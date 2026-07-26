@@ -11,6 +11,7 @@ from backend.shared.logging import setup_logging
 from backend.shared.exceptions import register_error_handlers
 from backend.modules.system.routes import system_bp
 from backend.modules.authentication.routes import auth_bp
+from backend.modules.donations.routes import donations_bp
 
 jwt = JWTManager()
 cors = CORS()
@@ -64,4 +65,5 @@ def _register_blueprints(app: Flask) -> None:
     """Register system and domain blueprints under API v1 versioned routing."""
     api_v1_bp.register_blueprint(system_bp)
     api_v1_bp.register_blueprint(auth_bp)
+    api_v1_bp.register_blueprint(donations_bp)
     app.register_blueprint(api_v1_bp)
