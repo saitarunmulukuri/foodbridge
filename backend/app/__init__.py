@@ -1,9 +1,7 @@
 """FoodBridge Flask Application Factory module."""
 
-import os
-from datetime import datetime, timezone
 from typing import Optional, Type
-from flask import Flask, Blueprint, jsonify
+from flask import Flask, Blueprint
 from flask_cors import CORS
 from flask_jwt_extended import JWTManager
 
@@ -11,6 +9,8 @@ from backend.config import get_config, Config
 from backend.database import db, migrate
 from backend.shared.logging import setup_logging
 from backend.shared.exceptions import register_error_handlers
+from backend.modules.system.routes import system_bp
+from backend.modules.authentication.routes import auth_bp
 
 jwt = JWTManager()
 cors = CORS()
@@ -36,7 +36,7 @@ def create_app(config_name: Optional[str] = None) -> Flask:
 
     # Initialize reusable logging
     setup_logging(app)
-    app.logger.info(f"Initializing FoodBridge Backend in [{app.config['APP_ENV']}] mode")
+    app.logger.info("Initializing FoodBridge Backend in [%s] mode", app.config["APP_ENV"])
 
     # Initialize Flask extensions
     _initialize_extensions(app)
@@ -61,23 +61,7 @@ def _initialize_extensions(app: Flask) -> None:
 
 
 def _register_blueprints(app: Flask) -> None:
-    """Register API v1 blueprints and health routes."""
-
-    @api_v1_bp.route("/health", methods=["GET"])
-    def api_v1_health():
-        """API v1 versioned health check endpoint."""
-        version_str = app.config.get("API_VERSION", "v1") if app else "v1"
-        return jsonify({
-            "status": "healthy",
-            "service": "FoodBridge API",
-            "version": version_str,
-            "timestamp": datetime.now(timezone.utc).isoformat()
-        }), 200
-
-    # Register API v1 blueprint on application
+    """Register system and domain blueprints under API v1 versioned routing."""
+    api_v1_bp.register_blueprint(system_bp)
+    api_v1_bp.register_blueprint(auth_bp)
     app.register_blueprint(api_v1_bp)
-
-    # Future domain module blueprints will be registered under api_v1_bp:
-    # Example:
-    # from backend.modules.authentication.routes import auth_bp
-    # api_v1_bp.register_blueprint(auth_bp, url_prefix="/auth")

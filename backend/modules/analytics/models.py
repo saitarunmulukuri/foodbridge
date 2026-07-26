@@ -1,1 +1,1 @@
-# Placeholder for analytics module
+"""Analytics module models placeholder."""

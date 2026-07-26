@@ -71,7 +71,7 @@ def setup_logging(app: Optional[Flask] = None) -> logging.Logger:
             file_handler.setLevel(log_level)
             root_logger.addHandler(file_handler)
         except Exception as err:
-            root_logger.warning(f"Failed to initialize file logger: {err}")
+            root_logger.warning("Failed to initialize file logger: %s", err)
 
     if app:
         app.logger.handlers = root_logger.handlers
