@@ -1,28 +1,38 @@
-"""Security utility functions for FoodBridge.
+"""Password hashing and verification security utilities for FoodBridge.
 
-Centralizes all password hashing, verification, and email normalization logic.
-These helpers are shared across all modules and must not contain domain-specific
-business logic.
+Uses bcrypt exclusively. No fallback mechanisms are supported.
+The werkzeug fallback was removed in the Sprint 1.1 refactoring.
+
+Constant-time verification is provided natively by bcrypt.checkpw().
+For protection against email-enumeration timing attacks during login,
+callers should invoke verify_password() with DUMMY_HASH when no user
+record is found (see AuthenticationService._authenticate_credentials).
 """
 
 import logging
-import re
 
 import bcrypt
 
 logger = logging.getLogger(__name__)
 
+# A pre-computed bcrypt hash of a fixed string.
+# Used as a constant-time stand-in when no user record is found during login,
+# preventing timing-based email enumeration attacks. Do NOT store or compare
+# real passwords against this value.
+DUMMY_HASH: str = "$2b$12$WXNIi.0LW7e1tHQjSekV7OdH8fNOpYEFmV3OKrRc5S4bVh7m6wSoW"
+
 
 def hash_password(password: str) -> str:
-    """Hash a plaintext password using bcrypt.
+    """Hash a plaintext password using bcrypt with a randomly generated salt.
 
-    Uses a randomly generated salt per hash. Never stores or logs plaintext passwords.
+    Never stores or logs the plaintext password.
 
     Args:
-        password: Plaintext password string.
+        password: Plaintext password string to hash.
 
     Returns:
-        bcrypt-hashed password string (UTF-8 decoded).
+        bcrypt-hashed password as a UTF-8 decoded string, suitable for
+        storage in the ``password_hash`` database column.
     """
     salt = bcrypt.gensalt()
     hashed = bcrypt.hashpw(password.encode("utf-8"), salt)
@@ -32,13 +42,17 @@ def hash_password(password: str) -> str:
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     """Verify a plaintext password against a stored bcrypt hash.
 
-    This helper is intended for use during authentication (login) flows.
-    It is safe to call with invalid or malformed hashes — it will return
-    False rather than raise an exception.
+    Safe to call with invalid or malformed hashes — returns False rather
+    than raising an exception, preventing information leakage.
+
+    Timing-attack note:
+        bcrypt.checkpw() is inherently constant-time for equal-length inputs.
+        For cases where no user exists, callers should pass DUMMY_HASH to
+        maintain a consistent execution time.
 
     Args:
-        plain_password: The plaintext password supplied by the user.
-        hashed_password: The stored bcrypt hash from the database.
+        plain_password: The plaintext password submitted by the user.
+        hashed_password: The bcrypt hash stored in the database.
 
     Returns:
         True if the password matches the hash, False otherwise.
@@ -49,37 +63,5 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
             hashed_password.encode("utf-8"),
         )
     except Exception:
-        logger.warning("Password verification check encountered an unexpected error.")
+        logger.warning("Password verification encountered an unexpected error.")
         return False
-
-
-def normalize_email(email: str) -> str:
-    """Normalize an email address for consistent storage and lookup.
-
-    Normalization steps:
-        1. Strip leading and trailing whitespace.
-        2. Convert to lowercase.
-        3. Validate the resulting email is non-empty.
-
-    Args:
-        email: Raw email string from the client.
-
-    Returns:
-        Normalized email string.
-
-    Raises:
-        ValueError: If the normalized email is empty or invalid.
-    """
-    if not email or not isinstance(email, str):
-        raise ValueError("Email must be a non-empty string.")
-
-    normalized = email.strip().lower()
-
-    if not normalized:
-        raise ValueError("Email cannot be empty after normalization.")
-
-    # Basic structural sanity check (full validation is handled by Marshmallow)
-    if "@" not in normalized or "." not in normalized.split("@")[-1]:
-        raise ValueError(f"Normalized email '{normalized}' does not appear to be valid.")
-
-    return normalized

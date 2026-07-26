@@ -3,8 +3,14 @@
 from backend.shared.exceptions.base_exceptions import (
     BadRequestException,
     ConflictException,
+    UnauthorizedException,
     ValidationException,
 )
+
+
+# -----------------------------------------------------------------------
+# Registration Exceptions
+# -----------------------------------------------------------------------
 
 
 class EmailAlreadyExistsException(ConflictException):
@@ -46,6 +52,51 @@ class RegistrationValidationException(ValidationException):
     def __init__(self, details: dict) -> None:
         super().__init__(
             message="User registration validation failed.",
+            status_code=422,
+            error_code="VALIDATION_ERROR",
+            details=details,
+        )
+
+
+# -----------------------------------------------------------------------
+# Login Exceptions
+# -----------------------------------------------------------------------
+
+
+class InvalidCredentialsException(UnauthorizedException):
+    """Exception raised for failed authentication attempts.
+
+    Security note: This exception is intentionally generic. It must NEVER
+    reveal whether the failure was caused by an unknown email or a wrong
+    password, to prevent user enumeration attacks.
+    """
+
+    def __init__(self) -> None:
+        super().__init__(
+            message="Invalid credentials. Please check your email and password.",
+            status_code=401,
+            error_code="INVALID_CREDENTIALS",
+        )
+
+
+class AccountNotActiveException(UnauthorizedException):
+    """Exception raised when a user attempts to log in with a non-ACTIVE account."""
+
+    def __init__(self, account_status: str) -> None:
+        super().__init__(
+            message=f"Your account is currently '{account_status}' and cannot log in. "
+                    f"Please contact support.",
+            status_code=401,
+            error_code="ACCOUNT_NOT_ACTIVE",
+        )
+
+
+class LoginValidationException(ValidationException):
+    """Exception raised for payload validation failures during login."""
+
+    def __init__(self, details: dict) -> None:
+        super().__init__(
+            message="Login validation failed.",
             status_code=422,
             error_code="VALIDATION_ERROR",
             details=details,
