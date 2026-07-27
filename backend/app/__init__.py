@@ -12,6 +12,8 @@ from backend.shared.exceptions import register_error_handlers
 from backend.modules.system.routes import system_bp
 from backend.modules.authentication.routes import auth_bp
 from backend.modules.donations.routes import donations_bp
+from backend.modules.ngos.routes import ngos_bp
+from backend.modules.donation_requests.routes import ngo_requests_bp
 
 jwt = JWTManager()
 cors = CORS()
@@ -66,4 +68,6 @@ def _register_blueprints(app: Flask) -> None:
     api_v1_bp.register_blueprint(system_bp)
     api_v1_bp.register_blueprint(auth_bp)
     api_v1_bp.register_blueprint(donations_bp)
+    api_v1_bp.register_blueprint(ngos_bp)
+    api_v1_bp.register_blueprint(ngo_requests_bp)
     app.register_blueprint(api_v1_bp)

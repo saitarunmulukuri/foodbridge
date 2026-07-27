@@ -54,3 +54,14 @@ class Config:
     # Logging Configuration
     LOG_LEVEL: str = os.getenv("LOG_LEVEL", "INFO")
     LOG_FILE_PATH: str = os.getenv("LOG_FILE_PATH", "logs/app.log")
+
+    # Decision Engine Configuration
+    # Hard ceiling on NGO-donation distance regardless of NGO service_radius_km.
+    # NGOs whose own service_radius_km exceeds this cap are still limited to this value.
+    DECISION_ENGINE_MAX_DISTANCE_KM: float = float(
+        os.getenv("DECISION_ENGINE_MAX_DISTANCE_KM", "50")
+    )
+    # Minimum remaining daily meal capacity an NGO must have to be eligible.
+    DECISION_ENGINE_MIN_REMAINING_CAPACITY: int = int(
+        os.getenv("DECISION_ENGINE_MIN_REMAINING_CAPACITY", "1")
+    )
