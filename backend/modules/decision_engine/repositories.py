@@ -21,7 +21,7 @@ from sqlalchemy.orm import Session, joinedload
 from backend.database import db
 from backend.modules.donations.models import Donation
 from backend.modules.donors.models import Donor
-from backend.modules.ngos.models import NGO, NGODailyCapacity
+from backend.modules.ngos.models import NGO, NGODailyCapacity, NGODateCapacity
 from backend.shared.constants.enums import (
     CapacityStatus,
     DayOfWeek,
@@ -102,6 +102,7 @@ class DecisionEngineRepository:
             List of NGO ORM instances pre-qualified at the database level.
         """
         today_dow = self._get_today_day_of_week()
+        today_date = datetime.now(timezone.utc).date()
 
         stmt = (
             select(NGO)
@@ -112,6 +113,11 @@ class DecisionEngineRepository:
                 )
             )
             .options(
+                joinedload(
+                    NGO.date_capacities.and_(
+                        NGODateCapacity.date == today_date
+                    )
+                ),
                 joinedload(
                     NGO.daily_capacities.and_(
                         and_(

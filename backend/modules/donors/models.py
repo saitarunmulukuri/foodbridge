@@ -1,7 +1,7 @@
 """Donor entity SQLAlchemy ORM model."""
 
 from decimal import Decimal
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, List, Optional
 from sqlalchemy import BigInteger, Boolean, Enum, ForeignKey, Numeric, String, Text
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -31,8 +31,8 @@ class Donor(BaseModel):
     contact_person: Mapped[str] = mapped_column(String(100), nullable=False)
     phone: Mapped[str] = mapped_column(String(20), nullable=False)
     address: Mapped[str] = mapped_column(Text, nullable=False)
-    latitude: Mapped[Decimal] = mapped_column(Numeric(10, 7), nullable=False)
-    longitude: Mapped[Decimal] = mapped_column(Numeric(10, 7), nullable=False)
+    latitude: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 7), nullable=True)
+    longitude: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 7), nullable=True)
     verification_status: Mapped[VerificationStatus] = mapped_column(
         Enum(VerificationStatus),
         nullable=False,

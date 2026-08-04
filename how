@@ -1,0 +1,29 @@
+[33mcommit fcacc2861661970bbc10868359a607f739b1d0a3[m[33m ([m[1;36mHEAD[m[33m -> [m[1;32mmain[m[33m, [m[1;33mtag: [m[1;33mv1.0.0-backend[m[33m, [m[1;31morigin/main[m[33m)[m
+Author: Sai Tarun Mulukuri <saitarunmulukuri@gmail.com>
+Date:   Mon Jul 27 12:25:05 2026 +0530
+
+    upto date
+
+[33mcommit aad2d71bf6ca3d97ed42c7b96a78cec1e5674c13[m
+Author: Sai Tarun Mulukuri <saitarunmulukuri@gmail.com>
+Date:   Sun Jul 26 20:29:37 2026 +0530
+
+    feat(donations): implement donation creation workflow
+
+[33mcommit 8cfbf2e2fbaf72b3c6b10895917cc47efda08ee6[m
+Author: Sai Tarun Mulukuri <saitarunmulukuri@gmail.com>
+Date:   Sun Jul 26 19:16:47 2026 +0530
+
+    feat(auth): implement user login and JWT authentication
+
+[33mcommit 58b770a51062886e1c7987c4c27854e8e9adcc22[m
+Author: Sai Tarun Mulukuri <saitarunmulukuri@gmail.com>
+Date:   Sun Jul 26 19:02:24 2026 +0530
+
+    feat(auth): implement user registration module
+
+[33mcommit 717701cf46e8bf682e582fc4bb3d0699d2be3065[m
+Author: Sai Tarun Mulukuri <saitarunmulukuri@gmail.com>
+Date:   Sun Jul 26 12:52:06 2026 +0530
+
+    feat: create backend application foundation

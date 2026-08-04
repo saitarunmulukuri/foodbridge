@@ -15,6 +15,7 @@ from typing import Dict, List
 
 from backend.modules.decision_engine.candidate_finder import CandidateNGO
 from backend.modules.decision_engine.config import DecisionEngineConfig
+from backend.modules.decision_engine.dto import EligibleNGO
 from backend.modules.donations.models import Donation
 
 logger = logging.getLogger(__name__)
@@ -154,8 +155,8 @@ class EligibilityFilterPipeline:
         candidates: List[CandidateNGO],
         donation: Donation,
         config: DecisionEngineConfig,
-    ) -> List[CandidateNGO]:
-        """Apply all eligibility filters to the candidate NGO DTOs.
+    ) -> List[EligibleNGO]:
+        """Apply all eligibility filters to candidate NGO DTOs and return EligibleNGO DTOs.
 
         Filters are evaluated in increasing order of computational cost:
             1. accepting_today_filter  (integer compare)
@@ -169,14 +170,14 @@ class EligibilityFilterPipeline:
             config: DecisionEngineConfig instance.
 
         Returns:
-            List of CandidateNGO DTOs that pass ALL eligibility rules.
+            List of EligibleNGO DTOs that pass ALL eligibility rules, with pre-computed distance_km.
         """
         donation_lat = float(donation.pickup_latitude)
         donation_lon = float(donation.pickup_longitude)
         max_radius = config.MAX_RADIUS_KM
         min_capacity = config.MIN_REMAINING_CAPACITY
 
-        eligible: List[CandidateNGO] = []
+        eligible: List[EligibleNGO] = []
         disqualified_counts: Dict[str, int] = {
             "not_accepting_today": 0,
             "insufficient_capacity": 0,
@@ -194,10 +195,31 @@ class EligibilityFilterPipeline:
             if not food_type_filter(ngo, donation):
                 disqualified_counts["food_type_mismatch"] += 1
                 continue
-            if not distance_filter(ngo, donation_lat, donation_lon, max_radius):
+
+            dist_km = haversine_distance_km(
+                lat1=ngo.latitude,
+                lon1=ngo.longitude,
+                lat2=donation_lat,
+                lon2=donation_lon,
+            )
+            effective_radius_km = min(float(ngo.service_radius_km), max_radius)
+            if dist_km > effective_radius_km:
                 disqualified_counts["outside_distance_radius"] += 1
                 continue
-            eligible.append(ngo)
+
+            eligible.append(
+                EligibleNGO(
+                    ngo_id=ngo.ngo_id,
+                    latitude=ngo.latitude,
+                    longitude=ngo.longitude,
+                    service_radius_km=ngo.service_radius_km,
+                    remaining_capacity=ngo.remaining_capacity,
+                    supported_food_types=ngo.supported_food_types,
+                    reliability_score=ngo.reliability_score,
+                    average_response_time_minutes=ngo.average_response_time_minutes,
+                    distance_km=dist_km,
+                )
+            )
 
         logger.info(
             "Eligibility pipeline complete for donation_id=%s: total=%d, eligible=%d, disqualified=%s",
@@ -208,3 +230,4 @@ class EligibilityFilterPipeline:
         )
 
         return eligible
+

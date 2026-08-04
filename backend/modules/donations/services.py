@@ -38,6 +38,9 @@ from backend.modules.donations.constants import (
 from backend.modules.donations.exceptions import (
     DonorProfileNotFoundException,
     InvalidDonationWindowException,
+    DonationNotFoundException,
+    DonationForbiddenException,
+    InvalidDonationStateException,
 )
 from backend.modules.donations.models import (
     Donation,
@@ -175,6 +178,177 @@ class DonationService:
         self._publish_donation_created_event(donation)
 
         return donation
+
+    # ------------------------------------------------------------------
+    # Public Interface — Donation Read (Sprint 5.5)
+    # ------------------------------------------------------------------
+
+    def list_my_donations(self, user_id: int, role: str) -> dict:
+        """Return all donations belonging to the authenticated DONOR.
+
+        Authorization:
+            Requires the caller to have the ``DONOR`` role.
+
+        Args:
+            user_id: Integer user ID from JWT sub claim.
+            role: UserRole string from JWT role claim.
+
+        Returns:
+            Dict with ``donations`` list and ``total`` count.
+        """
+        require_donor_role(user_id=user_id, role=role)
+        donor = self.repository.find_donor_by_user_id(user_id=user_id)
+        if donor is None:
+            raise DonorProfileNotFoundException(user_id)
+
+        donations = self.repository.find_donations_by_donor(donor.donor_id)
+        return {
+            "donations": [self._serialize_donation(d) for d in donations],
+            "total": len(donations),
+        }
+
+    def get_my_donation(self, user_id: int, role: str, donation_id: int) -> dict:
+        """Return a single donation by ID, verifying ownership.
+
+        Authorization:
+            Requires DONOR role. The donation must belong to the authenticated donor.
+
+        Args:
+            user_id: JWT sub claim.
+            role: JWT role claim.
+            donation_id: Donation primary key.
+
+        Raises:
+            DonorProfileNotFoundException: If no donor profile for user_id.
+            DonationNotFoundException: If donation_id does not exist.
+            DonationForbiddenException: If donation belongs to another donor.
+        """
+        require_donor_role(user_id=user_id, role=role)
+        donor = self.repository.find_donor_by_user_id(user_id=user_id)
+        if donor is None:
+            raise DonorProfileNotFoundException(user_id)
+
+        donation = self.repository.find_donation_by_id(donation_id)
+        if donation is None:
+            raise DonationNotFoundException(donation_id)
+        if donation.donor_id != donor.donor_id:
+            raise DonationForbiddenException(donation_id)
+
+        return self._serialize_donation(donation, include_items=True)
+
+    def submit_donation(self, user_id: int, role: str, donation_id: int) -> dict:
+        """Transition a DRAFT donation to SUBMITTED status.
+
+        Only SUBMITTED donations are visible to the Decision Engine and can
+        proceed through the recommendation workflow.
+
+        Authorization:
+            Requires DONOR role. The donation must belong to the caller.
+
+        State Transition:
+            DRAFT → SUBMITTED
+
+        Side Effects (atomic):
+            - donation.status = SUBMITTED
+            - DonationStatusHistory record appended
+
+        Args:
+            user_id: JWT sub claim.
+            role: JWT role claim.
+            donation_id: Donation primary key.
+
+        Raises:
+            DonorProfileNotFoundException: No donor profile for user_id.
+            DonationNotFoundException: donation_id does not exist.
+            DonationForbiddenException: Donation belongs to another donor.
+            InvalidDonationStateException: Donation is not in DRAFT status.
+        """
+        require_donor_role(user_id=user_id, role=role)
+        donor = self.repository.find_donor_by_user_id(user_id=user_id)
+        if donor is None:
+            raise DonorProfileNotFoundException(user_id)
+
+        donation = self.repository.find_donation_by_id(donation_id)
+        if donation is None:
+            raise DonationNotFoundException(donation_id)
+        if donation.donor_id != donor.donor_id:
+            raise DonationForbiddenException(donation_id)
+        if donation.status != DonationStatus.DRAFT:
+            raise InvalidDonationStateException(
+                donation_id=donation_id,
+                current_status=donation.status.value,
+                required_status=DonationStatus.DRAFT.value,
+            )
+
+        try:
+            prev_status = donation.status
+            donation.status = DonationStatus.SUBMITTED
+            self.repository.stage_status_history(
+                DonationStatusHistory(
+                    donation_id=donation.donation_id,
+                    previous_status=prev_status,
+                    new_status=DonationStatus.SUBMITTED,
+                    changed_by_user_id=user_id,
+                    change_reason="Donation submitted for NGO matching by donor.",
+                )
+            )
+            db.session.commit()
+            logger.info(
+                "Donation submitted: donation_id=%s donor_id=%s user_id=%s.",
+                donation.donation_id, donor.donor_id, user_id,
+            )
+        except Exception:
+            db.session.rollback()
+            logger.exception(
+                "Transaction failed during donation submit: donation_id=%s user_id=%s.",
+                donation_id, user_id,
+            )
+            raise
+
+        return self._serialize_donation(donation)
+
+    # ------------------------------------------------------------------
+    # Private Helpers — Serialization
+    # ------------------------------------------------------------------
+
+    @staticmethod
+    def _serialize_donation(donation: Donation, include_items: bool = False) -> dict:
+        """Serialize a Donation instance to a plain dict for the API response."""
+        data = {
+            "donation_id": donation.donation_id,
+            "donation_title": donation.donation_title,
+            "status": donation.status.value,
+            "total_quantity": float(donation.total_quantity),
+            "quantity_unit": donation.quantity_unit.value,
+            "pickup_city": donation.pickup_city,
+            "pickup_state": donation.pickup_state,
+            "available_from": donation.available_from.isoformat() if donation.available_from else None,
+            "expiry_time": donation.expiry_time.isoformat() if donation.expiry_time else None,
+            "created_at": donation.created_at.isoformat() if donation.created_at else None,
+        }
+        if include_items:
+            data["description"] = donation.description
+            data["pickup_address"] = donation.pickup_address
+            data["pickup_landmark"] = donation.pickup_landmark
+            data["pickup_postal_code"] = donation.pickup_postal_code
+            data["pickup_latitude"] = float(donation.pickup_latitude)
+            data["pickup_longitude"] = float(donation.pickup_longitude)
+            data["delivery_preference"] = donation.delivery_preference.value
+            data["special_instructions"] = donation.special_instructions
+            data["items"] = [
+                {
+                    "item_id": item.item_id,
+                    "item_name": item.item_name,
+                    "category": item.category.value,
+                    "quantity": float(item.quantity),
+                    "unit": item.unit.value,
+                    "food_type": item.food_type.value,
+                    "contains_allergens": item.contains_allergens,
+                    "allergen_details": item.allergen_details,
+                }
+                for item in donation.items
+            ]
+        return data
 
     # ------------------------------------------------------------------
     # Private Helpers — Validation & Building

@@ -2,10 +2,31 @@
 
 from datetime import datetime
 from typing import Any, Dict
-from sqlalchemy import DateTime, func, text
+from sqlalchemy import DateTime, func
+from sqlalchemy.ext.compiler import compiles
+from sqlalchemy.sql.expression import FunctionElement
 from sqlalchemy.orm import Mapped, mapped_column
 
 from backend.database import db
+
+
+class current_timestamp_on_update(FunctionElement):
+    """Dialect-aware DDL expression for updated_at server default.
+
+    - MySQL: ``CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP``
+    - All other dialects (SQLite, PostgreSQL): ``CURRENT_TIMESTAMP``
+    """
+    inherit_cache = True
+
+
+@compiles(current_timestamp_on_update, "mysql")
+def _compile_mysql(element, compiler, **kw):
+    return "CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"
+
+
+@compiles(current_timestamp_on_update)
+def _compile_default(element, compiler, **kw):
+    return "CURRENT_TIMESTAMP"
 
 
 class BaseModel(db.Model):
@@ -29,7 +50,7 @@ class BaseModel(db.Model):
         nullable=False,
         default=datetime.utcnow,
         onupdate=datetime.utcnow,
-        server_default=text("CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP"),
+        server_default=current_timestamp_on_update(),
     )
 
     def to_dict(self) -> Dict[str, Any]:

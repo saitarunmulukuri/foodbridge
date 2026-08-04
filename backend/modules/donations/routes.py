@@ -4,6 +4,9 @@ Registered blueprint:
     donations_bp → mounted at /donations under /api/v1/ prefix
 
 Sprint 2.1: POST /api/v1/donations
+Sprint 5.5: GET  /api/v1/donations
+            GET  /api/v1/donations/{id}
+            POST /api/v1/donations/{id}/submit
 """
 
 import logging
@@ -121,3 +124,88 @@ def create_donation():
         "message": "Donation created successfully.",
         "data": output,
     }), 201
+
+
+@donations_bp.route("", methods=["GET"])
+@jwt_required()
+def list_my_donations():
+    """List all donations belonging to the authenticated donor.
+
+    Endpoint: GET /api/v1/donations
+
+    Authorization:
+        Valid JWT required. Only DONOR role accepted.
+
+    Returns:
+        200 OK — list of donations with total count.
+        401 Unauthorized — missing or invalid JWT.
+        403 Forbidden — caller is not a DONOR.
+    """
+    claims = get_jwt()
+    user_id = int(claims["sub"])
+    role = claims.get("role", "")
+
+    service = DonationService()
+    result = service.list_my_donations(user_id=user_id, role=role)
+
+    return jsonify({"success": True, "data": result}), 200
+
+
+@donations_bp.route("/<int:donation_id>", methods=["GET"])
+@jwt_required()
+def get_donation(donation_id: int):
+    """Return a single donation by ID (owner-only).
+
+    Endpoint: GET /api/v1/donations/{donation_id}
+
+    Authorization:
+        Valid JWT required. DONOR role only. Caller must own the donation.
+
+    Returns:
+        200 OK — full donation detail including items.
+        401 Unauthorized — missing or invalid JWT.
+        403 Forbidden — caller is not a DONOR or does not own this donation.
+        404 Not Found — donation_id does not exist.
+    """
+    claims = get_jwt()
+    user_id = int(claims["sub"])
+    role = claims.get("role", "")
+
+    service = DonationService()
+    result = service.get_my_donation(user_id=user_id, role=role, donation_id=donation_id)
+
+    return jsonify({"success": True, "data": result}), 200
+
+
+@donations_bp.route("/<int:donation_id>/submit", methods=["POST"])
+@jwt_required()
+def submit_donation(donation_id: int):
+    """Submit a DRAFT donation for NGO matching.
+
+    Endpoint: POST /api/v1/donations/{donation_id}/submit
+
+    Authorization:
+        Valid JWT required. DONOR role only. Caller must own the donation.
+
+    State Transition:
+        DRAFT → SUBMITTED
+
+    Returns:
+        200 OK — updated donation with status=SUBMITTED.
+        401 Unauthorized — missing or invalid JWT.
+        403 Forbidden — caller is not a DONOR or does not own this donation.
+        404 Not Found — donation_id does not exist.
+        409 Conflict — donation is not in DRAFT status.
+    """
+    claims = get_jwt()
+    user_id = int(claims["sub"])
+    role = claims.get("role", "")
+
+    service = DonationService()
+    result = service.submit_donation(user_id=user_id, role=role, donation_id=donation_id)
+
+    return jsonify({
+        "success": True,
+        "message": "Donation submitted successfully.",
+        "data": result,
+    }), 200

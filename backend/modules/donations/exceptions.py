@@ -58,3 +58,43 @@ class InvalidDonationWindowException(BadRequestException):
             status_code=400,
             error_code="INVALID_DONATION_WINDOW",
         )
+
+
+class DonationNotFoundException(BadRequestException):
+    """Exception raised when a donation_id does not exist in the database."""
+
+    def __init__(self, donation_id: int) -> None:
+        from backend.shared.exceptions.base_exceptions import ResourceNotFoundException
+        super().__init__(
+            message=f"Donation #{donation_id} was not found.",
+            status_code=404,
+            error_code="DONATION_NOT_FOUND",
+        )
+        self.status_code = 404  # override to 404
+
+
+class DonationForbiddenException(BadRequestException):
+    """Exception raised when a user tries to act on a donation they do not own."""
+
+    def __init__(self, donation_id: int) -> None:
+        super().__init__(
+            message=f"You do not have permission to access donation #{donation_id}.",
+            status_code=403,
+            error_code="DONATION_FORBIDDEN",
+        )
+        self.status_code = 403  # override to 403
+
+
+class InvalidDonationStateException(BadRequestException):
+    """Exception raised when a donation is in the wrong state for a transition."""
+
+    def __init__(self, donation_id: int, current_status: str, required_status: str) -> None:
+        super().__init__(
+            message=(
+                f"Donation #{donation_id} is currently '{current_status}' "
+                f"and must be '{required_status}' for this operation."
+            ),
+            status_code=409,
+            error_code="INVALID_DONATION_STATE",
+        )
+        self.status_code = 409

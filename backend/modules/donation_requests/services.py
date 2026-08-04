@@ -197,6 +197,13 @@ class DonationRequestService:
 
             db.session.commit()
 
+            # Step 4: Dispatch initial volunteer assignment
+            try:
+                from backend.modules.volunteers.services import VolunteerService
+                VolunteerService(session=db.session).dispatch_initial_assignment(request_id)
+            except Exception:
+                logger.exception("Failed to dispatch initial volunteer assignment for request_id=%s", request_id)
+
             logger.info(
                 "DonationRequestService: ACCEPTED request_id=%s ngo_id=%s "
                 "donation_id=%s — cancelled %d competing requests.",

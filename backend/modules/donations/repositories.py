@@ -10,7 +10,7 @@ Architecture Rules:
 from typing import List, Optional
 
 from sqlalchemy import select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from backend.database import db
 from backend.modules.donations.models import (
@@ -90,3 +90,35 @@ class DonationRepository:
         """
         self._session.add(status_history)
         return status_history
+
+    def find_donation_by_id(self, donation_id: int) -> Optional[Donation]:
+        """Load a single Donation by primary key, eagerly loading items.
+
+        Args:
+            donation_id: Integer primary key.
+
+        Returns:
+            Donation instance with items loaded, or None.
+        """
+        stmt = (
+            select(Donation)
+            .where(Donation.donation_id == donation_id)
+            .options(joinedload(Donation.items))
+        )
+        return self._session.execute(stmt).unique().scalars().first()
+
+    def find_donations_by_donor(self, donor_id: int) -> List[Donation]:
+        """Return all donations for a given donor_id, ordered by creation date descending.
+
+        Args:
+            donor_id: Integer donor PK.
+
+        Returns:
+            List of Donation instances (items NOT eagerly loaded for list performance).
+        """
+        stmt = (
+            select(Donation)
+            .where(Donation.donor_id == donor_id)
+            .order_by(Donation.created_at.desc())
+        )
+        return list(self._session.execute(stmt).scalars().all())

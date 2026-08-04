@@ -290,12 +290,15 @@ class TestDecisionEngineService(unittest.TestCase):
             average_response_time_minutes=None,
         )
 
-    def test_service_raises_not_implemented(self):
-        """Sprint 3.1A: DecisionEngineService.run() is a documented skeleton."""
+    def test_service_raises_donation_not_found(self):
+        """DecisionEngineService.run() raises DonationNotFoundException when donation missing."""
         from backend.modules.decision_engine.services import DecisionEngineService
-        service = DecisionEngineService()
-        with self.assertRaises(NotImplementedError):
-            service.run(donation_id=1)
+        from backend.modules.decision_engine.exceptions import DonationNotFoundException
+        mock_finder = MagicMock()
+        mock_finder.load_donation.return_value = None
+        service = DecisionEngineService(candidate_finder=mock_finder)
+        with self.assertRaises(DonationNotFoundException):
+            service.run(donation_id=999)
 
     def test_eligibility_pipeline_returns_eligible_ngos(self):
         """Integration: EligibilityFilterPipeline filters DTOs correctly."""

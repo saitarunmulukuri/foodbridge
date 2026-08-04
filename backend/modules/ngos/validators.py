@@ -1,10 +1,12 @@
 """Field-level validators for the NGO module (Profile + Capacity Management).
 
-Sprint 3.1: Profile validators — phone, website, coordinates, service_radius
-Sprint 3.2: Capacity validators — maximum_capacity, day_of_week
+Sprint 3.1: Profile validators — phone, website, coordinates, service_radius,
+            city, state, country, postal_code
+Sprint 3.2: Capacity validators — maximum_capacity, day_of_week, date
 """
 
 import re
+from datetime import date as date_type, datetime, timezone
 from urllib.parse import urlparse
 
 from marshmallow import ValidationError
@@ -16,6 +18,7 @@ from backend.shared.constants.enums import DayOfWeek
 # -----------------------------------------------------------------------
 
 _PHONE_RE = re.compile(r"^\+?[0-9\s\-().]{7,20}$")
+_POSTAL_CODE_RE = re.compile(r"^[A-Za-z0-9\s\-]{2,20}$")
 
 
 def validate_phone(value: str) -> None:
@@ -66,6 +69,97 @@ def validate_service_radius(value: int) -> None:
     """Validate service radius is a positive integer."""
     if not isinstance(value, int) or value <= 0:
         raise ValidationError("service_radius_km must be a positive integer (≥ 1).")
+
+
+def validate_date_not_in_past(value: date_type) -> None:
+    """Validate that a calendar date is today or in the future (UTC).
+
+    Used with ``fields.Date()``, so ``value`` is already a parsed
+    ``datetime.date`` object — format errors are handled by marshmallow.
+
+    Business Rule (Sprint 3.2):
+        An NGO cannot set capacity for a date that has already passed.
+        The comparison uses UTC date for consistency across deployments.
+
+    Args:
+        value: Parsed calendar date from the request payload.
+
+    Raises:
+        ValidationError: If ``value`` is strictly before today (UTC).
+    """
+    today: date_type = datetime.now(timezone.utc).date()
+    if value < today:
+        raise ValidationError(
+            f"date cannot be in the past. "
+            f"Earliest allowed date is {today.isoformat()}."
+        )
+
+
+def validate_city(value: str) -> None:
+    """Validate city name is non-empty and within the 100-character column limit.
+
+    Args:
+        value: City string from the request payload.
+
+    Raises:
+        ValidationError: If the value is blank or exceeds 100 characters.
+    """
+    stripped = value.strip()
+    if not stripped:
+        raise ValidationError("city must not be blank.")
+    if len(stripped) > 100:
+        raise ValidationError("city must be 100 characters or fewer.")
+
+
+def validate_state(value: str) -> None:
+    """Validate state/province name is non-empty and within 100 characters.
+
+    Args:
+        value: State string from the request payload.
+
+    Raises:
+        ValidationError: If the value is blank or exceeds 100 characters.
+    """
+    stripped = value.strip()
+    if not stripped:
+        raise ValidationError("state must not be blank.")
+    if len(stripped) > 100:
+        raise ValidationError("state must be 100 characters or fewer.")
+
+
+def validate_country(value: str) -> None:
+    """Validate country name is non-empty and within 100 characters.
+
+    Args:
+        value: Country string from the request payload.
+
+    Raises:
+        ValidationError: If the value is blank or exceeds 100 characters.
+    """
+    stripped = value.strip()
+    if not stripped:
+        raise ValidationError("country must not be blank.")
+    if len(stripped) > 100:
+        raise ValidationError("country must be 100 characters or fewer.")
+
+
+def validate_postal_code(value: str) -> None:
+    """Validate postal / PIN code format (alphanumeric, spaces, hyphens; 2–20 chars).
+
+    Accepts international formats (e.g. '500032', 'SW1A 1AA', '10001-1234').
+
+    Args:
+        value: Postal code string from the request payload.
+
+    Raises:
+        ValidationError: If the value does not match the expected pattern.
+    """
+    stripped = value.strip()
+    if not _POSTAL_CODE_RE.match(stripped):
+        raise ValidationError(
+            "postal_code must be 2–20 alphanumeric characters "
+            "(spaces and hyphens allowed)."
+        )
 
 
 # -----------------------------------------------------------------------

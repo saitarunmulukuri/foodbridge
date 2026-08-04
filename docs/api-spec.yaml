@@ -1,0 +1,312 @@
+openapi: 3.0.3
+info:
+  title: FoodBridge Backend API
+  description: Production-grade RESTful API for surplus food donation routing, Decision Engine matching, NGO request management, and Volunteer pickup logistics.
+  version: 1.0.0
+  contact:
+    name: FoodBridge Engineering Team
+    email: dev@foodbridge.org
+servers:
+  - url: /api/v1
+    description: API Version 1 Base URL
+
+paths:
+  /health:
+    get:
+      summary: Health Check
+      description: Returns infrastructure status, database connectivity, and timestamp.
+      tags:
+        - System
+      responses:
+        '200':
+          description: Application is healthy and database is connected.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status: { type: string, example: "healthy" }
+                  database: { type: string, example: "connected" }
+                  jwt: { type: string, example: "initialized" }
+                  version: { type: string, example: "v1" }
+                  timestamp: { type: string, format: date-time }
+        '503':
+          description: Database is disconnected.
+
+  /readiness:
+    get:
+      summary: Readiness Probe
+      description: Probe for load balancers / Kubernetes to verify service readiness.
+      tags:
+        - System
+      responses:
+        '200':
+          description: Service is ready to process traffic.
+
+  /auth/register:
+    post:
+      summary: Register User
+      description: Register a new DONOR, NGO, or VOLUNTEER account along with role-specific profile details.
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, password_confirmation, role, profile]
+              properties:
+                email: { type: string, format: email, example: "donor@example.com" }
+                password: { type: string, format: password, example: "Secure@12345" }
+                password_confirmation: { type: string, format: password, example: "Secure@12345" }
+                role: { type: string, enum: [DONOR, NGO, VOLUNTEER], example: "DONOR" }
+                profile:
+                  type: object
+                  properties:
+                    organisation_name: { type: string, example: "Grand Hotel" }
+                    contact_person: { type: string, example: "John Doe" }
+                    phone: { type: string, example: "9876543210" }
+                    address: { type: string, example: "123 Main St, Hyderabad" }
+      responses:
+        '201':
+          description: User registered successfully.
+        '409':
+          description: Email or registration number already exists.
+        '422':
+          description: Input validation failed.
+
+  /auth/login:
+    post:
+      summary: User Login
+      description: Authenticate user credentials and return JWT access token & refresh token.
+      tags:
+        - Authentication
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email: { type: string, format: email, example: "donor@example.com" }
+                password: { type: string, format: password, example: "Secure@12345" }
+      responses:
+        '200':
+          description: Login successful.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success: { type: boolean, example: true }
+                  message: { type: string, example: "Login successful." }
+                  data:
+                    type: object
+                    properties:
+                      access_token: { type: string }
+                      refresh_token: { type: string }
+                      token_type: { type: string, example: "Bearer" }
+                      expires_in: { type: integer, example: 3600 }
+
+  /donations:
+    post:
+      summary: Create Surplus Food Donation
+      description: Submit a new surplus food donation offer (DRAFT state).
+      tags:
+        - Donations
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [donation_title, available_from, expiry_time, total_quantity, quantity_unit, pickup_address, pickup_city, pickup_state, pickup_postal_code, pickup_latitude, pickup_longitude, items]
+              properties:
+                donation_title: { type: string, example: "50 Meal Packs" }
+                available_from: { type: string, format: date-time }
+                expiry_time: { type: string, format: date-time }
+                total_quantity: { type: string, example: "50.00" }
+                quantity_unit: { type: string, example: "PACKET" }
+                pickup_address: { type: string, example: "123 Jubilee Hills" }
+                pickup_city: { type: string, example: "Hyderabad" }
+                pickup_state: { type: string, example: "Telangana" }
+                pickup_postal_code: { type: string, example: "500033" }
+                pickup_latitude: { type: string, example: "17.4310" }
+                pickup_longitude: { type: string, example: "78.4070" }
+                items:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      item_name: { type: string, example: "Veg Biryani" }
+                      category: { type: string, example: "RICE" }
+                      quantity: { type: string, example: "50.00" }
+                      unit: { type: string, example: "PACKET" }
+                      food_type: { type: string, example: "VEGETARIAN" }
+      responses:
+        '201':
+          description: Donation created successfully (Status: DRAFT).
+        '401':
+          description: Unauthorized.
+        '403':
+          description: Forbidden (DONOR role required).
+
+    get:
+      summary: List My Donations
+      description: Retrieve list of donations created by the authenticated donor.
+      tags:
+        - Donations
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of donor's donations.
+
+  /donations/{id}/submit:
+    post:
+      summary: Submit Donation for NGO Matching
+      description: Transition donation status from DRAFT to SUBMITTED.
+      tags:
+        - Donations
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Donation submitted for matching.
+        '409':
+          description: Donation is not in DRAFT state.
+
+  /decision-engine/run:
+    post:
+      summary: Execute Decision Engine Matching
+      description: Run eligibility pipeline, scoring formula, and ranking engine for a donation.
+      tags:
+        - Decision Engine
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [donation_id]
+              properties:
+                donation_id: { type: integer, example: 1 }
+                top_n: { type: integer, default: 3 }
+      responses:
+        '200':
+          description: Decision Engine execution complete with candidate NGO recommendations.
+
+  /ngos/me/capacity:
+    put:
+      summary: Update NGO Daily Capacity
+      description: Upsert daily meal intake capacity for a specific calendar date.
+      tags:
+        - NGO Management
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [date, maximum_capacity]
+              properties:
+                date: { type: string, format: date, example: "2026-08-01" }
+                maximum_capacity: { type: integer, example: 200 }
+      responses:
+        '200':
+          description: Date capacity updated.
+
+  /ngo/requests:
+    get:
+      summary: List NGO Requests
+      description: List donation requests issued to the authenticated NGO.
+      tags:
+        - NGO Requests
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of NGO requests.
+
+  /ngo/requests/{id}/accept:
+    post:
+      summary: Accept Donation Request
+      description: NGO accepts donation request, setting status to ACCEPTED and triggering volunteer assignment.
+      tags:
+        - NGO Requests
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Request accepted.
+
+  /volunteers/assignments:
+    get:
+      summary: List Volunteer Assignments
+      description: List pickup assignments assigned to the authenticated volunteer.
+      tags:
+        - Volunteer Logistics
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: List of volunteer assignments.
+
+  /volunteers/assignments/{id}/accept:
+    post:
+      summary: Accept Volunteer Pickup Assignment
+      description: Volunteer accepts pickup assignment (status becomes ACCEPTED, donation status PICKUP_IN_PROGRESS).
+      tags:
+        - Volunteer Logistics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Pickup assignment accepted.
+
+  /volunteers/assignments/{id}/complete:
+    post:
+      summary: Complete Delivery
+      description: Mark food pickup & delivery as completed (donation status becomes COMPLETED).
+      tags:
+        - Volunteer Logistics
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: Delivery completed.
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT

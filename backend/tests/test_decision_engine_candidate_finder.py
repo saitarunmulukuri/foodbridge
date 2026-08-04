@@ -53,6 +53,7 @@ def _make_ngo(
     cap.remaining_capacity = remaining
     cap.status = cap_status
     ngo.daily_capacities = [cap]
+    ngo.date_capacities = []
 
     ngo.ngo_requests = ngo_requests or []
     return ngo

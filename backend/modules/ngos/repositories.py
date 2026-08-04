@@ -1,30 +1,30 @@
 """Repository for NGO module — Profile + Capacity Management.
 
 Sprint 3.1: find_by_user_id(), apply_profile_update()
-Sprint 3.2: find_all_capacities(), find_capacity_by_day(), upsert_capacity()
+Sprint 3.2: find_all_date_capacities(), find_date_capacity_by_date(), upsert_date_capacity()
 
 Architecture Rules:
     - Uses SQLAlchemy 2.x select() / session.execute() / .scalars() style.
     - Commit / rollback is always delegated to the service layer.
     - All reads use joinedload where relationships are needed.
 
-Capacity Model Mapping:
-    API concept          │  ORM column (NGODailyCapacity)
+Capacity Model Mapping (Sprint 3.2 — NGODateCapacity):
+    API concept          │  ORM column (NGODateCapacity)
     ─────────────────────┼──────────────────────────────
     maximum_capacity     │  max_meals
-    allocated_capacity   │  max_meals - remaining_capacity (computed)
-    remaining_capacity   │  remaining_capacity (stored, kept in sync by service)
+    allocated_capacity   │  allocated_meals  (stored, system-managed)
+    remaining_capacity   │  COMPUTED: max_meals - allocated_meals (never stored)
 """
 
 import logging
+from datetime import date as date_type
 from typing import List, Optional
 
 from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
 from backend.database import db
-from backend.modules.ngos.models import NGO, NGODailyCapacity
-from backend.shared.constants.enums import CapacityStatus, DayOfWeek
+from backend.modules.ngos.models import NGO, NGODateCapacity
 
 logger = logging.getLogger(__name__)
 
@@ -50,17 +50,33 @@ class NGORepository:
         if result is None:
             logger.debug("NGORepository: no profile for user_id=%s.", user_id)
         else:
-            logger.debug("NGORepository: loaded ngo_id=%s for user_id=%s.", result.ngo_id, user_id)
+            logger.debug(
+                "NGORepository: loaded ngo_id=%s for user_id=%s.", result.ngo_id, user_id
+            )
         return result
 
     def apply_profile_update(self, ngo: NGO, updates: dict) -> NGO:
         """Apply validated profile field updates to an NGO ORM instance.
 
+        Uses an explicit whitelist to prevent mass-assignment of read-only
+        or system-managed fields (e.g. registration_number, verification_status).
+
         Does NOT commit. Service layer owns the transaction.
         """
         allowed_fields = {
-            "organisation_name", "contact_person", "phone", "address",
-            "latitude", "longitude", "service_radius_km",
+            "organisation_name",
+            "contact_person",
+            "phone",
+            "address",
+            "city",
+            "state",
+            "country",
+            "postal_code",
+            "description",
+            "website",
+            "latitude",
+            "longitude",
+            "service_radius_km",
         }
         applied = []
         for field, value in updates.items():
@@ -71,109 +87,108 @@ class NGORepository:
         return ngo
 
     # ------------------------------------------------------------------
-    # Sprint 3.2: Capacity Methods
+    # Sprint 3.2: Date Capacity Methods
     # ------------------------------------------------------------------
 
-    def find_all_capacities(self, ngo_id: int) -> List[NGODailyCapacity]:
-        """Load all NGODailyCapacity records for a given NGO.
+    def find_all_date_capacities(self, ngo_id: int) -> List[NGODateCapacity]:
+        """Load all NGODateCapacity records for a given NGO, ordered by date ascending.
 
         Args:
             ngo_id: The NGO's primary key.
 
         Returns:
-            List of NGODailyCapacity instances (may be empty if none configured).
+            List of NGODateCapacity instances (may be empty if none configured).
         """
         stmt = (
-            select(NGODailyCapacity)
-            .where(NGODailyCapacity.ngo_id == ngo_id)
-            .order_by(NGODailyCapacity.day_of_week)
+            select(NGODateCapacity)
+            .where(NGODateCapacity.ngo_id == ngo_id)
+            .order_by(NGODateCapacity.date)
         )
         results = self._session.execute(stmt).scalars().all()
         logger.debug(
-            "NGORepository: loaded %d capacity records for ngo_id=%s.",
+            "NGORepository: loaded %d date-capacity records for ngo_id=%s.",
             len(results),
             ngo_id,
         )
         return list(results)
 
-    def find_capacity_by_day(
-        self, ngo_id: int, day_of_week: DayOfWeek
-    ) -> Optional[NGODailyCapacity]:
-        """Load a single capacity record for an NGO on a specific day.
+    def find_date_capacity_by_date(
+        self, ngo_id: int, capacity_date: date_type
+    ) -> Optional[NGODateCapacity]:
+        """Load a single NGODateCapacity record for an NGO on a specific calendar date.
 
         Args:
             ngo_id: The NGO's primary key.
-            day_of_week: The target DayOfWeek enum value.
+            capacity_date: The target calendar date.
 
         Returns:
-            NGODailyCapacity instance if found, otherwise None.
+            NGODateCapacity instance if found, otherwise None.
         """
         stmt = (
-            select(NGODailyCapacity)
+            select(NGODateCapacity)
             .where(
-                NGODailyCapacity.ngo_id == ngo_id,
-                NGODailyCapacity.day_of_week == day_of_week,
+                NGODateCapacity.ngo_id == ngo_id,
+                NGODateCapacity.date == capacity_date,
             )
         )
         result = self._session.execute(stmt).scalars().first()
         logger.debug(
-            "NGORepository: capacity for ngo_id=%s day=%s → %s.",
+            "NGORepository: date-capacity for ngo_id=%s date=%s → %s.",
             ngo_id,
-            day_of_week.value,
+            capacity_date.isoformat(),
             "found" if result else "not found",
         )
         return result
 
-    def upsert_capacity(
+    def upsert_date_capacity(
         self,
         ngo_id: int,
-        day_of_week: DayOfWeek,
+        capacity_date: date_type,
         max_meals: int,
-        remaining_capacity: int,
-        status: Optional[CapacityStatus] = None,
-    ) -> NGODailyCapacity:
-        """Create or update an NGO's daily capacity record for a given day.
+    ) -> NGODateCapacity:
+        """Create or update an NGO's capacity record for a specific calendar date.
 
         Upsert Strategy:
-            - If a record exists for (ngo_id, day_of_week), update it.
-            - If no record exists, create a new one.
+            - If a record exists for (ngo_id, date), update ``max_meals`` only.
+            - If no record exists, create a new one with ``allocated_meals = 0``.
+
+        Important:
+            ``allocated_meals`` is NEVER modified here — it is system-managed
+            by the Decision Engine allocation process.
 
         Does NOT commit. Service layer owns the transaction.
 
         Args:
             ngo_id: The NGO's primary key.
-            day_of_week: The target DayOfWeek enum value.
-            max_meals: New maximum meal capacity for the day.
-            remaining_capacity: New remaining capacity (service-computed).
-            status: Optional CapacityStatus to set. If None, existing status
-                    is preserved (or defaults to ACTIVE for new records).
+            capacity_date: The target calendar date.
+            max_meals: New maximum meal capacity for the date.
 
         Returns:
-            The created or updated NGODailyCapacity ORM instance.
+            The created or updated NGODateCapacity ORM instance.
         """
-        existing = self.find_capacity_by_day(ngo_id, day_of_week)
+        existing = self.find_date_capacity_by_date(ngo_id, capacity_date)
 
         if existing is not None:
             existing.max_meals = max_meals
-            existing.remaining_capacity = remaining_capacity
-            if status is not None:
-                existing.status = status
             logger.debug(
-                "NGORepository: updated capacity for ngo_id=%s day=%s max=%s remaining=%s.",
-                ngo_id, day_of_week.value, max_meals, remaining_capacity,
+                "NGORepository: updated date-capacity for ngo_id=%s date=%s max=%s.",
+                ngo_id,
+                capacity_date.isoformat(),
+                max_meals,
             )
             return existing
-        else:
-            new_record = NGODailyCapacity(
-                ngo_id=ngo_id,
-                day_of_week=day_of_week,
-                max_meals=max_meals,
-                remaining_capacity=remaining_capacity,
-                status=status if status is not None else CapacityStatus.ACTIVE,
-            )
-            self._session.add(new_record)
-            logger.debug(
-                "NGORepository: created capacity for ngo_id=%s day=%s max=%s.",
-                ngo_id, day_of_week.value, max_meals,
-            )
-            return new_record
+
+        new_record = NGODateCapacity(
+            ngo_id=ngo_id,
+            date=capacity_date,
+            max_meals=max_meals,
+            allocated_meals=0,
+        )
+        self._session.add(new_record)
+        logger.debug(
+            "NGORepository: created date-capacity for ngo_id=%s date=%s max=%s.",
+            ngo_id,
+            capacity_date.isoformat(),
+            max_meals,
+        )
+        return new_record

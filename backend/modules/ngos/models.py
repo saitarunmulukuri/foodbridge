@@ -1,12 +1,13 @@
-"""NGO entity SQLAlchemy ORM models."""
+"""NGO entity SQLAlchemy ORM models — Sprint 3.1 profile + Sprint 3.2 date capacity."""
 
-from datetime import datetime
+from datetime import date as date_type, datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING, List, Optional
 from sqlalchemy import (
     BigInteger,
     Boolean,
     CheckConstraint,
+    Date,
     DateTime,
     Enum,
     ForeignKey,
@@ -54,8 +55,14 @@ class NGO(BaseModel):
     contact_person: Mapped[str] = mapped_column(String(100), nullable=False)
     phone: Mapped[str] = mapped_column(String(20), nullable=False)
     address: Mapped[str] = mapped_column(Text, nullable=False)
-    latitude: Mapped[Decimal] = mapped_column(Numeric(10, 7), nullable=False)
-    longitude: Mapped[Decimal] = mapped_column(Numeric(10, 7), nullable=False)
+    city: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    state: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    country: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    postal_code: Mapped[Optional[str]] = mapped_column(String(20), nullable=True)
+    description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    website: Mapped[Optional[str]] = mapped_column(String(255), nullable=True)
+    latitude: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 7), nullable=True)
+    longitude: Mapped[Optional[Decimal]] = mapped_column(Numeric(10, 7), nullable=True)
     service_radius_km: Mapped[int] = mapped_column(
         Integer, nullable=False, default=15, index=True
     )
@@ -77,6 +84,9 @@ class NGO(BaseModel):
     user: Mapped["User"] = relationship("User", back_populates="ngo")
     daily_capacities: Mapped[List["NGODailyCapacity"]] = relationship(
         "NGODailyCapacity", back_populates="ngo", cascade="all, delete-orphan"
+    )
+    date_capacities: Mapped[List["NGODateCapacity"]] = relationship(
+        "NGODateCapacity", back_populates="ngo", cascade="all, delete-orphan"
     )
     ngo_requests: Mapped[List["NGORequest"]] = relationship(
         "NGORequest", back_populates="ngo", cascade="all, delete-orphan"
@@ -123,7 +133,61 @@ class NGODailyCapacity(BaseModel):
     ngo: Mapped["NGO"] = relationship("NGO", back_populates="daily_capacities")
 
     def __repr__(self) -> str:
-        return f"<NGODailyCapacity capacity_id={self.capacity_id} day={self.day_of_week} remaining={self.remaining_capacity}>"
+        return (
+            f"<NGODailyCapacity capacity_id={self.capacity_id} "
+            f"day={self.day_of_week} remaining={self.remaining_capacity}>"
+        )
+
+
+class NGODateCapacity(BaseModel):
+    """NGO specific-date meal intake capacity model — Sprint 3.2.
+
+    Stores a maximum meal capacity for a single calendar date per NGO.
+    ``allocated_meals`` is system-managed (updated by the Decision Engine);
+    it is never accepted from client input.
+
+    Invariant (never violated):
+        remaining_capacity = max_meals - allocated_meals
+
+    ``remaining_capacity`` is NEVER stored — it is always computed at read time.
+    """
+
+    __tablename__ = "ngo_date_capacities"
+
+    date_capacity_id: Mapped[int] = mapped_column(
+        BigInteger, primary_key=True, autoincrement=True
+    )
+    ngo_id: Mapped[int] = mapped_column(
+        BigInteger,
+        ForeignKey("ngos.ngo_id", ondelete="CASCADE", onupdate="CASCADE"),
+        nullable=False,
+        index=True,
+    )
+    date: Mapped[date_type] = mapped_column(Date, nullable=False, index=True)
+    max_meals: Mapped[int] = mapped_column(
+        Integer, nullable=False
+    )  # API: maximum_capacity
+    allocated_meals: Mapped[int] = mapped_column(
+        Integer, nullable=False, default=0
+    )  # API: allocated_capacity; system-managed, never client-writable
+
+    # remaining_capacity = max_meals - allocated_meals  (computed, never stored)
+
+    __table_args__ = (
+        UniqueConstraint("ngo_id", "date", name="uq_ngo_date_capacity"),
+        CheckConstraint("max_meals > 0", name="chk_ngo_date_cap_max_meals"),
+        CheckConstraint("allocated_meals >= 0", name="chk_ngo_date_cap_allocated"),
+        Index("idx_ngo_date_capacities_ngo_date", "ngo_id", "date"),
+    )
+
+    # Relationships
+    ngo: Mapped["NGO"] = relationship("NGO", back_populates="date_capacities")
+
+    def __repr__(self) -> str:
+        return (
+            f"<NGODateCapacity date_capacity_id={self.date_capacity_id} "
+            f"ngo_id={self.ngo_id} date={self.date} max={self.max_meals}>"
+        )
 
 
 class NGORequest(BaseModel):
@@ -199,7 +263,10 @@ class NGORequest(BaseModel):
     )
 
     def __repr__(self) -> str:
-        return f"<NGORequest ngo_request_id={self.ngo_request_id} ngo_id={self.ngo_id} rank={self.recommendation_rank} status='{self.status}'>"
+        return (
+            f"<NGORequest ngo_request_id={self.ngo_request_id} ngo_id={self.ngo_id} "
+            f"rank={self.recommendation_rank} status='{self.status}'>"
+        )
 
 
 class NGORequestHistory(ImmutableBaseModel):
@@ -238,4 +305,7 @@ class NGORequestHistory(ImmutableBaseModel):
     changed_by_user: Mapped[Optional["User"]] = relationship("User")
 
     def __repr__(self) -> str:
-        return f"<NGORequestHistory id={self.ngo_request_history_id} req_id={self.ngo_request_id} {self.previous_status}->{self.new_status}>"
+        return (
+            f"<NGORequestHistory id={self.ngo_request_history_id} "
+            f"req_id={self.ngo_request_id} {self.previous_status}->{self.new_status}>"
+        )

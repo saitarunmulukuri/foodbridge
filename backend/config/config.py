@@ -65,3 +65,36 @@ class Config:
     DECISION_ENGINE_MIN_REMAINING_CAPACITY: int = int(
         os.getenv("DECISION_ENGINE_MIN_REMAINING_CAPACITY", "1")
     )
+
+    # ---------------------------------------------------------------------------
+    # Background Scheduler Configuration
+    # ---------------------------------------------------------------------------
+
+    # Whether to start the background scheduler at all (set False in testing).
+    SCHEDULER_ENABLED: bool = os.getenv("SCHEDULER_ENABLED", "true").lower() == "true"
+
+    # How often (in seconds) the NGO timeout sweep runs.
+    NGO_TIMEOUT_CHECK_INTERVAL: int = int(
+        os.getenv("NGO_TIMEOUT_CHECK_INTERVAL", "60")
+    )
+
+    # How often (in seconds) the Volunteer timeout sweep runs.
+    VOLUNTEER_TIMEOUT_CHECK_INTERVAL: int = int(
+        os.getenv("VOLUNTEER_TIMEOUT_CHECK_INTERVAL", "60")
+    )
+
+    # Minutes an NGO has to respond before their request is automatically timed out.
+    NGO_RESPONSE_TIMEOUT_MINUTES: int = int(
+        os.getenv("NGO_RESPONSE_TIMEOUT_MINUTES", "30")
+    )
+
+    # Minutes a volunteer has to respond before their assignment is automatically timed out.
+    VOLUNTEER_RESPONSE_TIMEOUT_MINUTES: int = int(
+        os.getenv("VOLUNTEER_RESPONSE_TIMEOUT_MINUTES", "15")
+    )
+
+    # Maximum search radius (km) when re-running volunteer candidate search on fallback.
+    VOLUNTEER_FALLBACK_RADIUS_KM: float = float(
+        os.getenv("VOLUNTEER_FALLBACK_RADIUS_KM", "15")
+    )
+

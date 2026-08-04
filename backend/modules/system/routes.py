@@ -27,3 +27,24 @@ def health_check():
         "version": "v1",
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }), 200 if db_status == "connected" else 503
+
+
+@system_bp.route("/readiness", methods=["GET"])
+def readiness_check():
+    """Readiness probe endpoint for load balancers / Kubernetes.
+    
+    Verifies database connectivity and essential application setup.
+    """
+    try:
+        db.session.execute(text("SELECT 1"))
+        return jsonify({
+            "ready": True,
+            "message": "Application is ready to accept traffic.",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }), 200
+    except Exception as err:
+        return jsonify({
+            "ready": False,
+            "message": f"Database unavailable: {str(err)}",
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }), 503

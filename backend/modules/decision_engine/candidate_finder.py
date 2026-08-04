@@ -190,16 +190,15 @@ class CandidateNGOFinder:
     def _extract_remaining_capacity(ngo: NGO) -> int:
         """Extract the remaining daily meal capacity from today's pre-joined capacity record.
 
-        The repository filters daily_capacities to today's ACTIVE record only.
-        If no record exists (which should not happen given the DB-level filter),
-        returns 0 as a safe sentinel.
-
-        Args:
-            ngo: NGO model instance with today's daily_capacities loaded.
-
-        Returns:
-            Remaining capacity as an integer.
+        Checks Sprint 3.2 ``date_capacities`` first (max_meals - allocated_meals).
+        Falls back to legacy ``daily_capacities`` if present.
+        Returns 0 as safe sentinel if no capacity record exists.
         """
+        if ngo.date_capacities:
+            dc = ngo.date_capacities[0]
+            max_m = int(dc.max_meals)
+            alloc = int(dc.allocated_meals)
+            return max(0, max_m - alloc)
         if ngo.daily_capacities:
             return int(ngo.daily_capacities[0].remaining_capacity)
         return 0

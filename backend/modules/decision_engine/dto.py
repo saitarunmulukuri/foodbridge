@@ -17,36 +17,7 @@ Pipeline Stage Mapping:
 from dataclasses import dataclass, field
 from typing import List, Optional
 
-
-@dataclass
-class CandidateNGO:
-    """Internal DTO representing a pre-qualified candidate NGO.
-
-    Produced by: CandidateNGOFinder (repositories + DB-level pre-filter)
-    Consumed by: EligibilityFilterPipeline
-
-    Fields:
-        ngo_id: Integer primary key of the NGO entity.
-        latitude: NGO headquarters latitude in decimal degrees (WGS-84).
-        longitude: NGO headquarters longitude in decimal degrees (WGS-84).
-        service_radius_km: NGO self-declared maximum service radius in km.
-        remaining_capacity: Remaining daily meal intake capacity for today.
-        supported_food_types: Food type strings the NGO accepts. Currently
-            populated with all food types — extension point for Sprint 3.2.
-        reliability_score: Float in [0.0, 1.0] representing historical acceptance
-            rate. Derived from NGO request history. None = no history (new NGO).
-        average_response_time_minutes: Average NGO response latency in minutes.
-            None until response timing data is available (schema extension point).
-    """
-
-    ngo_id: int
-    latitude: float
-    longitude: float
-    service_radius_km: int
-    remaining_capacity: int
-    supported_food_types: List[str]
-    reliability_score: Optional[float]
-    average_response_time_minutes: Optional[float]
+from backend.modules.decision_engine.candidate_finder import CandidateNGO
 
 
 @dataclass
@@ -144,3 +115,25 @@ class Recommendation:
     reliability_score_weighted: float
     response_score: float
     algorithm_version: str = "1.0"
+
+
+@dataclass(frozen=True)
+class DecisionEngineResult:
+    """Value object encapsulating the complete pipeline output.
+
+    Attributes:
+        donation_id: The donation that was evaluated.
+        recommendations: List[Recommendation]
+        total_candidates: NGOs retrieved from DB before any filtering.
+        total_eligible: NGOs remaining after eligibility filtering.
+        total_scored: NGOs that received a recommendation score.
+        algorithm_version: Version of the scoring algorithm used.
+    """
+
+    donation_id: int
+    recommendations: List[Recommendation]
+    total_candidates: int
+    total_eligible: int
+    total_scored: int
+    algorithm_version: str = "1.0"
+

@@ -292,10 +292,9 @@ class TestDonationRequestServiceAccept(unittest.TestCase):
 
     def test_accept_status_field_is_accepted(self):
         ngo = _make_ngo()
-        req = _make_request(ngo_id=1)
-        # After accept, status mock mutates to ACCEPTED
-        req.status = RequestStatus.ACCEPTED
-        service, _ = _make_service(ngo=ngo, single_request=req)
+        req = _make_request(ngo_id=1, status=RequestStatus.PENDING)
+        service, mock_repo = _make_service(ngo=ngo, single_request=req)
+        mock_repo.accept_request.side_effect = lambda r: setattr(r, "status", RequestStatus.ACCEPTED)
         with patch("backend.modules.donation_requests.services.db"):
             result = service.accept_request(user_id=10, role="NGO", request_id=1)
         self.assertEqual(result["status"], "ACCEPTED")
