@@ -85,7 +85,7 @@ def update_my_profile():
     try:
         validated = _profile_update_schema.load(json_data)
     except ValidationError as err:
-        raise BadRequestException(message="Validation failed.", payload=err.messages)
+        raise BadRequestException(message="Validation failed.", details=err.messages)
 
     service = VolunteerService()
     result = service.update_my_profile(user_id=user_id, role=role, validated_data=validated)

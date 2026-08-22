@@ -1,0 +1,133 @@
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { AuthProvider, useAuth } from './contexts/AuthContext';
+import { AuthLayout } from './components/layout/AuthLayout';
+import { PillNav } from './components/navigation/PillNav';
+import { HomePage } from './pages/HomePage';
+import { HowItWorksPage } from './pages/HowItWorksPage';
+import { PublicImpactPage } from './pages/PublicImpactPage';
+import { AboutPage } from './pages/AboutPage';
+import { LoginPage } from './pages/LoginPage';
+import { RegisterPage } from './pages/RegisterPage';
+import { DonorDashboard } from './pages/DonorDashboard';
+import { DonationsListPage } from './pages/DonationsListPage';
+import { ImpactPage } from './pages/ImpactPage';
+import { CreateDonationPage } from './pages/CreateDonationPage';
+import { DonationDetailPage } from './pages/DonationDetailPage';
+import { NgoDashboard } from './pages/NgoDashboard';
+import { VolunteerDashboard } from './pages/VolunteerDashboard';
+import { E2EStepperPage } from './pages/E2EStepperPage';
+import { ProfilePage } from './pages/ProfilePage';
+
+// ── Redirects authenticated users to their dashboard ──────────────
+const PublicOnlyRoute = ({ children }) => {
+  const { isAuthenticated, role } = useAuth();
+  if (isAuthenticated) {
+    if (role === 'DONOR')     return <Navigate to="/donor" replace />;
+    if (role === 'NGO')       return <Navigate to="/ngo" replace />;
+    if (role === 'VOLUNTEER') return <Navigate to="/volunteer" replace />;
+    return <Navigate to="/e2e-stepper" replace />;
+  }
+  return children;
+};
+
+// ── Guards authenticated routes ────────────────────────────────────
+const ProtectedRoute = ({ children, allowedRoles }) => {
+  const { isAuthenticated, role } = useAuth();
+
+  if (!isAuthenticated) return <Navigate to="/login" replace />;
+
+  if (allowedRoles && !allowedRoles.includes(role)) {
+    if (role === 'DONOR')     return <Navigate to="/donor" replace />;
+    if (role === 'NGO')       return <Navigate to="/ngo" replace />;
+    if (role === 'VOLUNTEER') return <Navigate to="/volunteer" replace />;
+    return <Navigate to="/e2e-stepper" replace />;
+  }
+
+  return <AuthLayout>{children}</AuthLayout>;
+};
+
+// ── Public layout with floating PillNav ────────────────────────────
+const PublicLayout = ({ children }) => {
+  const location = useLocation();
+
+  const navItems = [
+    { label: 'Home',           href: '/' },
+    { label: 'How It Works',   href: '/how-it-works' },
+    { label: 'Impact',         href: '/impact' },
+    { label: 'About',          href: '/about' },
+    { label: 'Sign In',        href: '/login', isCta: true },
+    { label: 'Create Account', href: '/register', isCta: true },
+  ];
+
+  return (
+    <div style={{ minHeight: '100vh', background: '#FAFAFC', display: 'flex', flexDirection: 'column' }}>
+      <div style={{ paddingTop: '12px' }}>
+        <PillNav
+          items={navItems}
+          activeHref={location.pathname}
+          ease="power2.out"
+          baseColor="#FFFFFF"
+          pillColor="#F8F9FB"
+          pillTextColor="#101828"
+          hoveredPillTextColor="#FFFFFF"
+          isAuthNav={false}
+        />
+      </div>
+      <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}>
+        {children}
+      </main>
+      <footer style={{ padding: '14px 24px', textAlign: 'center', fontSize: '11px', color: '#9CA3AF', borderTop: '1px solid #E4E7EC', background: '#FFFFFF' }}>
+        FoodBridge · Surplus food redistribution logistics
+      </footer>
+    </div>
+  );
+};
+
+// ── Route tree ─────────────────────────────────────────────────────
+function AppContent() {
+  return (
+    <Routes>
+      {/* Public Pages */}
+      <Route path="/"             element={<PublicLayout><HomePage /></PublicLayout>} />
+      <Route path="/how-it-works" element={<PublicLayout><HowItWorksPage /></PublicLayout>} />
+      <Route path="/impact"       element={<PublicLayout><PublicImpactPage /></PublicLayout>} />
+      <Route path="/about"        element={<PublicLayout><AboutPage /></PublicLayout>} />
+
+      {/* Public auth routes */}
+      <Route path="/login"    element={<PublicOnlyRoute><PublicLayout><LoginPage /></PublicLayout></PublicOnlyRoute>} />
+      <Route path="/register" element={<PublicOnlyRoute><PublicLayout><RegisterPage /></PublicLayout></PublicOnlyRoute>} />
+
+      {/* Donor routes */}
+      <Route path="/donor"                element={<ProtectedRoute allowedRoles={['DONOR', 'ADMIN']}><DonorDashboard /></ProtectedRoute>} />
+      <Route path="/donor/list"           element={<ProtectedRoute allowedRoles={['DONOR', 'ADMIN']}><DonationsListPage /></ProtectedRoute>} />
+      <Route path="/donor/impact"         element={<ProtectedRoute allowedRoles={['DONOR', 'ADMIN']}><ImpactPage /></ProtectedRoute>} />
+      <Route path="/donor/create"         element={<ProtectedRoute allowedRoles={['DONOR', 'ADMIN']}><CreateDonationPage /></ProtectedRoute>} />
+      <Route path="/donor/donations/:id"  element={<ProtectedRoute allowedRoles={['DONOR', 'ADMIN']}><DonationDetailPage /></ProtectedRoute>} />
+
+      {/* NGO routes */}
+      <Route path="/ngo"      element={<ProtectedRoute allowedRoles={['NGO', 'ADMIN']}><NgoDashboard /></ProtectedRoute>} />
+
+      {/* Volunteer routes */}
+      <Route path="/volunteer" element={<ProtectedRoute allowedRoles={['VOLUNTEER', 'ADMIN']}><VolunteerDashboard /></ProtectedRoute>} />
+
+      {/* Internal E2E stepper */}
+      <Route path="/e2e-stepper" element={<ProtectedRoute allowedRoles={['DONOR', 'NGO', 'VOLUNTEER', 'ADMIN']}><E2EStepperPage /></ProtectedRoute>} />
+
+      {/* Profile & Digital ID */}
+      <Route path="/profile" element={<ProtectedRoute allowedRoles={['DONOR', 'NGO', 'VOLUNTEER', 'ADMIN']}><ProfilePage /></ProtectedRoute>} />
+
+      {/* Fallback */}
+      <Route path="*" element={<Navigate to="/" replace />} />
+    </Routes>
+  );
+}
+
+export default function App() {
+  return (
+    <Router>
+      <AuthProvider>
+        <AppContent />
+      </AuthProvider>
+    </Router>
+  );
+}

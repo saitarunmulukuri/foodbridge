@@ -1,0 +1,509 @@
+/* ============================================================
+   FoodBridge PillNav — Unified Application Navigation
+   Works for both public (auth) and authenticated (app) contexts.
+   Supports smooth collapse/expand, active states, and hover bubbles.
+   ============================================================ */
+
+/* ── Container: Public & Auth pages use centered float pill ── */
+.pill-nav-container {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  padding: 0.75rem 1.25rem 0.5rem 1.25rem;
+  position: relative;
+  z-index: 50;
+}
+
+/* ── Core PillNav ── */
+.pill-nav {
+  --nav-h: 46px;
+  --pill-pad-x: 14px;
+  --pill-gap: 3px;
+  --base: #FFFFFF;
+  --pill-bg: #F8F9FB;
+  --pill-text: #101828;
+  --hover-text: #FFFFFF;
+  --hover-bg: #101828;
+  --active-bg: #FF5A36;
+  --active-text: #FFFFFF;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 4px 6px;
+  background: var(--base);
+  border: 1px solid #E4E7EC;
+  border-radius: 9999px;
+  box-shadow: 0 4px 20px -2px rgba(16, 24, 40, 0.08), 0 2px 6px -1px rgba(16, 24, 40, 0.04);
+  box-sizing: border-box;
+  max-width: 1140px;
+  transition:
+    max-width 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    padding 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    gap 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    box-shadow 200ms ease;
+}
+
+/* Collapsed state: Only logo visible */
+.pill-nav.is-collapsed {
+  max-width: 175px;
+  gap: 0;
+  padding: 4px 6px;
+  cursor: pointer;
+}
+
+@media (max-width: 768px) {
+  .pill-nav {
+    max-width: 100%;
+    justify-content: space-between;
+    padding: 4px 8px;
+  }
+}
+
+/* ── Brand Logo ── */
+.pill-logo {
+  height: 38px;
+  padding: 0 12px 0 4px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  text-decoration: none;
+  border-radius: 9999px;
+  transition: opacity 0.2s ease;
+  flex-shrink: 0;
+}
+
+.pill-logo:hover {
+  opacity: 0.9;
+}
+
+.pill-logo-badge {
+  width: 30px;
+  height: 30px;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #FF5E3A 0%, #FF4500 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #FFFFFF;
+  box-shadow: 0 2px 6px rgba(255, 90, 54, 0.35);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  flex-shrink: 0;
+}
+
+.pill-logo:hover .pill-logo-badge {
+  transform: scale(1.06) rotate(5deg);
+}
+
+.pill-logo-text {
+  font-size: 15px;
+  font-weight: 800;
+  color: #101828;
+  letter-spacing: -0.3px;
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+/* ── Collapsible wrapper for desktop items + CTA + collapse button ── */
+.pill-nav-collapsible {
+  display: flex;
+  align-items: center;
+  overflow: visible;
+  white-space: nowrap;
+  max-width: 1080px;
+  opacity: 1;
+  transform: translateX(0);
+  transition:
+    max-width 300ms cubic-bezier(0.16, 1, 0.3, 1),
+    opacity 250ms cubic-bezier(0.16, 1, 0.3, 1),
+    transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pill-nav.is-collapsed .pill-nav-collapsible {
+  max-width: 0;
+  opacity: 0;
+  transform: translateX(8px);
+  pointer-events: none;
+  margin: 0;
+  overflow: hidden;
+}
+
+/* ── Center nav items area ── */
+.pill-nav-center {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  justify-content: center;
+}
+
+/* ── Navigation Items List ── */
+.pill-nav-items {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: var(--nav-h);
+}
+
+.pill-list {
+  list-style: none;
+  display: flex;
+  align-items: center;
+  gap: var(--pill-gap);
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+.pill-list > li {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+/* ── Individual Pill ── */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 var(--pill-pad-x);
+  background: transparent;
+  color: var(--pill-text);
+  text-decoration: none;
+  border-radius: 9999px;
+  box-sizing: border-box;
+  font-weight: 500;
+  font-size: 13.5px;
+  text-transform: none;
+  letter-spacing: -0.1px;
+  white-space: nowrap;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: color 0.2s ease, background-color 0.2s ease;
+}
+
+.pill .hover-circle {
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  border-radius: 50%;
+  background: var(--hover-bg, #101828);
+  z-index: 1;
+  display: block;
+  pointer-events: none;
+  will-change: transform;
+}
+
+.pill .label-stack {
+  position: relative;
+  display: inline-block;
+  line-height: 1;
+  z-index: 2;
+}
+
+.pill .pill-label {
+  position: relative;
+  z-index: 2;
+  display: inline-block;
+  line-height: 1;
+  will-change: transform;
+}
+
+.pill .pill-label-hover {
+  position: absolute;
+  left: 0;
+  top: 0;
+  color: var(--hover-text, #FFFFFF);
+  z-index: 3;
+  display: inline-block;
+  will-change: transform, opacity;
+}
+
+/* Active State */
+.pill.is-active {
+  background: var(--active-bg, #FF5A36);
+  color: var(--active-text, #FFFFFF);
+  font-weight: 700;
+  box-shadow: 0 2px 8px rgba(255, 90, 54, 0.22);
+}
+
+.pill.is-active .pill-label {
+  color: #FFFFFF;
+}
+
+.pill.is-active .hover-circle {
+  background: #E04420;
+}
+
+/* CTA Highlight pill (Public: Sign In / Create Account) */
+.pill.pill-cta {
+  background: #101828;
+  color: #FFFFFF;
+  font-weight: 700;
+  padding: 0 16px;
+  box-shadow: 0 2px 6px rgba(16, 24, 40, 0.12);
+}
+
+.pill.pill-cta .hover-circle {
+  background: #FF5A36;
+}
+
+.pill.pill-cta.is-active {
+  background: #FF5A36;
+  color: #FFFFFF;
+  box-shadow: 0 2px 8px rgba(255, 90, 54, 0.28);
+}
+
+/* ── CTA Slot ── */
+.pill-nav-cta-slot {
+  display: flex;
+  align-items: center;
+  margin-left: 2px;
+}
+
+/* ── Primary CTA for Authenticated Users (e.g. Create Donation) ── */
+.pill-primary-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 36px;
+  padding: 0 16px;
+  background: #101828;
+  color: #FFFFFF;
+  font-weight: 700;
+  font-size: 13.5px;
+  border-radius: 9999px;
+  text-decoration: none;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(16, 24, 40, 0.12);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-left: 2px;
+  letter-spacing: -0.1px;
+}
+
+.pill-primary-cta:hover {
+  background: #FF5A36;
+  color: #FFFFFF;
+  transform: translateY(-0.5px);
+  box-shadow: 0 4px 14px rgba(255, 90, 54, 0.35);
+}
+
+.pill-primary-cta.is-active {
+  background: #FF5A36;
+  color: #FFFFFF;
+  box-shadow: 0 2px 10px rgba(255, 90, 54, 0.35);
+}
+
+.pill-primary-cta.is-active:hover {
+  background: #E04420;
+}
+
+/* ── Direct Sign Out Button (Red text + icon, subtle) ── */
+.pill-signout-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 36px;
+  padding: 0 10px;
+  background: transparent;
+  border: none;
+  border-radius: 9999px;
+  color: #EF4444;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.15s ease;
+  margin-left: 2px;
+  outline: none;
+  font-family: inherit;
+}
+
+.pill-signout-btn:hover {
+  background: #FEF2F2;
+  color: #DC2626;
+}
+
+.pill-signout-btn:active {
+  transform: scale(0.96);
+}
+
+/* ── Circular Collapse Button ── */
+.pill-collapse-button {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: #F8F9FB;
+  border: 1px solid #E4E7EC;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #64748B;
+  margin-left: 4px;
+  padding: 0;
+  flex-shrink: 0;
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.pill-collapse-button:hover {
+  background: #EEF2F6;
+  color: #101828;
+  border-color: #D0D5DD;
+  transform: scale(1.05);
+}
+
+.pill-collapse-button:active {
+  transform: scale(0.95);
+}
+
+/* ── Right Slot ── */
+.pill-nav-right {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  padding-left: 4px;
+}
+
+/* ── Mobile & Desktop Visibility ── */
+.desktop-only {
+  display: flex;
+}
+
+.mobile-only {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .desktop-only {
+    display: none !important;
+  }
+
+  .mobile-only {
+    display: flex !important;
+  }
+}
+
+/* ── Hamburger Menu Button ── */
+.mobile-menu-button {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #F8F9FB;
+  border: 1px solid #E4E7EC;
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  cursor: pointer;
+  padding: 0;
+  transition: background-color 0.2s ease, border-color 0.2s ease;
+}
+
+.mobile-menu-button:hover {
+  background: #EEF2F6;
+  border-color: #D0D5DD;
+}
+
+.hamburger-line {
+  width: 15px;
+  height: 2px;
+  background: #101828;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+  transform-origin: center;
+}
+
+/* ── Mobile Menu Popover ── */
+.mobile-menu-popover {
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 1.25rem;
+  right: 1.25rem;
+  background: #FFFFFF;
+  border: 1px solid #E4E7EC;
+  border-radius: 20px;
+  box-shadow: 0 12px 36px rgba(16, 24, 40, 0.14);
+  z-index: 998;
+  opacity: 0;
+  transform-origin: top center;
+  visibility: hidden;
+  overflow: hidden;
+}
+
+.mobile-menu-list {
+  list-style: none;
+  margin: 0;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mobile-menu-link {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 11px 16px;
+  color: #101828;
+  background-color: transparent;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+  border-radius: 12px;
+  transition: all 0.15s ease;
+}
+
+.mobile-menu-link:hover {
+  cursor: pointer;
+  background-color: #F8F9FB;
+  color: #FF5A36;
+}
+
+.mobile-menu-link.is-active {
+  background-color: #FF5A36;
+  color: #FFFFFF;
+  font-weight: 700;
+}
+
+.mobile-menu-divider {
+  height: 1px;
+  background: #F3F4F6;
+  margin: 4px 8px;
+}
+
+.mobile-menu-logout {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 11px 16px;
+  color: #EF4444;
+  background-color: transparent;
+  font-size: 14px;
+  font-weight: 600;
+  border-radius: 12px;
+  cursor: pointer;
+  border: none;
+  width: 100%;
+  text-align: left;
+  transition: background-color 0.15s ease;
+  font-family: inherit;
+}
+
+.mobile-menu-logout:hover {
+  background-color: #FEF2F2;
+}
+
+.mobile-menu-role-label {
+  padding: 8px 16px 4px;
+  font-size: 10px;
+  font-weight: 700;
+  color: #9CA3AF;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}

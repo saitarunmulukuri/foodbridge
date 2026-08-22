@@ -5,6 +5,8 @@ from datetime import datetime, timedelta, timezone
 from decimal import Decimal
 from unittest.mock import MagicMock
 
+from backend.app import create_app
+_app = create_app("testing")
 from backend.modules.volunteers.assignment_engine import VolunteerAssignmentEngine
 from backend.modules.volunteers.candidate_finder import CandidateVolunteerFinder, haversine_distance_km
 from backend.modules.volunteers.dto import CandidateVolunteer
