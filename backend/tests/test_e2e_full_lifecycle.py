@@ -131,10 +131,11 @@ class TestE2EFullLifecycle(unittest.TestCase):
         self.assertEqual(res.status_code, 200)
         ngo_token = json.loads(res.data)["data"]["access_token"]
 
-        # NGO updates daily capacity for today (matching donation available_from date)
+        # NGO updates daily capacity for the donation's available date
+        donation_target_date = (self.now + timedelta(hours=2)).date().isoformat()
         res = self.client.put(
             "/api/v1/ngos/me/capacity",
-            data=json.dumps({"date": date.today().isoformat(), "maximum_capacity": 200}),
+            data=json.dumps({"date": donation_target_date, "maximum_capacity": 200}),
             content_type="application/json",
             headers=self._auth_header(ngo_token),
         )

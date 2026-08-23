@@ -4,6 +4,27 @@
  * and the fabric lanyard ribbon. Uses 2× DPI (1200×1800) for crisp rendering.
  */
 
+// Cross-browser helper for rounded rectangles on Canvas 2D
+function drawRoundRect(ctx, x, y, width, height, radius) {
+  if (typeof ctx.roundRect === 'function') {
+    ctx.roundRect(x, y, width, height, radius);
+  } else {
+    const r = typeof radius === 'number'
+      ? { tl: radius, tr: radius, br: radius, bl: radius }
+      : { tl: 0, tr: 0, br: 0, bl: 0, ...radius };
+    ctx.moveTo(x + r.tl, y);
+    ctx.lineTo(x + width - r.tr, y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + r.tr);
+    ctx.lineTo(x + width, y + height - r.br);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - r.br, y + height);
+    ctx.lineTo(x + r.bl, y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - r.bl);
+    ctx.lineTo(x, y + r.tl);
+    ctx.quadraticCurveTo(x, y, x + r.tl, y);
+    ctx.closePath();
+  }
+}
+
 export function generateCardFrontTexture(userData) {
   // 2× high-DPI resolution for crisp text
   const width = 1200;
@@ -46,7 +67,7 @@ export function generateCardFrontTexture(userData) {
   // Lanyard hole guide
   ctx.fillStyle = '#E2E8F0';
   ctx.beginPath();
-  ctx.roundRect(width / 2 - 60, 60, 120, 20, 10);
+  drawRoundRect(ctx, width / 2 - 60, 60, 120, 20, 10);
   ctx.fill();
 
   // ---------- HEADER ----------
@@ -105,7 +126,7 @@ export function generateCardFrontTexture(userData) {
   const pillW = 370;
   ctx.fillStyle = accentColor;
   ctx.beginPath();
-  ctx.roundRect(nameX, 416, pillW, 56, 10);
+  drawRoundRect(ctx, nameX, 416, pillW, 56, 10);
   ctx.fill();
   ctx.fillStyle = '#FFFFFF';
   ctx.font = 'bold 26px system-ui, Arial, sans-serif';
@@ -134,7 +155,7 @@ export function generateCardFrontTexture(userData) {
   const idBoxH = 160;
   ctx.fillStyle = '#0F172A';
   ctx.beginPath();
-  ctx.roundRect(80, idBoxY, width - 160, idBoxH, 20);
+  drawRoundRect(ctx, 80, idBoxY, width - 160, idBoxH, 20);
   ctx.fill();
 
   ctx.fillStyle = '#94A3B8';
@@ -148,7 +169,7 @@ export function generateCardFrontTexture(userData) {
   // Chip icon
   ctx.fillStyle = '#334155';
   ctx.beginPath();
-  ctx.roundRect(width - 220, idBoxY + 36, 100, 76, 12);
+  drawRoundRect(ctx, width - 220, idBoxY + 36, 100, 76, 12);
   ctx.fill();
   ctx.strokeStyle = '#64748B';
   ctx.lineWidth = 3;
@@ -171,7 +192,7 @@ export function generateCardFrontTexture(userData) {
   ctx.strokeStyle = '#E2E8F0';
   ctx.lineWidth = 2;
   ctx.beginPath();
-  ctx.roundRect(80, metY, metW, metH, 20);
+  drawRoundRect(ctx, 80, metY, metW, metH, 20);
   ctx.fill();
   ctx.stroke();
   ctx.fillStyle = '#64748B';
@@ -183,7 +204,7 @@ export function generateCardFrontTexture(userData) {
 
   ctx.fillStyle = '#F8FAFC';
   ctx.beginPath();
-  ctx.roundRect(80 + metW + 40, metY, metW, metH, 20);
+  drawRoundRect(ctx, 80 + metW + 40, metY, metW, metH, 20);
   ctx.fill();
   ctx.stroke();
   ctx.fillStyle = '#64748B';
@@ -203,7 +224,7 @@ export function generateCardFrontTexture(userData) {
   holoGrad.addColorStop(1, '#DDD6FE');
   ctx.fillStyle = holoGrad;
   ctx.beginPath();
-  ctx.roundRect(80, holoY, width - 160, 80, 14);
+  drawRoundRect(ctx, 80, holoY, width - 160, 80, 14);
   ctx.fill();
   ctx.fillStyle = 'rgba(15,23,42,0.7)';
   ctx.font = 'bold 24px system-ui, Arial, sans-serif';
@@ -269,7 +290,7 @@ export function generateCardBackTexture(userData) {
 
   ctx.fillStyle = '#1E293B';
   ctx.beginPath();
-  ctx.roundRect(width / 2 - 60, 60, 120, 20, 10);
+  drawRoundRect(ctx, width / 2 - 60, 60, 120, 20, 10);
   ctx.fill();
 
   // Header
@@ -295,7 +316,7 @@ export function generateCardBackTexture(userData) {
 
   ctx.fillStyle = '#FFFFFF';
   ctx.beginPath();
-  ctx.roundRect(qrX - 20, qrY - 20, qrSize + 40, qrSize + 40, 20);
+  drawRoundRect(ctx, qrX - 20, qrY - 20, qrSize + 40, qrSize + 40, 20);
   ctx.fill();
 
   ctx.fillStyle = '#0F172A';
@@ -330,7 +351,7 @@ export function generateCardBackTexture(userData) {
   const boxY = 802;
   ctx.fillStyle = '#1E293B';
   ctx.beginPath();
-  ctx.roundRect(80, boxY, width - 160, 440, 20);
+  drawRoundRect(ctx, 80, boxY, width - 160, 440, 20);
   ctx.fill();
   ctx.strokeStyle = '#334155';
   ctx.lineWidth = 2;
@@ -360,7 +381,7 @@ export function generateCardBackTexture(userData) {
   const hotlineY = 1302;
   ctx.fillStyle = '#1E293B';
   ctx.beginPath();
-  ctx.roundRect(80, hotlineY, width - 160, 160, 20);
+  drawRoundRect(ctx, 80, hotlineY, width - 160, 160, 20);
   ctx.fill();
   ctx.strokeStyle = '#334155';
   ctx.stroke();

@@ -10,7 +10,7 @@ Test Coverage:
 """
 
 import unittest
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta, timezone
 from decimal import Decimal
 from unittest.mock import MagicMock, patch
 
@@ -45,9 +45,9 @@ from marshmallow import ValidationError
 # Helper factories
 # -----------------------------------------------------------------------
 
-_TODAY = date.today()
+_TODAY = datetime.now(timezone.utc).date()
 _FUTURE_DATE = _TODAY + timedelta(days=1)
-_PAST_DATE = _TODAY - timedelta(days=1)
+_PAST_DATE = _TODAY - timedelta(days=2)
 
 
 def _make_ngo(ngo_id: int = 1, user_id: int = 10) -> MagicMock:

@@ -37,10 +37,12 @@ from backend.shared.constants.enums import (
     VehicleType,
     VerificationStatus,
 )
+from flask import current_app
 from backend.shared.security import (
     DUMMY_HASH,
     hash_password,
     normalize_email,
+    verify_google_token,
     verify_password,
 )
 
@@ -61,7 +63,7 @@ class AuthenticationService:
         self.repository = repository or AuthenticationRepository()
 
     # ------------------------------------------------------------------
-    # Public Interface — Registration (Sprint 1.1)
+    # Public Interface — Registration (Sprint 1.1 + Google OAuth)
     # ------------------------------------------------------------------
 
     def register_user(
@@ -71,8 +73,8 @@ class AuthenticationService:
 
         Steps:
             1. Normalize email and resolve role.
-            2. Validate pre-conditions (uniqueness).
-            3. Hash password and determine account status.
+            2. Validate pre-conditions (uniqueness of email / NGO reg / Google subject).
+            3. Hash password (or set None for Google OAuth) and determine account status.
             4. Construct User and role-specific profile entities.
             5. Stage both and commit. Rollback and re-raise on failure.
 
@@ -90,23 +92,32 @@ class AuthenticationService:
         email = normalize_email(registration_data["email"])
         role_enum = self._resolve_role(registration_data["role"])
         profile_data = registration_data["profile"]
+        google_sub = registration_data.get("google_subject_id")
 
-        self._validate_registration(email, role_enum, profile_data)
+        self._validate_registration(email, role_enum, profile_data, google_sub)
 
-        password_hash = hash_password(registration_data["password"])
+        raw_password = registration_data.get("password")
+        password_hash = hash_password(raw_password) if raw_password else None
         account_status = self._determine_account_status(role_enum)
 
-        user = self._create_user(email, password_hash, role_enum, account_status)
+        user = self._create_user(
+            email=email,
+            password_hash=password_hash,
+            role_enum=role_enum,
+            account_status=account_status,
+            google_subject_id=google_sub,
+        )
         profile = self._create_profile(role_enum, profile_data)
 
         try:
             self.repository.stage_user_and_profile(user, profile)
             db.session.commit()
             logger.info(
-                "User registered: user_id=%s, role=%s, account_status=%s",
+                "User registered: user_id=%s, role=%s, account_status=%s, google_linked=%s",
                 user.user_id,
                 role_enum.value,
                 account_status.value,
+                bool(google_sub),
             )
         except Exception:
             db.session.rollback()
@@ -118,6 +129,107 @@ class AuthenticationService:
             raise
 
         return user, profile
+
+    # ------------------------------------------------------------------
+    # Public Interface — Google Authentication
+    # ------------------------------------------------------------------
+
+    def authenticate_google_user(self, credential: str) -> Dict[str, Any]:
+        """Authenticate or verify a user via Google Identity Services.
+
+        Flow:
+            1. Verify the Google token against Google's tokeninfo API.
+            2. Match user by `google_subject_id`, or fallback to verified `email`.
+            3. If user exists:
+               - Link `google_subject_id` if missing.
+               - Enforce ACTIVE account status.
+               - Update `last_login` timestamp and commit.
+               - Return standard FoodBridge JWT tokens + user payload (is_new_user=False).
+            4. If user does NOT exist:
+               - Return verified Google identity details for registration (is_new_user=True).
+
+        Args:
+            credential: Raw Google ID token (JWT) from Google Identity Services.
+
+        Returns:
+            Dict with authentication result or new-user registration metadata.
+
+        Raises:
+            InvalidGoogleTokenException: If Google token verification fails.
+            AccountNotActiveException: If existing user account is not ACTIVE.
+        """
+        expected_client_id = current_app.config.get("GOOGLE_CLIENT_ID", "")
+        google_profile = verify_google_token(
+            token=credential,
+            expected_client_id=expected_client_id,
+        )
+
+        google_sub = google_profile["sub"]
+        email = google_profile["email"]
+        name = google_profile.get("name", "")
+        picture = google_profile.get("picture", "")
+
+        # 1. Search by Google Subject ID
+        user = self.repository.find_by_google_subject_id(google_sub)
+
+        # 2. Fallback search by verified email address (Account Linking)
+        if user is None:
+            user = self.repository.find_by_email(email)
+            if user is not None and not user.google_subject_id:
+                logger.info(
+                    "Linking Google account [sub=%s] to existing user [user_id=%s, email=%s]",
+                    google_sub,
+                    user.user_id,
+                    email,
+                )
+                self.repository.link_google_account(user, google_sub)
+
+        # 3. Existing User Flow
+        if user is not None:
+            self._enforce_account_active(user)
+
+            login_time = datetime.now(timezone.utc)
+            try:
+                self.repository.update_last_login(user, login_time)
+                db.session.commit()
+                logger.info(
+                    "Google login successful: user_id=%s, role=%s, email=%s",
+                    user.user_id,
+                    user.role.value,
+                    user.email,
+                )
+            except Exception:
+                db.session.rollback()
+                logger.exception("Google login transaction failed for user_id=%s", user.user_id)
+                raise
+
+            self._log_login_event(user, login_time)
+
+            tokens = generate_tokens(user)
+            return {
+                "is_new_user": False,
+                "access_token": tokens["access_token"],
+                "refresh_token": tokens["refresh_token"],
+                "token_type": tokens["token_type"],
+                "expires_in": tokens["expires_in"],
+                "user": {
+                    "user_id": user.user_id,
+                    "email": user.email,
+                    "role": user.role.value,
+                    "account_status": user.account_status.value,
+                },
+            }
+
+        # 4. New User Flow — Identity verified, proceed to role selection & profile completion
+        logger.info("New Google user verified: email=%s, sub=%s", email, google_sub)
+        return {
+            "is_new_user": True,
+            "email": email,
+            "name": name,
+            "google_subject_id": google_sub,
+            "picture": picture,
+        }
+
 
     # ------------------------------------------------------------------
     # Public Interface — Login (Sprint 1.2)
@@ -305,6 +417,7 @@ class AuthenticationService:
         email: str,
         role_enum: UserRole,
         profile_data: Dict[str, Any],
+        google_subject_id: Optional[str] = None,
     ) -> None:
         """Assert uniqueness pre-conditions before creating any database records.
 
@@ -312,6 +425,7 @@ class AuthenticationService:
             email: Normalized email address.
             role_enum: Resolved UserRole enum.
             profile_data: Role-specific profile fields.
+            google_subject_id: Optional Google Subject ID string.
 
         Raises:
             EmailAlreadyExistsException: If the email is already registered.
@@ -322,6 +436,15 @@ class AuthenticationService:
                 "Registration rejected: email already exists [email=%s]", email
             )
             raise EmailAlreadyExistsException(email)
+
+        if google_subject_id:
+            existing_google_user = self.repository.find_by_google_subject_id(google_subject_id)
+            if existing_google_user:
+                logger.warning(
+                    "Registration rejected: Google account already registered [sub=%s]",
+                    google_subject_id,
+                )
+                raise EmailAlreadyExistsException(email)
 
         if role_enum == UserRole.NGO:
             reg_num = profile_data.get("registration_number", "").strip()
@@ -353,17 +476,19 @@ class AuthenticationService:
     def _create_user(
         self,
         email: str,
-        password_hash: str,
+        password_hash: Optional[str],
         role_enum: UserRole,
         account_status: AccountStatus,
+        google_subject_id: Optional[str] = None,
     ) -> User:
         """Construct an unpersisted User model instance.
 
         Args:
             email: Normalized email address.
-            password_hash: bcrypt-hashed password string.
+            password_hash: bcrypt-hashed password string or None for Google-only.
             role_enum: Validated UserRole enum.
             account_status: Initial account status.
+            google_subject_id: Optional Google unique subject ID.
 
         Returns:
             Unpersisted User model instance.
@@ -371,6 +496,7 @@ class AuthenticationService:
         return User(
             email=email,
             password_hash=password_hash,
+            google_subject_id=google_subject_id,
             role=role_enum,
             account_status=account_status,
         )

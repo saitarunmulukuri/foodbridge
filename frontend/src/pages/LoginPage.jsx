@@ -6,11 +6,11 @@
 import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
+import { GoogleSignInButton } from '../components/auth/GoogleSignInButton';
+import { TextField } from '../components/common/forms';
 import {
   UtensilsCrossed,
   ArrowRight,
-  Eye,
-  EyeOff,
   Building2,
   Truck,
   ChevronDown,
@@ -54,12 +54,11 @@ const QUICK_ACCOUNTS = [
 export const LoginPage = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [showPersonas, setShowPersonas] = useState(false);
 
-  const { login } = useAuth();
+  const { login, loginWithGoogle } = useAuth();
   const navigate = useNavigate();
 
   const redirectByRole = (role) => {
@@ -82,6 +81,31 @@ export const LoginPage = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGoogleSuccess = async (credential) => {
+    setLoading(true);
+    setErrorMessage('');
+    try {
+      const res = await loginWithGoogle(credential);
+      if (res.isNewUser) {
+        navigate('/register', {
+          state: {
+            googleUser: res.googleUser,
+          },
+        });
+      } else {
+        redirectByRole(res.user.role);
+      }
+    } catch (err) {
+      setErrorMessage(err.message || 'Google authentication failed.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleGoogleError = (err) => {
+    setErrorMessage(err?.message || 'Google Sign-In failed.');
   };
 
   const handleSubmit = (e) => {
@@ -287,63 +311,30 @@ export const LoginPage = () => {
           )}
 
           {/* Form */}
-          <form onSubmit={handleSubmit}>
+          <form onSubmit={handleSubmit} className="space-y-4">
             {/* Email */}
-            <div style={{ marginBottom: 20 }}>
-              <label htmlFor="login-email" className="fb-form-label">
-                Email Address
-              </label>
-              <input
-                id="login-email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                placeholder="you@example.com"
-                required
-                autoComplete="email"
-                className="fb-input"
-              />
-            </div>
+            <TextField
+              id="login-email"
+              label="Email Address"
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              required
+              autoComplete="email"
+            />
 
             {/* Password */}
-            <div style={{ marginBottom: 24 }}>
-              <label htmlFor="login-password" className="fb-form-label">
-                Password
-              </label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  id="login-password"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••••"
-                  required
-                  autoComplete="current-password"
-                  className="fb-input"
-                  style={{ paddingRight: '2.5rem' }}
-                />
-                <button
-                  type="button"
-                  tabIndex={-1}
-                  onClick={() => setShowPassword((v) => !v)}
-                  style={{
-                    position: 'absolute',
-                    right: 12,
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: '#9CA3AF',
-                    padding: 4,
-                    display: 'flex',
-                  }}
-                  aria-label={showPassword ? 'Hide password' : 'Show password'}
-                >
-                  {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
-                </button>
-              </div>
-            </div>
+            <TextField
+              id="login-password"
+              label="Password"
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••••"
+              required
+              autoComplete="current-password"
+            />
 
             {/* Submit */}
             <button
@@ -356,7 +347,39 @@ export const LoginPage = () => {
               {!loading && <ArrowRight size={16} className="btn-arrow" />}
             </button>
 
-            <div style={{ textAlign: 'center', marginTop: 16 }}>
+            {/* ─── Divider ─── */}
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                margin: '18px 0',
+                gap: 12,
+              }}
+            >
+              <div style={{ flex: 1, height: 1, background: '#E5E7EB' }} />
+              <span
+                style={{
+                  fontSize: 11,
+                  fontWeight: 600,
+                  color: '#9CA3AF',
+                  letterSpacing: '0.06em',
+                  textTransform: 'uppercase',
+                }}
+              >
+                OR
+              </span>
+              <div style={{ flex: 1, height: 1, background: '#E5E7EB' }} />
+            </div>
+
+            {/* ─── Google Sign-In Button ─── */}
+            <GoogleSignInButton
+              onSuccess={handleGoogleSuccess}
+              onError={handleGoogleError}
+              disabled={loading}
+              text="Continue with Google"
+            />
+
+            <div style={{ textAlign: 'center', marginTop: 18 }}>
               <span style={{ color: '#6B7280', fontSize: 13 }}>New to FoodBridge? </span>
               <Link
                 to="/register"
@@ -469,3 +492,6 @@ export const LoginPage = () => {
     </div>
   );
 };
+
+export default LoginPage;
+

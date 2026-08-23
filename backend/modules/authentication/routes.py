@@ -15,6 +15,7 @@ from backend.modules.authentication.exceptions import (
     RegistrationValidationException,
 )
 from backend.modules.authentication.schemas import (
+    GoogleAuthRequestSchema,
     UserLoginSchema,
     UserRegisterResponseSchema,
     UserRegisterSchema,
@@ -26,6 +27,7 @@ auth_bp = Blueprint("auth", __name__, url_prefix="/auth")
 _register_schema = UserRegisterSchema()
 _register_response_schema = UserRegisterResponseSchema()
 _login_schema = UserLoginSchema()
+_google_auth_schema = GoogleAuthRequestSchema()
 
 
 @auth_bp.route("/register", methods=["POST"])
@@ -108,3 +110,66 @@ def login():
         "message": "Login successful.",
         "data": result,
     }), 200
+
+
+@auth_bp.route("/google", methods=["POST"])
+def google_auth():
+    """Authenticate or verify a user via Google Identity Services.
+
+    Endpoint: POST /api/v1/auth/google
+
+    Request Body:
+        credential (str) — Google ID Token (JWT) from Google Identity Services
+
+    Returns:
+        200 OK — If existing user:
+                 {
+                     "success": true,
+                     "message": "Google login successful.",
+                     "data": {
+                         "is_new_user": false,
+                         "access_token": "...",
+                         "refresh_token": "...",
+                         "token_type": "Bearer",
+                         "expires_in": 7200,
+                         "user": { ... }
+                     }
+                 }
+                 If new user:
+                 {
+                     "success": true,
+                     "message": "Google identity verified. Please complete registration.",
+                     "data": {
+                         "is_new_user": true,
+                         "email": "user@gmail.com",
+                         "google_subject_id": "...",
+                         "name": "..."
+                     }
+                 }
+    """
+    json_data = request.get_json(silent=True)
+    if not json_data:
+        raise LoginValidationException({"payload": ["Missing or invalid JSON payload."]})
+
+    try:
+        validated_data = _google_auth_schema.load(json_data)
+    except ValidationError as err:
+        raise LoginValidationException(err.messages)
+
+    credential = validated_data.get("credential") or validated_data.get("id_token") or validated_data.get("code")
+
+    service = AuthenticationService()
+    result = service.authenticate_google_user(credential)
+
+    message = (
+        "Google identity verified. Please complete registration."
+        if result.get("is_new_user")
+        else "Google login successful."
+    )
+
+    return jsonify({
+        "success": True,
+        "message": message,
+        "data": result,
+    }), 200
+

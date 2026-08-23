@@ -8,6 +8,7 @@ import { donationService } from '../services/donationService';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { ExpiryTimer } from '../components/common/ExpiryTimer';
 import { SpotlightCard } from '../components/common/SpotlightCard';
+import { TextField, Select } from '../components/common/forms';
 import {
   IN_PROGRESS_STATUSES,
   COMPLETED_STATUSES,
@@ -23,7 +24,6 @@ import {
   Boxes,
   AlertCircle,
   X,
-  ArrowUpDown,
   Filter,
   ArrowRight,
 } from 'lucide-react';
@@ -60,10 +60,12 @@ export const DonationsListPage = () => {
     setError(null);
     try {
       const res  = await donationService.listMyDonations();
-      const list = res?.donations || res?.data?.donations || [];
+      const rawList = res?.donations || res?.data?.donations || (Array.isArray(res?.data) ? res.data : []);
+      const list = Array.isArray(rawList) ? [...rawList] : [];
       setDonations(list);
     } catch (err) {
       setError(err.message || 'Failed to load donations.');
+      setDonations([]);
     } finally {
       setLoading(false);
     }
@@ -71,37 +73,42 @@ export const DonationsListPage = () => {
 
   useEffect(() => { fetchDonations(); }, []);
 
-  const counts = useMemo(() => ({
-    total:     donations.length,
-    active:    donations.filter(d => IN_PROGRESS_STATUSES.has(d.status)).length,
-    completed: donations.filter(d => COMPLETED_STATUSES.has(d.status)).length,
-    terminal:  donations.filter(d => TERMINAL_STATUSES.has(d.status)).length,
-  }), [donations]);
+  const counts = useMemo(() => {
+    const list = Array.isArray(donations) ? donations : [];
+    return {
+      total:     list.length,
+      active:    list.filter(d => d && IN_PROGRESS_STATUSES.has(d.status)).length,
+      completed: list.filter(d => d && COMPLETED_STATUSES.has(d.status)).length,
+      terminal:  list.filter(d => d && TERMINAL_STATUSES.has(d.status)).length,
+    };
+  }, [donations]);
 
   const filtered = useMemo(() => {
-    let list = donations;
+    let list = Array.isArray(donations) ? [...donations] : [];
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       list = list.filter(d =>
-        (d.donation_title || '').toLowerCase().includes(q) ||
-        (d.pickup_address || '').toLowerCase().includes(q) ||
-        String(d.donation_id || '').includes(q)
+        d && (
+          (d.donation_title || '').toLowerCase().includes(q) ||
+          (d.pickup_address || '').toLowerCase().includes(q) ||
+          String(d.donation_id || '').includes(q)
+        )
       );
     }
 
-    if (statusFilter === 'ACTIVE')    list = list.filter(d => IN_PROGRESS_STATUSES.has(d.status));
-    if (statusFilter === 'COMPLETED') list = list.filter(d => COMPLETED_STATUSES.has(d.status));
-    if (statusFilter === 'TERMINAL')  list = list.filter(d => TERMINAL_STATUSES.has(d.status));
-    if (statusFilter === 'DRAFT')     list = list.filter(d => d.status === 'DRAFT');
+    if (statusFilter === 'ACTIVE')    list = list.filter(d => d && IN_PROGRESS_STATUSES.has(d.status));
+    if (statusFilter === 'COMPLETED') list = list.filter(d => d && COMPLETED_STATUSES.has(d.status));
+    if (statusFilter === 'TERMINAL')  list = list.filter(d => d && TERMINAL_STATUSES.has(d.status));
+    if (statusFilter === 'DRAFT')     list = list.filter(d => d && d.status === 'DRAFT');
 
-    return [...list].sort((a, b) => {
-      if (sortBy === 'NEWEST') return new Date(b.created_at ?? 0) - new Date(a.created_at ?? 0);
-      if (sortBy === 'OLDEST') return new Date(a.created_at ?? 0) - new Date(b.created_at ?? 0);
-      if (sortBy === 'QUANTITY') return (b.total_quantity || 0) - (a.total_quantity || 0);
+    return list.sort((a, b) => {
+      if (sortBy === 'NEWEST') return new Date(b?.created_at ?? 0) - new Date(a?.created_at ?? 0);
+      if (sortBy === 'OLDEST') return new Date(a?.created_at ?? 0) - new Date(b?.created_at ?? 0);
+      if (sortBy === 'QUANTITY') return (b?.total_quantity || 0) - (a?.total_quantity || 0);
       if (sortBy === 'EXPIRY') {
-        if (!a.expiry_time) return 1;
-        if (!b.expiry_time) return -1;
+        if (!a?.expiry_time) return 1;
+        if (!b?.expiry_time) return -1;
         return new Date(a.expiry_time) - new Date(b.expiry_time);
       }
       return 0;
@@ -175,37 +182,40 @@ export const DonationsListPage = () => {
 
           {/* Search + Sort Bar */}
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2 border-t border-slate-100">
-            <div className="relative flex-1">
-              <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
+            <div className="flex-1">
+              <TextField
+                icon={Search}
                 placeholder="Search by title, pickup address, or offer ID…"
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-xl pl-9 pr-9 py-2 text-xs text-slate-900 placeholder:text-slate-400 focus:outline-none focus:border-[#FF553E] focus:bg-white transition"
+                suffix={
+                  searchQuery ? (
+                    <button
+                      type="button"
+                      onClick={() => setSearchQuery('')}
+                      aria-label="Clear search"
+                      className="text-slate-400 hover:text-slate-700 p-1 transition"
+                    >
+                      <X size={14} />
+                    </button>
+                  ) : null
+                }
+                style={{ marginBottom: 0 }}
               />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 p-0.5"
-                >
-                  <X size={13} />
-                </button>
-              )}
             </div>
 
-            <div className="flex items-center space-x-2 shrink-0">
-              <ArrowUpDown size={13} className="text-slate-400" />
-              <select
+            <div className="w-full sm:w-48 shrink-0">
+              <Select
                 value={sortBy}
                 onChange={e => setSortBy(e.target.value)}
-                className="bg-slate-50 border border-slate-200 text-slate-700 font-semibold rounded-xl px-3 py-2 text-xs focus:outline-none focus:border-[#FF553E] focus:bg-white"
-              >
-                <option value="NEWEST">Newest First</option>
-                <option value="OLDEST">Oldest First</option>
-                <option value="QUANTITY">Largest Quantity</option>
-                <option value="EXPIRY">Soonest Expiry</option>
-              </select>
+                options={[
+                  { value: 'NEWEST', label: 'Newest First' },
+                  { value: 'OLDEST', label: 'Oldest First' },
+                  { value: 'QUANTITY', label: 'Largest Quantity' },
+                  { value: 'EXPIRY', label: 'Soonest Expiry' },
+                ]}
+                style={{ marginBottom: 0 }}
+              />
             </div>
           </div>
         </div>
@@ -267,8 +277,10 @@ export const DonationsListPage = () => {
 
           {/* Table Rows */}
           <div className="divide-y divide-slate-100">
-            {filtered.map(d => {
-              const city = extractCity(d.pickup_address);
+            {filtered.map((d, index) => {
+              if (!d) return null;
+              const donationId = d.donation_id ?? index;
+              const city = d.pickup_city || extractCity(d.pickup_address) || 'Hyderabad, TS';
               const qty  = formatQty(d.total_quantity, d.quantity_unit);
               const now = Date.now();
               const expMs = d.expiry_time ? new Date(d.expiry_time).getTime() : null;
@@ -276,17 +288,17 @@ export const DonationsListPage = () => {
 
               return (
                 <SpotlightCard
-                  key={d.donation_id}
+                  key={donationId}
                   spotlightColor="rgba(255, 85, 62, 0.12)"
                   className="p-4 sm:px-6 sm:py-4 hover:bg-slate-50/70 transition-colors flex flex-col lg:grid lg:grid-cols-[2fr_1fr_1.2fr_1fr_1fr_80px] gap-3 lg:gap-4 lg:items-center relative"
                 >
                   {/* Donation Title */}
                   <div className="min-w-0 relative z-10">
                     <Link
-                      to={`/donor/donations/${d.donation_id}`}
+                      to={`/donor/donations/${donationId}`}
                       className="text-xs sm:text-sm font-bold text-slate-900 hover:text-[#FF553E] transition truncate block"
                     >
-                      {d.donation_title || `Donation #${d.donation_id}`}
+                      {d.donation_title || `Donation #${donationId}`}
                     </Link>
                     {showExpiry && (
                       <div className="mt-1">
@@ -304,7 +316,7 @@ export const DonationsListPage = () => {
                   {/* Location */}
                   <div className="text-xs text-slate-500 flex items-center space-x-1.5 truncate font-medium relative z-10">
                     <MapPin size={13} className="text-slate-400 shrink-0 lg:hidden" />
-                    <span className="truncate">{city || 'Location unavailable'}</span>
+                    <span className="truncate">{city}</span>
                   </div>
 
                   {/* Status Badge */}
@@ -338,3 +350,6 @@ export const DonationsListPage = () => {
     </div>
   );
 };
+
+export default DonationsListPage;
+

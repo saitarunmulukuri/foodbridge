@@ -27,6 +27,12 @@ class Config:
         days=int(os.getenv("JWT_REFRESH_TOKEN_EXPIRES_DAYS", "30"))
     )
 
+    # Google Authentication
+    GOOGLE_CLIENT_ID: str = os.getenv(
+        "GOOGLE_CLIENT_ID",
+        "967870553184-htkviano4mbbi9ld77qrnd4kl1cfq1c2.apps.googleusercontent.com",
+    )
+
     # Database Configuration (MySQL / PyMySQL)
     MYSQL_HOST: str = os.getenv("MYSQL_HOST", "localhost")
     MYSQL_PORT: str = os.getenv("MYSQL_PORT", "3306")

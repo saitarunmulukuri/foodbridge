@@ -27,7 +27,12 @@ class User(BaseModel):
     email: Mapped[str] = mapped_column(
         String(255), unique=True, nullable=False, index=True
     )
-    password_hash: Mapped[str] = mapped_column(String(255), nullable=False)
+    password_hash: Mapped[Optional[str]] = mapped_column(
+        String(255), nullable=True
+    )
+    google_subject_id: Mapped[Optional[str]] = mapped_column(
+        String(255), unique=True, nullable=True, index=True
+    )
     role: Mapped[UserRole] = mapped_column(
         Enum(UserRole), nullable=False, index=True
     )

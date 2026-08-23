@@ -253,11 +253,13 @@ export const DonorDashboard = () => {
     setError(null);
     try {
       const res = await donationService.listMyDonations();
-      const list = res?.donations || res?.data?.donations || [];
-      list.sort((a, b) => new Date(b.created_at ?? 0) - new Date(a.created_at ?? 0));
+      const rawList = res?.donations || res?.data?.donations || (Array.isArray(res?.data) ? res.data : []);
+      const list = Array.isArray(rawList) ? [...rawList] : [];
+      list.sort((a, b) => new Date(b?.created_at ?? 0) - new Date(a?.created_at ?? 0));
       setDonations(list);
     } catch (err) {
       setError(err.message || 'Failed to load donations.');
+      setDonations([]);
     } finally {
       setLoading(false);
     }
@@ -267,33 +269,35 @@ export const DonorDashboard = () => {
 
   // Stat calculations
   const stats = useMemo(() => {
+    const list = Array.isArray(donations) ? donations : [];
     const now = Date.now();
-    const inProgress = donations.filter(d => {
-      if (!IN_PROGRESS_STATUSES.has(d.status)) return false;
+    const inProgress = list.filter(d => {
+      if (!d || !IN_PROGRESS_STATUSES.has(d.status)) return false;
       const exp = d.expiry_time ? new Date(d.expiry_time).getTime() : null;
       return exp === null || exp >= now;
     }).length;
-    const completed = donations.filter(d => COMPLETED_STATUSES.has(d.status)).length;
-    return { total: donations.length, inProgress, completed };
+    const completed = list.filter(d => d && COMPLETED_STATUSES.has(d.status)).length;
+    return { total: list.length, inProgress, completed };
   }, [donations]);
 
   const activeDonation = useMemo(() => {
+    const list = Array.isArray(donations) ? donations : [];
     const now = Date.now();
-    const actives = donations.filter(d => {
-      if (!IN_PROGRESS_STATUSES.has(d.status)) return false;
+    const actives = list.filter(d => {
+      if (!d || !IN_PROGRESS_STATUSES.has(d.status)) return false;
       const exp = d.expiry_time ? new Date(d.expiry_time).getTime() : null;
       return exp === null || exp >= now;
     });
     if (!actives.length) return null;
-    return actives.sort((a, b) => {
-      if (!a.expiry_time) return 1;
-      if (!b.expiry_time) return -1;
+    return [...actives].sort((a, b) => {
+      if (!a?.expiry_time) return 1;
+      if (!b?.expiry_time) return -1;
       return new Date(a.expiry_time) - new Date(b.expiry_time);
     })[0];
   }, [donations]);
 
   const otherDonations = useMemo(
-    () => donations.filter(d => d.donation_id !== activeDonation?.donation_id).slice(0, 6),
+    () => (Array.isArray(donations) ? donations : []).filter(d => d && d.donation_id !== activeDonation?.donation_id).slice(0, 6),
     [donations, activeDonation]
   );
 
@@ -453,3 +457,6 @@ export const DonorDashboard = () => {
     </div>
   );
 };
+
+export default DonorDashboard;
+

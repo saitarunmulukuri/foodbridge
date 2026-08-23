@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { createContext, useContext, useState, useEffect } from 'react';
 import { authService } from '../services/authService';
 import { getStoredToken, setStoredToken, getStoredUser, setStoredUser } from '../services/apiClient';
 
@@ -57,6 +57,54 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const loginWithGoogle = async (credential) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await authService.googleLogin(credential);
+      if (response.success && response.data) {
+        if (response.data.is_new_user) {
+          return {
+            isNewUser: true,
+            googleUser: response.data,
+          };
+        }
+
+        const { access_token, user } = response.data;
+        const userData = {
+          user_id: user.user_id,
+          email: user.email,
+          role: user.role,
+          account_status: user.account_status,
+        };
+
+        setToken(access_token);
+        setUser(userData);
+        setStoredToken(access_token);
+        setStoredUser(userData);
+        return {
+          isNewUser: false,
+          user: userData,
+          accessToken: access_token,
+        };
+      } else {
+        throw new Error(response.message || 'Google login failed.');
+      }
+    } catch (err) {
+      setError(err.message);
+      throw err;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loginDirect = (userData, accessToken) => {
+    setToken(accessToken);
+    setUser(userData);
+    setStoredToken(accessToken);
+    setStoredUser(userData);
+  };
+
   const quickSwitchPersona = async (roleName) => {
     const preset = PRESET_USERS[roleName];
     if (!preset) return;
@@ -78,6 +126,8 @@ export const AuthProvider = ({ children }) => {
         loading,
         error,
         login,
+        loginWithGoogle,
+        loginDirect,
         quickSwitchPersona,
         logout,
         isAuthenticated: !!token && !!user,

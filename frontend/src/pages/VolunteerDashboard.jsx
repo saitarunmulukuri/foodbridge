@@ -401,3 +401,6 @@ export const VolunteerDashboard = () => {
     </div>
   );
 };
+
+export default VolunteerDashboard;
+

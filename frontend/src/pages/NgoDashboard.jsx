@@ -8,6 +8,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { ExpiryTimer } from '../components/common/ExpiryTimer';
 import { AnimatedList } from '../components/common/AnimatedList';
+import { NumberField } from '../components/common/forms';
 import {
   RefreshCw,
   AlertCircle,
@@ -103,15 +104,15 @@ const CapacityWidget = ({ capacity, onUpdate }) => {
       {error   && <AlertBanner type="error"   message={error}   onDismiss={() => setError(null)} />}
 
       <form onSubmit={handleSubmit} className="flex items-center space-x-3 pt-1">
-        <input
+        <NumberField
           id="capacity-input"
-          type="number"
           min="1"
           max="10000"
           placeholder="New max capacity (meals)"
           value={newCapacity}
           onChange={e => setNewCapacity(e.target.value)}
-          className="fb-input flex-1 text-xs"
+          className="flex-1"
+          style={{ marginBottom: 0 }}
         />
         <button
           id="update-capacity-btn"
@@ -379,3 +380,6 @@ export const NgoDashboard = () => {
     </div>
   );
 };
+
+export default NgoDashboard;
+

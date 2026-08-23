@@ -447,19 +447,19 @@ export function Lanyard({
   const [frontTexture, setFrontTexture] = useState(null);
   const [backTexture, setBackTexture] = useState(null);
   const [strapTexture, setStrapTexture] = useState(null);
-  const [webGlSupported, setWebGlSupported] = useState(true);
-  const [fallbackFlipped, setFallbackFlipped] = useState(false);
-
-  // Check WebGL support
-  useEffect(() => {
+  const [webGlSupported, setWebGlSupported] = useState(() => {
     try {
+      if (typeof window === 'undefined') return false;
       const canvas = document.createElement('canvas');
-      const gl = canvas.getContext('webgl') || canvas.getContext('experimental-webgl');
-      if (!gl) setWebGlSupported(false);
+      return !!(
+        window.WebGLRenderingContext &&
+        (canvas.getContext('webgl') || canvas.getContext('experimental-webgl'))
+      );
     } catch {
-      setWebGlSupported(false);
+      return false;
     }
-  }, []);
+  });
+  const [fallbackFlipped, setFallbackFlipped] = useState(false);
 
   // Load textures
   useEffect(() => {

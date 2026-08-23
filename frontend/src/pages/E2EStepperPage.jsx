@@ -292,3 +292,6 @@ export const E2EStepperPage = () => {
     </div>
   );
 };
+
+export default E2EStepperPage;
+

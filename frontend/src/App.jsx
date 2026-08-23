@@ -1,22 +1,67 @@
+import React, { Suspense, lazy } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AuthLayout } from './components/layout/AuthLayout';
 import { PillNav } from './components/navigation/PillNav';
-import { HomePage } from './pages/HomePage';
-import { HowItWorksPage } from './pages/HowItWorksPage';
-import { PublicImpactPage } from './pages/PublicImpactPage';
-import { AboutPage } from './pages/AboutPage';
-import { LoginPage } from './pages/LoginPage';
-import { RegisterPage } from './pages/RegisterPage';
-import { DonorDashboard } from './pages/DonorDashboard';
-import { DonationsListPage } from './pages/DonationsListPage';
-import { ImpactPage } from './pages/ImpactPage';
-import { CreateDonationPage } from './pages/CreateDonationPage';
-import { DonationDetailPage } from './pages/DonationDetailPage';
-import { NgoDashboard } from './pages/NgoDashboard';
-import { VolunteerDashboard } from './pages/VolunteerDashboard';
-import { E2EStepperPage } from './pages/E2EStepperPage';
-import { ProfilePage } from './pages/ProfilePage';
+import { ErrorBoundary } from './components/common/ErrorBoundary';
+
+// ── Static page imports for instantaneous, zero-flicker routing ──
+import HomePage from './pages/HomePage';
+import HowItWorksPage from './pages/HowItWorksPage';
+import PublicImpactPage from './pages/PublicImpactPage';
+import AboutPage from './pages/AboutPage';
+import LoginPage from './pages/LoginPage';
+import RegisterPage from './pages/RegisterPage';
+import DonorDashboard from './pages/DonorDashboard';
+import DonationsListPage from './pages/DonationsListPage';
+import ImpactPage from './pages/ImpactPage';
+import CreateDonationPage from './pages/CreateDonationPage';
+import DonationDetailPage from './pages/DonationDetailPage';
+import NgoDashboard from './pages/NgoDashboard';
+import VolunteerDashboard from './pages/VolunteerDashboard';
+import E2EStepperPage from './pages/E2EStepperPage';
+import ProfilePage from './pages/ProfilePage';
+
+// ── Loading Fallback ───────────────────────────────────────────────
+const PageLoader = () => (
+  <div
+    style={{
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      minHeight: '50vh',
+      width: '100%',
+    }}
+  >
+    <div
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '12px',
+      }}
+    >
+      <div
+        style={{
+          width: '36px',
+          height: '36px',
+          borderRadius: '50%',
+          border: '3px solid #E2E8F0',
+          borderTopColor: '#FF5A2F',
+          animation: 'fb-spin 0.8s linear infinite',
+        }}
+      />
+      <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748B' }}>
+        Loading FoodBridge…
+      </span>
+      <style>{`
+        @keyframes fb-spin {
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
+    </div>
+  </div>
+);
 
 // ── Redirects authenticated users to their dashboard ──────────────
 const PublicOnlyRoute = ({ children }) => {
@@ -49,14 +94,26 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 // ── Public layout with floating PillNav ────────────────────────────
 const PublicLayout = ({ children }) => {
   const location = useLocation();
+  const { isAuthenticated, role } = useAuth();
+
+  const getDashboardHref = () => {
+    if (role === 'DONOR') return '/donor';
+    if (role === 'NGO') return '/ngo';
+    if (role === 'VOLUNTEER') return '/volunteer';
+    return '/e2e-stepper';
+  };
 
   const navItems = [
     { label: 'Home',           href: '/' },
     { label: 'How It Works',   href: '/how-it-works' },
     { label: 'Impact',         href: '/impact' },
     { label: 'About',          href: '/about' },
-    { label: 'Sign In',        href: '/login', isCta: true },
-    { label: 'Create Account', href: '/register', isCta: true },
+    ...(isAuthenticated
+      ? [{ label: 'Dashboard', href: getDashboardHref(), isCta: true }]
+      : [
+          { label: 'Sign In',        href: '/login', isCta: true },
+          { label: 'Create Account', href: '/register', isCta: true },
+        ]),
   ];
 
   return (
@@ -74,7 +131,9 @@ const PublicLayout = ({ children }) => {
         />
       </div>
       <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}>
-        {children}
+        <Suspense fallback={<PageLoader />}>
+          {children}
+        </Suspense>
       </main>
       <footer style={{ padding: '14px 24px', textAlign: 'center', fontSize: '11px', color: '#9CA3AF', borderTop: '1px solid #E4E7EC', background: '#FFFFFF' }}>
         FoodBridge · Surplus food redistribution logistics
@@ -86,48 +145,53 @@ const PublicLayout = ({ children }) => {
 // ── Route tree ─────────────────────────────────────────────────────
 function AppContent() {
   return (
-    <Routes>
-      {/* Public Pages */}
-      <Route path="/"             element={<PublicLayout><HomePage /></PublicLayout>} />
-      <Route path="/how-it-works" element={<PublicLayout><HowItWorksPage /></PublicLayout>} />
-      <Route path="/impact"       element={<PublicLayout><PublicImpactPage /></PublicLayout>} />
-      <Route path="/about"        element={<PublicLayout><AboutPage /></PublicLayout>} />
+    <Suspense fallback={<PageLoader />}>
+      <Routes>
+        {/* Public Pages */}
+        <Route path="/"             element={<PublicLayout><HomePage /></PublicLayout>} />
+        <Route path="/how-it-works" element={<PublicLayout><HowItWorksPage /></PublicLayout>} />
+        <Route path="/impact"       element={<PublicLayout><PublicImpactPage /></PublicLayout>} />
+        <Route path="/about"        element={<PublicLayout><AboutPage /></PublicLayout>} />
 
-      {/* Public auth routes */}
-      <Route path="/login"    element={<PublicOnlyRoute><PublicLayout><LoginPage /></PublicLayout></PublicOnlyRoute>} />
-      <Route path="/register" element={<PublicOnlyRoute><PublicLayout><RegisterPage /></PublicLayout></PublicOnlyRoute>} />
+        {/* Public auth routes */}
+        <Route path="/login"    element={<PublicOnlyRoute><PublicLayout><LoginPage /></PublicLayout></PublicOnlyRoute>} />
+        <Route path="/register" element={<PublicOnlyRoute><PublicLayout><RegisterPage /></PublicLayout></PublicOnlyRoute>} />
 
-      {/* Donor routes */}
-      <Route path="/donor"                element={<ProtectedRoute allowedRoles={['DONOR', 'ADMIN']}><DonorDashboard /></ProtectedRoute>} />
-      <Route path="/donor/list"           element={<ProtectedRoute allowedRoles={['DONOR', 'ADMIN']}><DonationsListPage /></ProtectedRoute>} />
-      <Route path="/donor/impact"         element={<ProtectedRoute allowedRoles={['DONOR', 'ADMIN']}><ImpactPage /></ProtectedRoute>} />
-      <Route path="/donor/create"         element={<ProtectedRoute allowedRoles={['DONOR', 'ADMIN']}><CreateDonationPage /></ProtectedRoute>} />
-      <Route path="/donor/donations/:id"  element={<ProtectedRoute allowedRoles={['DONOR', 'ADMIN']}><DonationDetailPage /></ProtectedRoute>} />
+        {/* Donor routes */}
+        <Route path="/donor"                element={<ProtectedRoute allowedRoles={['DONOR', 'ADMIN']}><DonorDashboard /></ProtectedRoute>} />
+        <Route path="/donor/list"           element={<ProtectedRoute allowedRoles={['DONOR', 'ADMIN']}><DonationsListPage /></ProtectedRoute>} />
+        <Route path="/donor/impact"         element={<ProtectedRoute allowedRoles={['DONOR', 'ADMIN']}><ImpactPage /></ProtectedRoute>} />
+        <Route path="/donor/create"         element={<ProtectedRoute allowedRoles={['DONOR', 'ADMIN']}><CreateDonationPage /></ProtectedRoute>} />
+        <Route path="/donor/donations/:id"  element={<ProtectedRoute allowedRoles={['DONOR', 'ADMIN']}><DonationDetailPage /></ProtectedRoute>} />
 
-      {/* NGO routes */}
-      <Route path="/ngo"      element={<ProtectedRoute allowedRoles={['NGO', 'ADMIN']}><NgoDashboard /></ProtectedRoute>} />
+        {/* NGO routes */}
+        <Route path="/ngo"      element={<ProtectedRoute allowedRoles={['NGO', 'ADMIN']}><NgoDashboard /></ProtectedRoute>} />
 
-      {/* Volunteer routes */}
-      <Route path="/volunteer" element={<ProtectedRoute allowedRoles={['VOLUNTEER', 'ADMIN']}><VolunteerDashboard /></ProtectedRoute>} />
+        {/* Volunteer routes */}
+        <Route path="/volunteer" element={<ProtectedRoute allowedRoles={['VOLUNTEER', 'ADMIN']}><VolunteerDashboard /></ProtectedRoute>} />
 
-      {/* Internal E2E stepper */}
-      <Route path="/e2e-stepper" element={<ProtectedRoute allowedRoles={['DONOR', 'NGO', 'VOLUNTEER', 'ADMIN']}><E2EStepperPage /></ProtectedRoute>} />
+        {/* Internal E2E stepper */}
+        <Route path="/e2e-stepper" element={<ProtectedRoute allowedRoles={['DONOR', 'NGO', 'VOLUNTEER', 'ADMIN']}><E2EStepperPage /></ProtectedRoute>} />
 
-      {/* Profile & Digital ID */}
-      <Route path="/profile" element={<ProtectedRoute allowedRoles={['DONOR', 'NGO', 'VOLUNTEER', 'ADMIN']}><ProfilePage /></ProtectedRoute>} />
+        {/* Profile & Digital ID */}
+        <Route path="/profile" element={<ProtectedRoute allowedRoles={['DONOR', 'NGO', 'VOLUNTEER', 'ADMIN']}><ProfilePage /></ProtectedRoute>} />
 
-      {/* Fallback */}
-      <Route path="*" element={<Navigate to="/" replace />} />
-    </Routes>
+        {/* Fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
+    </Suspense>
   );
 }
 
 export default function App() {
   return (
     <Router>
-      <AuthProvider>
-        <AppContent />
-      </AuthProvider>
+      <ErrorBoundary>
+        <AuthProvider>
+          <AppContent />
+        </AuthProvider>
+      </ErrorBoundary>
     </Router>
   );
 }
+

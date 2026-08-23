@@ -45,6 +45,28 @@ class AuthenticationRepository:
         stmt = select(User).where(User.email == email)
         return self._session.execute(stmt).scalars().first()
 
+    def find_by_google_subject_id(self, google_subject_id: str) -> Optional[User]:
+        """Find a user record by their unique Google Subject ID.
+
+        Args:
+            google_subject_id: Unique Google user subject identifier string.
+
+        Returns:
+            User instance if found, otherwise None.
+        """
+        stmt = select(User).where(User.google_subject_id == google_subject_id)
+        return self._session.execute(stmt).scalars().first()
+
+    def link_google_account(self, user: User, google_subject_id: str) -> None:
+        """Associate a verified Google subject identifier with an existing User account.
+
+        Args:
+            user: The User instance to link.
+            google_subject_id: Unique Google user subject identifier string.
+        """
+        user.google_subject_id = google_subject_id
+        self._session.add(user)
+
     def exists_by_email(self, email: str) -> bool:
         """Check whether a user with the given normalized email already exists.
 

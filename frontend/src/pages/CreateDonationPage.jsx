@@ -2,10 +2,17 @@
  * CreateDonationPage — Donor surplus food listing form.
  * Cloudhub style: Numbered section cards (01/02/03), crisp light theme, sticky preview.
  */
-import { useState, useRef, useMemo } from 'react';
+import { useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { donationService } from '../services/donationService';
 import { geoService } from '../services/geoService';
+import {
+  TextField,
+  TextArea,
+  Select,
+  NumberField,
+  DateTimePicker,
+} from '../components/common/forms';
 import {
   Plus,
   Trash2,
@@ -16,8 +23,6 @@ import {
   AlertCircle,
   Loader2,
   RotateCcw,
-  ChevronDown,
-  ChevronUp,
   Calendar,
   Boxes,
   Sparkles,
@@ -31,11 +36,6 @@ const toLocalDatetimeString = (date = new Date()) => {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 };
 
-const Label = ({ children, required }) => (
-  <label className="block text-xs font-bold text-slate-700 mb-1.5">
-    {children}{required && <span className="text-red-500 ml-0.5">*</span>}
-  </label>
-);
 
 const SectionHeader = ({ title, number }) => (
   <div className="fb-section-card-header bg-slate-50/60">
@@ -144,11 +144,7 @@ export const CreateDonationPage = () => {
 
   const [locationStatus,  setLocationStatus]  = useState('idle');
   const [locationMessage, setLocationMessage] = useState(null);
-  const [locationSummary, setLocationSummary] = useState(null);
-  const [showAdvancedLocation, setShowAdvancedLocation] = useState(false);
 
-  const availableFromRef = useRef(null);
-  const expiryTimeRef    = useRef(null);
   const minDT = useMemo(() => toLocalDatetimeString(new Date()), []);
 
   const [formData, setFormData] = useState({
@@ -171,15 +167,6 @@ export const CreateDonationPage = () => {
   const [items, setItems] = useState([{
     item_name: '', category: 'RICE', quantity: '', unit: 'PACKET', food_type: 'VEGETARIAN', contains_allergens: false,
   }]);
-
-  const triggerPicker = (ref) => {
-    if (ref?.current) {
-      if (typeof ref.current.showPicker === 'function') {
-        try { ref.current.showPicker(); return; } catch { /* fallback */ }
-      }
-      ref.current.focus();
-    }
-  };
 
   const handleInput = (e) => {
     const { name, value } = e.target;
@@ -214,12 +201,16 @@ export const CreateDonationPage = () => {
   const handleDetectLocation = async () => {
     setLocationStatus('loading');
     setLocationMessage(null);
-    setLocationSummary(null);
     try {
       const coords = await geoService.getCurrentCoordinates();
       const latStr = coords.latitude.toFixed(6);
       const lonStr = coords.longitude.toFixed(6);
-      setFormData(prev => ({ ...prev, pickup_latitude: latStr, pickup_longitude: lonStr }));
+
+      setFormData(prev => ({
+        ...prev,
+        pickup_latitude: latStr,
+        pickup_longitude: lonStr,
+      }));
 
       const geo = await geoService.reverseGeocode(coords.latitude, coords.longitude);
       if (geo) {
@@ -230,17 +221,16 @@ export const CreateDonationPage = () => {
           pickup_state:       geo.state       || prev.pickup_state,
           pickup_postal_code: geo.postalCode  || prev.pickup_postal_code,
         }));
-        setLocationSummary({
-          display: [geo.city, geo.state].filter(Boolean).join(', ') || 'Address located',
-          coords:  `${latStr}, ${lonStr}`,
-        });
+        if (!geo.postalCode) {
+          setLocationMessage('PIN code could not be detected. Please enter it manually.');
+        }
       } else {
-        setLocationSummary({ display: 'Coordinates detected', coords: `${latStr}, ${lonStr}` });
+        setLocationMessage('Location detected, but the address could not be determined. Please enter your location manually.');
       }
       setLocationStatus('success');
     } catch (err) {
       setLocationStatus('error');
-      setLocationMessage(err.message || 'Could not detect location. Enter address manually.');
+      setLocationMessage(err.message || 'Unable to determine your location. Please try again.');
     }
   };
 
@@ -312,62 +302,70 @@ export const CreateDonationPage = () => {
         <div className="space-y-5">
 
           {/* Section 1: Overview */}
-          <div className="fb-section-card bg-white">
+          <div className="fb-section-card bg-white relative z-20 overflow-visible">
             <SectionHeader title="Donation Overview" number="01" />
             <div className="p-6 space-y-4">
+              <TextField
+                label="Title"
+                name="donation_title"
+                value={formData.donation_title}
+                onChange={handleInput}
+                placeholder="e.g. Surplus Lunch Buffet Meal Packs"
+                required
+              />
 
-              <div>
-                <Label required>Title</Label>
-                <input name="donation_title" value={formData.donation_title} onChange={handleInput}
-                  placeholder="e.g. Surplus Lunch Buffet Meal Packs" required
-                  className="fb-input" />
-              </div>
+              <TextArea
+                label="Description"
+                name="description"
+                value={formData.description}
+                onChange={handleInput}
+                placeholder="e.g. Freshly prepared meal packs from catering event, packed hygienically."
+                rows={2}
+              />
 
-              <div>
-                <Label>Description</Label>
-                <textarea name="description" value={formData.description} onChange={handleInput}
-                  placeholder="e.g. Freshly prepared meal packs from catering event, packed hygienically."
-                  rows={2} className="fb-input" />
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <Label required>Total Quantity</Label>
-                  <input type="number" name="total_quantity" value={formData.total_quantity} onChange={handleInput}
-                    placeholder="e.g. 50" min="0.1" step="any" required className="fb-input" />
-                </div>
-                <div>
-                  <Label required>Unit</Label>
-                  <select name="quantity_unit" value={formData.quantity_unit} onChange={handleInput} className="fb-input font-medium">
-                    {QUANTITY_UNITS.map(u => <option key={u} value={u}>{u}</option>)}
-                  </select>
-                </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <NumberField
+                  label="Total Quantity"
+                  name="total_quantity"
+                  value={formData.total_quantity}
+                  onChange={handleInput}
+                  placeholder="e.g. 50"
+                  min="1"
+                  step="1"
+                  required
+                />
+                <Select
+                  label="Unit"
+                  name="quantity_unit"
+                  value={formData.quantity_unit}
+                  onChange={handleInput}
+                  options={QUANTITY_UNITS}
+                  required
+                />
               </div>
 
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div>
-                  <Label required>Available From</Label>
-                  <input ref={availableFromRef} id="available_from_input"
-                    type="datetime-local" name="available_from"
-                    value={formData.available_from} onChange={handleInput}
-                    onClick={() => triggerPicker(availableFromRef)}
-                    min={minDT} required
-                    className="fb-input cursor-pointer" />
-                  <p className="text-[10px] text-slate-400 mt-1">Start of pickup availability</p>
-                </div>
-                <div>
-                  <Label required>Expiry Time</Label>
-                  <input ref={expiryTimeRef} id="expiry_time_input"
-                    type="datetime-local" name="expiry_time"
-                    value={formData.expiry_time} onChange={handleInput}
-                    onClick={() => triggerPicker(expiryTimeRef)}
-                    min={formData.available_from || minDT} required
-                    className={`fb-input cursor-pointer ${timeError ? '!border-red-500' : ''}`} />
-                  {timeError
-                    ? <p className="text-[10px] text-red-600 mt-1 flex items-center space-x-1 font-semibold"><AlertCircle size={11} /><span>{timeError}</span></p>
-                    : <p className="text-[10px] text-slate-400 mt-1">Must be after Available From</p>
-                  }
-                </div>
+                <DateTimePicker
+                  id="available_from_input"
+                  name="available_from"
+                  label="Available From"
+                  value={formData.available_from}
+                  onChange={handleInput}
+                  minDateTime={minDT}
+                  required
+                  helperText="Start of pickup availability"
+                />
+                <DateTimePicker
+                  id="expiry_time_input"
+                  name="expiry_time"
+                  label="Expiry Time"
+                  value={formData.expiry_time}
+                  onChange={handleInput}
+                  minDateTime={formData.available_from || minDT}
+                  required
+                  error={timeError}
+                  helperText={!timeError ? "Must be after Available From" : undefined}
+                />
               </div>
             </div>
           </div>
@@ -384,31 +382,42 @@ export const CreateDonationPage = () => {
             </div>
             <div className="px-6 pb-6 space-y-3">
               {items.map((item, idx) => (
-                <div key={idx} className="bg-slate-50/80 border border-slate-200 rounded-xl p-3.5 grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <div className="col-span-2 sm:col-span-2">
-                    <label className="block text-[10px] font-bold text-slate-600 mb-1">Item Name *</label>
-                    <input type="text" value={item.item_name}
+                <div key={idx} className="bg-slate-50/80 border border-slate-200 rounded-xl p-3.5 grid grid-cols-1 sm:grid-cols-4 gap-3 items-start">
+                  <div className="sm:col-span-2">
+                    <TextField
+                      label="Item Name"
+                      value={item.item_name}
                       onChange={e => handleItemChange(idx, 'item_name', e.target.value)}
-                      placeholder="e.g. Vegetable Biryani" required
-                      className="w-full px-3 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:border-[#FF553E] focus:outline-none placeholder:text-slate-400" />
+                      placeholder="e.g. Vegetable Biryani"
+                      required
+                    />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-600 mb-1">Category</label>
-                    <select value={item.category} onChange={e => handleItemChange(idx, 'category', e.target.value)}
-                      className="w-full px-2.5 py-2 rounded-lg bg-white border border-slate-200 text-slate-800 text-xs focus:border-[#FF553E] focus:outline-none font-medium">
-                      {ITEM_CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-                    </select>
+                    <Select
+                      label="Category"
+                      value={item.category}
+                      onChange={e => handleItemChange(idx, 'category', e.target.value)}
+                      options={ITEM_CATEGORIES}
+                    />
                   </div>
                   <div>
-                    <label className="block text-[10px] font-bold text-slate-600 mb-1">Quantity *</label>
-                    <div className="flex space-x-1">
-                      <input type="number" value={item.quantity}
+                    <label className="block text-xs font-bold text-slate-700 mb-1.5 select-none">
+                      Quantity <span className="text-red-500">*</span>
+                    </label>
+                    <div className="flex items-center space-x-1">
+                      <NumberField
+                        value={item.quantity}
                         onChange={e => handleItemChange(idx, 'quantity', e.target.value)}
-                        placeholder="Qty" min="0.1" step="any" required
-                        className="flex-1 min-w-0 px-2.5 py-2 rounded-lg bg-white border border-slate-200 text-slate-900 text-xs focus:border-[#FF553E] focus:outline-none placeholder:text-slate-400 font-semibold" />
+                        placeholder="Qty"
+                        min="1"
+                        step="1"
+                        required
+                        className="flex-1 min-w-0"
+                      />
                       {items.length > 1 && (
                         <button type="button" onClick={() => removeItem(idx)}
-                          className="p-2 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition">
+                          aria-label="Remove item"
+                          className="h-[44px] px-2.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition flex items-center justify-center border border-slate-200">
                           <Trash2 size={14} />
                         </button>
                       )}
@@ -423,105 +432,133 @@ export const CreateDonationPage = () => {
           <div className="fb-section-card bg-white">
             <div className="flex items-center justify-between">
               <SectionHeader title="Pickup Location" number="03" />
+              <button
+                type="button"
+                id="use-my-location-btn"
+                onClick={handleDetectLocation}
+                disabled={locationStatus === 'loading'}
+                className={`mr-5 px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center space-x-2 transition border shrink-0 ${
+                  locationStatus === 'loading'
+                    ? 'bg-slate-100 text-slate-500 border-slate-200 cursor-wait'
+                    : locationStatus === 'success'
+                    ? 'bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100'
+                    : locationStatus === 'error'
+                    ? 'bg-red-50 border-red-300 text-red-700 hover:bg-red-100'
+                    : 'fb-btn-primary'
+                }`}
+              >
+                {locationStatus === 'loading' && (
+                  <>
+                    <Loader2 size={13} className="animate-spin" />
+                    <span>Detecting location…</span>
+                  </>
+                )}
+                {locationStatus === 'success' && (
+                  <>
+                    <CheckCircle2 size={13} />
+                    <span>Location detected</span>
+                  </>
+                )}
+                {locationStatus === 'error' && (
+                  <>
+                    <RotateCcw size={13} />
+                    <span>Retry</span>
+                  </>
+                )}
+                {locationStatus === 'idle' && (
+                  <>
+                    <MapPin size={13} />
+                    <span>Use My Location</span>
+                  </>
+                )}
+              </button>
             </div>
-            <div className="px-6 pb-6 space-y-4">
-              <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3">
-                <p className="text-xs text-slate-500">
-                  Coordinates are used by the Decision Engine to rank NGOs by proximity.
-                </p>
 
-                {/* Location detection CTA */}
-                <button type="button" id="use-my-location-btn"
-                  onClick={handleDetectLocation}
-                  disabled={locationStatus === 'loading'}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center space-x-2 transition border shrink-0 ${
-                    locationStatus === 'loading'  ? 'bg-slate-100 text-slate-500 border-slate-200 cursor-wait'
-                  : locationStatus === 'success'  ? 'bg-emerald-50 border-emerald-300 text-emerald-700'
-                  : locationStatus === 'error'    ? 'bg-red-50 border-red-300 text-red-700'
-                  : 'fb-btn-primary'
-                  }`}>
-                  {locationStatus === 'loading'  && <><Loader2 size={12} className="animate-spin" /><span>Detecting…</span></>}
-                  {locationStatus === 'success'  && <><CheckCircle2 size={12} /><span>Location detected</span></>}
-                  {locationStatus === 'error'    && <><RotateCcw size={12} /><span>Retry</span></>}
-                  {locationStatus === 'idle'     && <><MapPin size={12} /><span>Use My Location</span></>}
-                </button>
-              </div>
-
-              {/* Success summary */}
-              {locationStatus === 'success' && locationSummary && (
-                <div className="flex items-center justify-between px-4 py-2.5 bg-emerald-50 border border-emerald-200 rounded-xl text-xs">
-                  <div className="flex items-center space-x-2 text-emerald-800">
-                    <CheckCircle2 size={14} className="text-emerald-600 shrink-0" />
-                    <span><strong>{locationSummary.display}</strong> · {locationSummary.coords}</span>
-                  </div>
-                  <span className="text-emerald-600 text-[11px] font-semibold hidden sm:inline">Edit below if needed</span>
-                </div>
-              )}
-
-              {/* Error */}
-              {locationStatus === 'error' && locationMessage && (
-                <div className="flex items-start space-x-2 px-4 py-2.5 bg-red-50 border border-red-200 rounded-xl text-xs text-red-700">
+            <div className="p-6 space-y-4">
+              {/* Notice / Error message */}
+              {locationMessage && (
+                <div
+                  className={`flex items-start space-x-2 px-3.5 py-2.5 rounded-xl text-xs ${
+                    locationStatus === 'error'
+                      ? 'bg-red-50 border border-red-200 text-red-700'
+                      : 'bg-amber-50 border border-amber-200 text-amber-800'
+                  }`}
+                >
                   <AlertCircle size={14} className="shrink-0 mt-0.5" />
                   <span>{locationMessage}</span>
                 </div>
               )}
 
-              {/* Address fields */}
+              {/* Address / Area */}
+              <TextField
+                label="Address / Area"
+                name="pickup_address"
+                value={formData.pickup_address}
+                onChange={handleInput}
+                placeholder="e.g. 100 Jubilee Hills Road 36"
+                required
+              />
+
+              {/* City, State, PIN Code */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                <div className="sm:col-span-3">
-                  <Label required>Street Address</Label>
-                  <input type="text" name="pickup_address" value={formData.pickup_address} onChange={handleInput}
-                    placeholder="e.g. 100 Jubilee Hills Road 36" required className="fb-input" />
-                </div>
-                <div>
-                  <Label required>City</Label>
-                  <input type="text" name="pickup_city" value={formData.pickup_city} onChange={handleInput}
-                    placeholder="e.g. Hyderabad" required className="fb-input" />
-                </div>
-                <div>
-                  <Label required>State</Label>
-                  <input type="text" name="pickup_state" value={formData.pickup_state} onChange={handleInput}
-                    placeholder="e.g. Telangana" required className="fb-input" />
-                </div>
-                <div>
-                  <Label required>Postal Code</Label>
-                  <input type="text" name="pickup_postal_code" value={formData.pickup_postal_code} onChange={handleInput}
-                    placeholder="e.g. 500033" required className="fb-input" />
-                </div>
+                <TextField
+                  label="City"
+                  name="pickup_city"
+                  value={formData.pickup_city}
+                  onChange={handleInput}
+                  placeholder="e.g. Hyderabad"
+                  required
+                />
+                <TextField
+                  label="State"
+                  name="pickup_state"
+                  value={formData.pickup_state}
+                  onChange={handleInput}
+                  placeholder="e.g. Telangana"
+                  required
+                />
+                <TextField
+                  label="PIN Code"
+                  name="pickup_postal_code"
+                  value={formData.pickup_postal_code}
+                  onChange={handleInput}
+                  placeholder="e.g. 500033"
+                  maxLength={6}
+                  pattern="[0-9]{6}"
+                  required
+                  inputClassName="font-mono"
+                />
               </div>
 
-              {/* Advanced coordinates disclosure */}
-              <div>
-                <button type="button" onClick={() => setShowAdvancedLocation(v => !v)}
-                  className="flex items-center space-x-1.5 text-xs text-slate-500 hover:text-slate-800 transition font-semibold">
-                  {showAdvancedLocation ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                  <span>Advanced location details (coordinates)</span>
-                </button>
-
-                {showAdvancedLocation && (
-                  <div className="grid grid-cols-2 gap-3 mt-2.5 p-4 rounded-xl bg-slate-50 border border-slate-200">
-                    <div>
-                      <Label required>Latitude</Label>
-                      <input type="text" name="pickup_latitude" value={formData.pickup_latitude} onChange={handleInput}
-                        placeholder="e.g. 17.4310" required
-                        className="fb-input font-mono text-xs" />
-                    </div>
-                    <div>
-                      <Label required>Longitude</Label>
-                      <input type="text" name="pickup_longitude" value={formData.pickup_longitude} onChange={handleInput}
-                        placeholder="e.g. 78.4070" required
-                        className="fb-input font-mono text-xs" />
-                    </div>
-                  </div>
-                )}
+              {/* Latitude and Longitude directly visible */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <TextField
+                  label="Latitude"
+                  name="pickup_latitude"
+                  value={formData.pickup_latitude}
+                  onChange={handleInput}
+                  placeholder="e.g. 17.431000"
+                  required
+                  inputClassName="font-mono text-xs"
+                />
+                <TextField
+                  label="Longitude"
+                  name="pickup_longitude"
+                  value={formData.pickup_longitude}
+                  onChange={handleInput}
+                  placeholder="e.g. 78.407000"
+                  required
+                  inputClassName="font-mono text-xs"
+                />
               </div>
 
-              <div>
-                <Label>Special Instructions</Label>
-                <input type="text" name="special_instructions" value={formData.special_instructions} onChange={handleInput}
-                  placeholder="e.g. Collect from service entrance; please bring insulated carriers."
-                  className="fb-input" />
-              </div>
+              <TextField
+                label="Special Instructions"
+                name="special_instructions"
+                value={formData.special_instructions}
+                onChange={handleInput}
+                placeholder="e.g. Collect from service entrance; please bring insulated carriers."
+              />
             </div>
           </div>
 
@@ -545,3 +582,6 @@ export const CreateDonationPage = () => {
     </div>
   );
 };
+
+export default CreateDonationPage;
+

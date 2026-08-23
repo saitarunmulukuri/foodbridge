@@ -313,13 +313,13 @@ export const DonationDetailPage = () => {
   }
 
   const state = resolveDonationState(donation);
-  const foodItems = donation.food_items || donation.items || [];
-  const qty = donation.total_quantity
+  const foodItems = Array.isArray(donation?.items) ? donation.items : Array.isArray(donation?.food_items) ? donation.food_items : [];
+  const qty = donation?.total_quantity
     ? `${donation.total_quantity}${donation.quantity_unit ? ' ' + donation.quantity_unit : ''}`.trim()
     : null;
-  const city = donation.pickup_address?.split(',').slice(-2, -1)[0]?.trim();
-  const showExpirySection = donation.expiry_time && state.showExpiry;
-  const currentJourneyStep = getJourneyStepNumber(donation.status);
+  const city = donation?.pickup_city || (donation?.pickup_address ? donation.pickup_address.split(',').slice(-2, -1)[0]?.trim() : null) || 'Hyderabad, TS';
+  const showExpirySection = Boolean(donation?.expiry_time && state?.showExpiry);
+  const currentJourneyStep = getJourneyStepNumber(donation?.status);
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 animate-fade-in-up">
@@ -499,3 +499,6 @@ export const DonationDetailPage = () => {
     </div>
   );
 };
+
+export default DonationDetailPage;
+

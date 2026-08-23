@@ -61,18 +61,29 @@ class UserRegisterSchema(Schema):
     """Schema for validating the user registration request payload."""
 
     email = fields.Email(required=True, validate=validate.Length(max=255))
-    password = fields.Str(required=True, validate=validate_password_policy)
-    password_confirmation = fields.Str(required=True)
+    password = fields.Str(required=False, allow_none=True, validate=validate_password_policy)
+    password_confirmation = fields.Str(required=False, allow_none=True)
+    google_subject_id = fields.Str(required=False, allow_none=True)
     role = fields.Str(required=True, validate=validate_registration_role)
     profile = fields.Dict(required=True)
 
     @validates_schema
     def validate_password_match(self, data: dict, **kwargs) -> None:
-        """Ensure password and password_confirmation are identical."""
-        if data.get("password") != data.get("password_confirmation"):
+        """Ensure password is provided for standard registration, and matches confirmation."""
+        google_sub = data.get("google_subject_id")
+        password = data.get("password")
+        password_confirm = data.get("password_confirmation")
+
+        if not google_sub and not password:
             raise ValidationError(
-                {"password_confirmation": ["Password and confirmation do not match."]}
+                {"password": ["Password is required for standard email registration."]}
             )
+
+        if password or password_confirm:
+            if password != password_confirm:
+                raise ValidationError(
+                    {"password_confirmation": ["Password and confirmation do not match."]}
+                )
 
     @validates_schema
     def validate_role_profile(self, data: dict, **kwargs) -> None:
@@ -127,3 +138,25 @@ class UserLoginResponseSchema(Schema):
         metadata={"description": "Access token lifetime in seconds, per JWT configuration."}
     )
     user = fields.Dict()
+
+
+# -----------------------------------------------------------------------
+# Google Authentication Schemas
+# -----------------------------------------------------------------------
+
+
+class GoogleAuthRequestSchema(Schema):
+    """Schema for validating Google OAuth authentication payloads."""
+
+    credential = fields.Str(required=False, allow_none=True)
+    id_token = fields.Str(required=False, allow_none=True)
+    code = fields.Str(required=False, allow_none=True)
+
+    @validates_schema
+    def validate_token_presence(self, data: dict, **kwargs) -> None:
+        """Ensure at least one Google authentication token/credential is provided."""
+        if not data.get("credential") and not data.get("id_token") and not data.get("code"):
+            raise ValidationError(
+                {"credential": ["Either 'credential', 'id_token', or 'code' is required."]}
+            )
+

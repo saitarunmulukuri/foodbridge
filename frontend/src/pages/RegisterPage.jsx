@@ -4,11 +4,16 @@
  * orange left brand hero panel, and right panel with 3-step registration flow.
  */
 
-import { useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { authService } from '../services/authService';
 import Stepper, { Step } from '../components/common/Stepper';
+import {
+  TextField,
+  NumberField,
+  Select,
+} from '../components/common/forms';
 import {
   UtensilsCrossed,
   Building2,
@@ -16,9 +21,8 @@ import {
   ArrowRight,
   CheckCircle,
   AlertCircle,
-  Eye,
-  EyeOff,
   Check,
+  ShieldCheck,
 } from 'lucide-react';
 
 /* ── Role Definitions ── */
@@ -70,23 +74,13 @@ function RoleCard({ role, isSelected, onSelect }) {
   );
 }
 
-/* ── Form Field wrapper ── */
-function FormField({ label, hint, children }) {
-  return (
-    <div style={{ marginBottom: 16 }}>
-      <label className="fb-form-label">{label}</label>
-      {children}
-      {hint && (
-        <p style={{ fontSize: 11, color: '#9CA3AF', marginTop: 4 }}>{hint}</p>
-      )}
-    </div>
-  );
-}
-
 /* ── Main Page ── */
 export const RegisterPage = () => {
+  const location = useLocation();
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const { login, loginDirect } = useAuth();
+
+  const googleUser = location.state?.googleUser || null;
 
   // Stepper state — controlled externally
   const [currentStep, setCurrentStep] = useState(1);
@@ -98,20 +92,27 @@ export const RegisterPage = () => {
   const [isPending, setIsPending] = useState(false);
 
   // Account fields
-  const [email, setEmail] = useState('');
+  const [email, setEmail] = useState(googleUser?.email || '');
   const [password, setPassword] = useState('');
   const [passwordConfirm, setPasswordConfirm] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showPasswordConfirm, setShowPasswordConfirm] = useState(false);
 
   // Profile fields
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
-  const [contactPerson, setContactPerson] = useState('');
+  const [contactPerson, setContactPerson] = useState(googleUser?.name || '');
   const [orgName, setOrgName] = useState('');
   const [registrationNumber, setRegistrationNumber] = useState('');
   const [serviceRadius, setServiceRadius] = useState('15');
   const [vehicleType, setVehicleType] = useState('VAN');
+
+  useEffect(() => {
+    if (googleUser?.email) {
+      setEmail(googleUser.email);
+    }
+    if (googleUser?.name) {
+      setContactPerson((prev) => prev || googleUser.name);
+    }
+  }, [googleUser]);
 
   const buildProfile = () => {
     if (selectedRole === 'DONOR') {
@@ -134,42 +135,72 @@ export const RegisterPage = () => {
   };
 
   const handleRegister = async () => {
-    if (password !== passwordConfirm) {
-      setErrorMessage('Passwords do not match.');
-      return false;
+    if (!googleUser) {
+      if (password !== passwordConfirm) {
+        setErrorMessage('Passwords do not match.');
+        return false;
+      }
+      if (!email || !password) {
+        setErrorMessage('All required fields must be filled.');
+        return false;
+      }
+    } else {
+      if (!email) {
+        setErrorMessage('Email address is missing.');
+        return false;
+      }
     }
-    if (!email || !password) {
-      setErrorMessage('All required fields must be filled.');
-      return false;
-    }
+
     setLoading(true);
     setErrorMessage('');
     try {
       const payload = {
         email,
-        password,
-        password_confirmation: passwordConfirm,
         role: selectedRole,
         profile: buildProfile(),
       };
+
+      if (googleUser) {
+        payload.google_subject_id = googleUser.google_subject_id;
+      } else {
+        payload.password = password;
+        payload.password_confirmation = passwordConfirm;
+      }
+
       const response = await authService.register(payload);
 
       if (response.success) {
-        const { account_status } = response.data;
+        const { account_status, user_id, role } = response.data;
         if (account_status === 'PENDING') {
           setSuccessMsg('Your NGO account is pending verification. You will be notified once activated.');
           setIsPending(true);
           return true;
         }
+
         setSuccessMsg('Your FoodBridge account is ready.');
-        const user = await login(email, password);
+
+        if (googleUser) {
+          // Attempt to log in with Google identity
+          try {
+            const loginResp = await authService.googleLogin(googleUser.google_subject_id);
+            if (loginResp.success && loginResp.data?.access_token) {
+              loginDirect(loginResp.data.user, loginResp.data.access_token);
+            }
+          } catch {
+            // Fallback user session initialization
+            loginDirect({ user_id, email, role, account_status }, null);
+          }
+        } else {
+          await login(email, password);
+        }
+
         setTimeout(() => {
-          switch (user.role) {
+          switch (selectedRole) {
             case 'DONOR':     navigate('/donor');     break;
             case 'VOLUNTEER': navigate('/volunteer'); break;
             default:          navigate('/login');     break;
           }
-        }, 2200);
+        }, 2000);
         return true;
       }
     } catch (err) {
@@ -188,6 +219,10 @@ export const RegisterPage = () => {
     }
   };
 
+  const handleRoleSelect = (roleKey) => {
+    setSelectedRole((prev) => (prev === roleKey ? '' : roleKey));
+  };
+
   const goToStep = (n) => {
     setErrorMessage('');
     setCurrentStep(n);
@@ -201,14 +236,39 @@ export const RegisterPage = () => {
 
   /* Step 2 → 3: validate then submit */
   const handleStep2Continue = async () => {
-    if (!email || !password || !passwordConfirm) {
-      setErrorMessage('All fields are required.');
-      return;
+    if (!googleUser) {
+      if (!email || !password || !passwordConfirm) {
+        setErrorMessage('All fields are required.');
+        return;
+      }
+      if (password !== passwordConfirm) {
+        setErrorMessage('Passwords do not match.');
+        return;
+      }
+    } else {
+      if (!email) {
+        setErrorMessage('Email is required.');
+        return;
+      }
     }
-    if (password !== passwordConfirm) {
-      setErrorMessage('Passwords do not match.');
-      return;
+
+    if (selectedRole === 'DONOR') {
+      if (!orgName || !contactPerson || !phone || !address) {
+        setErrorMessage('All organisation profile fields are required.');
+        return;
+      }
+    } else if (selectedRole === 'NGO') {
+      if (!orgName || !registrationNumber || !contactPerson || !phone || !address) {
+        setErrorMessage('All NGO profile fields are required.');
+        return;
+      }
+    } else if (selectedRole === 'VOLUNTEER') {
+      if (!phone || !vehicleType) {
+        setErrorMessage('Phone number and vehicle type are required.');
+        return;
+      }
     }
+
     const success = await handleRegister();
     if (success) goToStep(3);
   };
@@ -398,18 +458,51 @@ export const RegisterPage = () => {
             {/* ─────── STEP 1: ROLE SELECTION ─────── */}
             <Step>
               <div>
-                <p
+                <div
                   style={{
-                    fontSize: 10.5,
-                    fontWeight: 700,
-                    color: '#9CA3AF',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.08em',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
                     margin: '0 0 12px',
                   }}
                 >
-                  Choose your role
-                </p>
+                  <p
+                    style={{
+                      fontSize: 10.5,
+                      fontWeight: 700,
+                      color: '#9CA3AF',
+                      textTransform: 'uppercase',
+                      letterSpacing: '0.08em',
+                      margin: 0,
+                    }}
+                  >
+                    Choose your role
+                  </p>
+                  {selectedRole && (
+                    <button
+                      type="button"
+                      onClick={() => setSelectedRole('')}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#FF5A2F',
+                        fontSize: 11.5,
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        padding: '2px 6px',
+                        borderRadius: 4,
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        transition: 'all 150ms ease',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.textDecoration = 'underline')}
+                      onMouseLeave={(e) => (e.currentTarget.style.textDecoration = 'none')}
+                    >
+                      Deselect
+                    </button>
+                  )}
+                </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                   {ROLES.map((role) => (
@@ -417,7 +510,7 @@ export const RegisterPage = () => {
                       key={role.key}
                       role={role}
                       isSelected={selectedRole === role.key}
-                      onSelect={setSelectedRole}
+                      onSelect={handleRoleSelect}
                     />
                   ))}
                 </div>
@@ -466,138 +559,180 @@ export const RegisterPage = () => {
                 )}
 
                 {/* Account credentials */}
-                <FormField label="Email Address">
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="you@example.com"
-                    required
-                    className="fb-input"
-                  />
-                </FormField>
+                {googleUser ? (
+                  <div
+                    style={{
+                      marginBottom: 20,
+                      padding: '12px 14px',
+                      borderRadius: 10,
+                      background: '#F8FAFC',
+                      border: '1px solid #E2E8F0',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 12,
+                    }}
+                  >
+                    <div
+                      style={{
+                        width: 36,
+                        height: 36,
+                        borderRadius: 8,
+                        background: '#FFFFFF',
+                        border: '1px solid #E2E8F0',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                      }}
+                    >
+                      <svg style={{ width: 18, height: 18 }} viewBox="0 0 24 24">
+                        <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
+                        <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
+                        <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" fill="#FBBC05" />
+                        <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335" />
+                      </svg>
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                        <span style={{ fontSize: 13.5, fontWeight: 600, color: '#1E293B' }}>{googleUser.email}</span>
+                        <ShieldCheck size={15} style={{ color: '#10B981', flexShrink: 0 }} />
+                      </div>
+                      <div style={{ fontSize: 11, color: '#64748B' }}>Verified with Google · No password required</div>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <TextField
+                      label="Email Address"
+                      type="email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      placeholder="you@example.com"
+                      required
+                    />
 
-                <FormField
-                  label="Password"
-                  hint="Must contain uppercase, lowercase, digit, and special character."
-                >
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      type={showPassword ? 'text' : 'password'}
+                    <TextField
+                      label="Password"
+                      type="password"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Min 8 characters"
+                      hint="Must contain uppercase, lowercase, digit, and special character."
                       required
-                      className="fb-input"
-                      style={{ paddingRight: '2.5rem' }}
                     />
-                    <button
-                      type="button"
-                      tabIndex={-1}
-                      onClick={() => setShowPassword((v) => !v)}
-                      style={{
-                        position: 'absolute', right: 11, top: '50%', transform: 'translateY(-50%)',
-                        background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF',
-                        display: 'flex', padding: 4,
-                      }}
-                    >
-                      {showPassword ? <EyeOff size={14} /> : <Eye size={14} />}
-                    </button>
-                  </div>
-                </FormField>
 
-                <FormField label="Confirm Password">
-                  <div style={{ position: 'relative' }}>
-                    <input
-                      type={showPasswordConfirm ? 'text' : 'password'}
+                    <TextField
+                      label="Confirm Password"
+                      type="password"
                       value={passwordConfirm}
                       onChange={(e) => setPasswordConfirm(e.target.value)}
                       placeholder="Repeat password"
                       required
-                      className="fb-input"
-                      style={{ paddingRight: '2.5rem' }}
                     />
-                    <button
-                      type="button"
-                      tabIndex={-1}
-                      onClick={() => setShowPasswordConfirm((v) => !v)}
-                      style={{
-                        position: 'absolute', right: 11, top: '50%', transform: 'translateY(-50%)',
-                        background: 'none', border: 'none', cursor: 'pointer', color: '#9CA3AF',
-                        display: 'flex', padding: 4,
-                      }}
-                    >
-                      {showPasswordConfirm ? <EyeOff size={14} /> : <Eye size={14} />}
-                    </button>
-                  </div>
-                </FormField>
+                  </>
+                )}
 
                 {/* Role-specific profile fields */}
                 {selectedRole === 'DONOR' && (
                   <>
-                    <FormField label="Organisation / Establishment Name">
-                      <input type="text" value={orgName} onChange={(e) => setOrgName(e.target.value)}
-                        placeholder="e.g. The Grand Hotel" required className="fb-input" />
-                    </FormField>
-                    <FormField label="Contact Person">
-                      <input type="text" value={contactPerson} onChange={(e) => setContactPerson(e.target.value)}
-                        placeholder="Full name" required className="fb-input" />
-                    </FormField>
-                    <FormField label="Phone Number">
-                      <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
-                        placeholder="10-digit mobile number" required className="fb-input" />
-                    </FormField>
-                    <FormField label="Pickup Address">
-                      <input type="text" value={address} onChange={(e) => setAddress(e.target.value)}
-                        placeholder="Full street address" required className="fb-input" />
-                    </FormField>
+                    <TextField
+                      label="Organisation / Establishment Name"
+                      value={orgName}
+                      onChange={(e) => setOrgName(e.target.value)}
+                      placeholder="e.g. The Grand Hotel"
+                      required
+                    />
+                    <TextField
+                      label="Contact Person"
+                      value={contactPerson}
+                      onChange={(e) => setContactPerson(e.target.value)}
+                      placeholder="Full name"
+                      required
+                    />
+                    <TextField
+                      label="Phone Number"
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="10-digit mobile number"
+                      required
+                    />
+                    <TextField
+                      label="Pickup Address"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      placeholder="Full street address"
+                      required
+                    />
                   </>
                 )}
 
                 {selectedRole === 'NGO' && (
                   <>
-                    <FormField label="Organisation Name">
-                      <input type="text" value={orgName} onChange={(e) => setOrgName(e.target.value)}
-                        placeholder="Registered NGO name" required className="fb-input" />
-                    </FormField>
-                    <FormField label="NGO Registration Number">
-                      <input type="text" value={registrationNumber} onChange={(e) => setRegistrationNumber(e.target.value)}
-                        placeholder="e.g. NGO-2024-001" required className="fb-input" />
-                    </FormField>
-                    <FormField label="Contact Person">
-                      <input type="text" value={contactPerson} onChange={(e) => setContactPerson(e.target.value)}
-                        placeholder="Full name" required className="fb-input" />
-                    </FormField>
-                    <FormField label="Phone Number">
-                      <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
-                        placeholder="10-digit mobile number" required className="fb-input" />
-                    </FormField>
-                    <FormField label="Address">
-                      <input type="text" value={address} onChange={(e) => setAddress(e.target.value)}
-                        placeholder="Full address" required className="fb-input" />
-                    </FormField>
-                    <FormField
+                    <TextField
+                      label="Organisation Name"
+                      value={orgName}
+                      onChange={(e) => setOrgName(e.target.value)}
+                      placeholder="Registered NGO name"
+                      required
+                    />
+                    <TextField
+                      label="NGO Registration Number"
+                      value={registrationNumber}
+                      onChange={(e) => setRegistrationNumber(e.target.value)}
+                      placeholder="e.g. NGO-2024-001"
+                      required
+                    />
+                    <TextField
+                      label="Contact Person"
+                      value={contactPerson}
+                      onChange={(e) => setContactPerson(e.target.value)}
+                      placeholder="Full name"
+                      required
+                    />
+                    <TextField
+                      label="Phone Number"
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="10-digit mobile number"
+                      required
+                    />
+                    <TextField
+                      label="Address"
+                      value={address}
+                      onChange={(e) => setAddress(e.target.value)}
+                      placeholder="Full address"
+                      required
+                    />
+                    <NumberField
                       label="Service Radius (km)"
+                      value={serviceRadius}
+                      onChange={(e) => setServiceRadius(e.target.value)}
+                      min="1"
+                      max="500"
                       hint="NGO accounts undergo administrative review prior to activation."
-                    >
-                      <input type="number" value={serviceRadius} onChange={(e) => setServiceRadius(e.target.value)}
-                        min="1" max="500" className="fb-input" />
-                    </FormField>
+                    />
                   </>
                 )}
 
                 {selectedRole === 'VOLUNTEER' && (
                   <>
-                    <FormField label="Phone Number">
-                      <input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)}
-                        placeholder="10-digit mobile number" required className="fb-input" />
-                    </FormField>
-                    <FormField label="Vehicle Type">
-                      <select value={vehicleType} onChange={(e) => setVehicleType(e.target.value)}
-                        required className="fb-input">
-                        {VEHICLE_TYPES.map((vt) => <option key={vt} value={vt}>{vt}</option>)}
-                      </select>
-                    </FormField>
+                    <TextField
+                      label="Phone Number"
+                      type="tel"
+                      value={phone}
+                      onChange={(e) => setPhone(e.target.value)}
+                      placeholder="10-digit mobile number"
+                      required
+                    />
+                    <Select
+                      label="Vehicle Type"
+                      value={vehicleType}
+                      onChange={(e) => setVehicleType(e.target.value)}
+                      options={VEHICLE_TYPES}
+                      required
+                    />
                   </>
                 )}
 
@@ -698,3 +833,6 @@ export const RegisterPage = () => {
     </div>
   );
 };
+
+export default RegisterPage;
+

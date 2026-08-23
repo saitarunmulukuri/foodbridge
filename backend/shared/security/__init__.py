@@ -16,6 +16,7 @@ Exports:
 """
 
 from backend.shared.security.email import normalize_email
+from backend.shared.security.google_auth import verify_google_token
 from backend.shared.security.jwt import (
     create_user_access_token,
     create_user_refresh_token,
@@ -30,8 +31,11 @@ __all__ = [
     "DUMMY_HASH",
     # Email
     "normalize_email",
+    # Google Auth
+    "verify_google_token",
     # JWT
     "create_user_access_token",
     "create_user_refresh_token",
     "get_access_token_expires_seconds",
 ]
+

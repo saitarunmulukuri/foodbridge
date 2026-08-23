@@ -54,10 +54,12 @@ export const ImpactPage = () => {
     setError(null);
     try {
       const res = await donationService.listMyDonations();
-      const list = res?.donations || res?.data?.donations || [];
+      const rawList = res?.donations || res?.data?.donations || (Array.isArray(res?.data) ? res.data : []);
+      const list = Array.isArray(rawList) ? [...rawList] : [];
       setDonations(list);
     } catch (err) {
       setError(err.message || 'Failed to load donation metrics.');
+      setDonations([]);
     } finally {
       setLoading(false);
     }
@@ -68,15 +70,17 @@ export const ImpactPage = () => {
   }, []);
 
   const metrics = useMemo(() => {
-    const totalOffers = donations.length;
-    const activeOffers = donations.filter(d => ACTIVE_STATUSES.has(d.status));
-    const completedOffers = donations.filter(d => COMPLETED_STATUSES.has(d.status));
-    const expiredOrCancelled = donations.filter(d => TERMINAL_STATUSES.has(d.status));
+    const list = Array.isArray(donations) ? donations : [];
+    const totalOffers = list.length;
+    const activeOffers = list.filter(d => d && ACTIVE_STATUSES.has(d.status));
+    const completedOffers = list.filter(d => d && COMPLETED_STATUSES.has(d.status));
+    const expiredOrCancelled = list.filter(d => d && TERMINAL_STATUSES.has(d.status));
 
     const quantityByUnit = {};
     const completedQuantityByUnit = {};
 
-    donations.forEach((d) => {
+    list.forEach((d) => {
+      if (!d) return;
       const qty = Number(d.total_quantity) || 0;
       const rawUnit = (d.quantity_unit || 'items').toLowerCase().trim();
       const unitKey = rawUnit.endsWith('s') ? rawUnit : `${rawUnit}s`;
@@ -107,7 +111,8 @@ export const ImpactPage = () => {
   }, [donations]);
 
   const recentJourneys = useMemo(() => {
-    return [...donations]
+    const list = Array.isArray(donations) ? donations : [];
+    return [...list]
       .sort((a, b) => new Date(b.created_at || 0) - new Date(a.created_at || 0))
       .slice(0, 5);
   }, [donations]);
@@ -369,3 +374,6 @@ export const ImpactPage = () => {
     </div>
   );
 };
+
+export default ImpactPage;
+

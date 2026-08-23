@@ -24,11 +24,11 @@ export const geoService = {
           });
         },
         (error) => {
-          let message = 'Could not detect location.';
+          let message = 'Unable to determine your location. Please try again.';
           if (error.code === error.PERMISSION_DENIED) {
-            message = 'Location permission was blocked. You can enter the pickup address manually.';
+            message = 'Location permission was denied. Please allow location access or enter your location manually.';
           } else if (error.code === error.POSITION_UNAVAILABLE) {
-            message = 'Location information is unavailable on your device.';
+            message = 'Unable to determine your location. Please try again.';
           } else if (error.code === error.TIMEOUT) {
             message = 'Location request timed out. Please try again or enter manually.';
           }

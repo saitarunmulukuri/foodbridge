@@ -101,3 +101,15 @@ class LoginValidationException(ValidationException):
             error_code="VALIDATION_ERROR",
             details=details,
         )
+
+
+class InvalidGoogleTokenException(UnauthorizedException):
+    """Exception raised when Google ID token validation fails."""
+
+    def __init__(self, reason: str = "Invalid or expired Google authentication token.") -> None:
+        super().__init__(
+            message=reason,
+            status_code=401,
+            error_code="INVALID_GOOGLE_TOKEN",
+        )
+

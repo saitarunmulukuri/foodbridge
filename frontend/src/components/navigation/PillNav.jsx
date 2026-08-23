@@ -53,60 +53,16 @@ export const PillNav = ({
 
   // ── GSAP layout for pill hover bubbles ────────────────────────────
   const setupLayout = useCallback(() => {
-    // Setup for standard items
-    circleRefs.current.forEach((circle, index) => {
-      if (!circle?.parentElement) return;
+    try {
+      // Setup for standard items
+      circleRefs.current.forEach((circle, index) => {
+        if (!circle?.parentElement) return;
 
-      const pill = circle.parentElement;
-      const rect = pill.getBoundingClientRect();
-      const { width: w, height: h } = rect;
-      if (w === 0 || h === 0) return;
+        const pill = circle.parentElement;
+        const rect = pill.getBoundingClientRect();
+        const { width: w, height: h } = rect;
+        if (w === 0 || h === 0) return;
 
-      const R = ((w * w) / 4 + h * h) / (2 * h);
-      const D = Math.ceil(2 * R) + 2;
-      const delta = Math.ceil(R - Math.sqrt(Math.max(0, R * R - (w * w) / 4))) + 1;
-      const originY = D - delta;
-
-      circle.style.width = `${D}px`;
-      circle.style.height = `${D}px`;
-      circle.style.bottom = `-${delta}px`;
-
-      gsap.set(circle, {
-        xPercent: -50,
-        scale: 0,
-        transformOrigin: `50% ${originY}px`,
-      });
-
-      const label = pill.querySelector('.pill-label');
-      const hoverLabel = pill.querySelector('.pill-label-hover');
-
-      if (label) gsap.set(label, { y: 0 });
-      if (hoverLabel) gsap.set(hoverLabel, { y: h + 10, opacity: 0 });
-
-      tlRefs.current[index]?.kill();
-      const tl = gsap.timeline({ paused: true });
-
-      tl.to(circle, { scale: 1.25, xPercent: -50, duration: 0.32, ease, overwrite: 'auto' }, 0);
-
-      if (label) {
-        tl.to(label, { y: -(h + 6), duration: 0.32, ease, overwrite: 'auto' }, 0);
-      }
-
-      if (hoverLabel) {
-        gsap.set(hoverLabel, { y: Math.ceil(h + 10), opacity: 0 });
-        tl.to(hoverLabel, { y: 0, opacity: 1, duration: 0.32, ease, overwrite: 'auto' }, 0);
-      }
-
-      tlRefs.current[index] = tl;
-    });
-
-    // Setup for CTA item if present (e.g. Create Donation)
-    if (ctaCircleRef.current?.parentElement) {
-      const circle = ctaCircleRef.current;
-      const pill = circle.parentElement;
-      const rect = pill.getBoundingClientRect();
-      const { width: w, height: h } = rect;
-      if (w > 0 && h > 0) {
         const R = ((w * w) / 4 + h * h) / (2 * h);
         const D = Math.ceil(2 * R) + 2;
         const delta = Math.ceil(R - Math.sqrt(Math.max(0, R * R - (w * w) / 4))) + 1;
@@ -128,7 +84,7 @@ export const PillNav = ({
         if (label) gsap.set(label, { y: 0 });
         if (hoverLabel) gsap.set(hoverLabel, { y: h + 10, opacity: 0 });
 
-        ctaTlRef.current?.kill();
+        tlRefs.current[index]?.kill();
         const tl = gsap.timeline({ paused: true });
 
         tl.to(circle, { scale: 1.25, xPercent: -50, duration: 0.32, ease, overwrite: 'auto' }, 0);
@@ -142,8 +98,56 @@ export const PillNav = ({
           tl.to(hoverLabel, { y: 0, opacity: 1, duration: 0.32, ease, overwrite: 'auto' }, 0);
         }
 
-        ctaTlRef.current = tl;
+        tlRefs.current[index] = tl;
+      });
+
+      // Setup for CTA item if present (e.g. Create Donation)
+      if (ctaCircleRef.current?.parentElement) {
+        const circle = ctaCircleRef.current;
+        const pill = circle.parentElement;
+        const rect = pill.getBoundingClientRect();
+        const { width: w, height: h } = rect;
+        if (w > 0 && h > 0) {
+          const R = ((w * w) / 4 + h * h) / (2 * h);
+          const D = Math.ceil(2 * R) + 2;
+          const delta = Math.ceil(R - Math.sqrt(Math.max(0, R * R - (w * w) / 4))) + 1;
+          const originY = D - delta;
+
+          circle.style.width = `${D}px`;
+          circle.style.height = `${D}px`;
+          circle.style.bottom = `-${delta}px`;
+
+          gsap.set(circle, {
+            xPercent: -50,
+            scale: 0,
+            transformOrigin: `50% ${originY}px`,
+          });
+
+          const label = pill.querySelector('.pill-label');
+          const hoverLabel = pill.querySelector('.pill-label-hover');
+
+          if (label) gsap.set(label, { y: 0 });
+          if (hoverLabel) gsap.set(hoverLabel, { y: h + 10, opacity: 0 });
+
+          ctaTlRef.current?.kill();
+          const tl = gsap.timeline({ paused: true });
+
+          tl.to(circle, { scale: 1.25, xPercent: -50, duration: 0.32, ease, overwrite: 'auto' }, 0);
+
+          if (label) {
+            tl.to(label, { y: -(h + 6), duration: 0.32, ease, overwrite: 'auto' }, 0);
+          }
+
+          if (hoverLabel) {
+            gsap.set(hoverLabel, { y: Math.ceil(h + 10), opacity: 0 });
+            tl.to(hoverLabel, { y: 0, opacity: 1, duration: 0.32, ease, overwrite: 'auto' }, 0);
+          }
+
+          ctaTlRef.current = tl;
+        }
       }
+    } catch (e) {
+      console.warn('PillNav layout calculation non-fatal warning:', e);
     }
   }, [ease]);
 
