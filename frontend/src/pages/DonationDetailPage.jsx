@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { donationService } from '../services/donationService';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { FoodJourney } from '../components/common/FoodJourney';
@@ -7,6 +7,8 @@ import { ExpiryTimer } from '../components/common/ExpiryTimer';
 import { SmartMatchPanel } from '../components/donor/SmartMatchPanel';
 import { Stepper, Step } from '../components/common/Stepper';
 import { SpotlightCard } from '../components/common/SpotlightCard';
+import { Button } from '../components/common/Button';
+import { GlareHover } from '../components/magicui/GlareHover';
 import {
   IN_PROGRESS_STATUSES,
   COMPLETED_STATUSES,
@@ -109,55 +111,57 @@ function getJourneyStepNumber(status) {
 }
 
 const Card = ({ title, icon: Icon, children, className = '' }) => (
-  <SpotlightCard
-    className={`fb-section-card bg-white border border-slate-200 shadow-sm ${className}`}
-    spotlightColor="rgba(255, 85, 62, 0.08)"
-  >
-    {title && (
-      <div className="fb-section-card-header bg-slate-50/60 border-b border-slate-100 relative z-10">
-        {Icon && <Icon size={16} className="text-[#FF553E] shrink-0" />}
-        <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider">{title}</h2>
-      </div>
-    )}
-    <div className="p-5 sm:p-6 relative z-10">{children}</div>
-  </SpotlightCard>
+  <GlareHover className="rounded-2xl" duration={600} opacity={0.45}>
+    <SpotlightCard
+      className={`fb-section-card bg-white dark:bg-[#11171F] border border-slate-200 dark:border-[#26313D] shadow-sm ${className}`}
+      spotlightColor="rgba(255, 85, 62, 0.08)"
+    >
+      {title && (
+        <div className="fb-section-card-header bg-slate-50/60 dark:bg-[#171E27] border-b border-slate-100 dark:border-[#26313D] relative z-10">
+          {Icon && <Icon size={16} className="text-[#FF5A2F] shrink-0" />}
+          <h2 className="text-xs font-bold text-slate-900 dark:text-[#F5F7FA] uppercase tracking-wider">{title}</h2>
+        </div>
+      )}
+      <div className="p-5 sm:p-6 relative z-10">{children}</div>
+    </SpotlightCard>
+  </GlareHover>
 );
 
 const MetaRow = ({ icon: Icon, label, value }) => {
   if (!value) return null;
   return (
-    <div className="flex items-start space-x-3.5 py-3 border-b border-slate-100 last:border-0">
+    <div className="flex items-start space-x-3.5 py-3 border-b border-slate-100 dark:border-[#26313D] last:border-0">
       <div
-        className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 bg-orange-50 text-[#FF553E] border border-orange-200"
+        className="w-8 h-8 rounded-xl flex items-center justify-center shrink-0 mt-0.5 bg-orange-50 dark:bg-orange-500/15 text-[#FF5A2F] border border-orange-200 dark:border-orange-500/30"
       >
         <Icon size={14} />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-[10px] text-slate-400 font-bold uppercase tracking-widest">{label}</p>
-        <p className="text-xs sm:text-sm text-slate-900 mt-0.5 font-semibold leading-snug break-words">{value}</p>
+        <p className="text-[10px] text-slate-400 dark:text-[#748296] font-bold uppercase tracking-widest">{label}</p>
+        <p className="text-xs font-semibold text-slate-800 dark:text-[#F5F7FA] mt-0.5">{value}</p>
       </div>
     </div>
   );
 };
 
 const FoodItemRow = ({ item, index }) => (
-  <div className="flex items-center justify-between py-3 border-b border-slate-100 last:border-0">
+  <div className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-[#26313D] last:border-0">
     <div className="flex items-center space-x-3">
-      <div className="w-7 h-7 rounded-lg bg-slate-100 border border-slate-200 flex items-center justify-center text-slate-700 text-xs font-extrabold shrink-0">
+      <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-[#171E27] border border-slate-200 dark:border-[#26313D] flex items-center justify-center text-slate-700 dark:text-[#F5F7FA] text-xs font-extrabold shrink-0">
         {index + 1}
       </div>
       <div>
-        <p className="text-xs sm:text-sm font-bold text-slate-900">{item.food_name || item.item_name || 'Food Item'}</p>
+        <p className="text-xs sm:text-sm font-bold text-slate-900 dark:text-[#F5F7FA]">{item.food_name || item.item_name || 'Food Item'}</p>
         {item.food_category && (
-          <p className="text-[11px] text-slate-500 font-medium mt-0.5">{item.food_category}</p>
+          <p className="text-[11px] text-slate-500 dark:text-[#A5B1C2] font-medium mt-0.5">{item.food_category}</p>
         )}
       </div>
     </div>
     <div className="text-right">
-      <span className="text-xs sm:text-sm font-extrabold text-slate-900 tabular-nums">
+      <span className="text-xs sm:text-sm font-extrabold text-slate-900 dark:text-[#F5F7FA] tabular-nums">
         {item.quantity ?? item.quantity_kg ?? '—'}
       </span>
-      {item.unit && <span className="text-slate-500 font-medium ml-1 text-xs">{item.unit}</span>}
+      {item.unit && <span className="text-slate-500 dark:text-[#A5B1C2] font-medium ml-1 text-xs">{item.unit}</span>}
     </div>
   </div>
 );
@@ -202,15 +206,20 @@ const DonationActions = ({ donation, onRefresh }) => {
 
       {/* DRAFT -> Submit */}
       {status === 'DRAFT' && (
-        <button
+        <Button
           id="submit-donation-btn"
           onClick={handleSubmit}
           disabled={submitting}
-          className="w-full fb-btn-primary py-3.5 text-sm font-bold shadow-lg"
+          loading={submitting}
+          loadingText="Submitting…"
+          variant="primary"
+          size="lg"
+          fullWidth
+          icon={Send}
+          className="shadow-lg"
         >
-          {submitting ? <RefreshCw size={15} className="animate-spin" /> : <Send size={15} />}
-          <span>{submitting ? 'Submitting…' : 'Submit Donation Offer'}</span>
-        </button>
+          Submit Donation Offer
+        </Button>
       )}
 
       {/* SUBMITTED -> SmartMatchPanel */}
@@ -288,11 +297,11 @@ export const DonationDetailPage = () => {
   if (loading) {
     return (
       <div className="space-y-5 max-w-5xl mx-auto">
-        <div className="h-8 w-40 bg-white border border-slate-200 rounded-xl fb-skeleton" />
-        <div className="h-44 bg-white border border-slate-200 rounded-3xl fb-skeleton" />
+        <div className="h-8 w-40 bg-white dark:bg-[#11171F] border border-slate-200 dark:border-[#26313D] rounded-xl fb-skeleton" />
+        <div className="h-44 bg-white dark:bg-[#11171F] border border-slate-200 dark:border-[#26313D] rounded-3xl fb-skeleton" />
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-          <div className="h-64 bg-white border border-slate-200 rounded-2xl fb-skeleton" />
-          <div className="h-64 bg-white border border-slate-200 rounded-2xl fb-skeleton" />
+          <div className="h-64 bg-white dark:bg-[#11171F] border border-slate-200 dark:border-[#26313D] rounded-2xl fb-skeleton" />
+          <div className="h-64 bg-white dark:bg-[#11171F] border border-slate-200 dark:border-[#26313D] rounded-2xl fb-skeleton" />
         </div>
       </div>
     );
@@ -305,9 +314,9 @@ export const DonationDetailPage = () => {
           <AlertCircle size={16} className="shrink-0" />
           <span>{error || 'Donation not found.'}</span>
         </div>
-        <button onClick={() => navigate('/donor')} className="text-xs text-slate-500 hover:text-slate-900 transition font-bold">
+        <Button onClick={() => navigate('/donor')} variant="secondary" size="sm">
           ← Back to Dashboard
-        </button>
+        </Button>
       </div>
     );
   }
@@ -326,38 +335,40 @@ export const DonationDetailPage = () => {
 
       {/* Back Navigation Breadcrumb */}
       <div className="flex items-center justify-between">
-        <Link
+        <Button
           to="/donor/list"
-          className="inline-flex items-center space-x-1.5 text-xs text-slate-500 hover:text-slate-900 transition font-bold"
+          variant="ghost"
+          size="sm"
+          icon={ArrowLeft}
         >
-          <ArrowLeft size={14} />
-          <span>Back to My Donations</span>
-        </Link>
-        <button
+          Back to My Donations
+        </Button>
+        <Button
           onClick={fetchDonation}
-          className="inline-flex items-center space-x-1.5 text-xs text-slate-500 hover:text-slate-900 transition font-semibold"
+          variant="ghost"
+          size="sm"
+          icon={RefreshCw}
         >
-          <RefreshCw size={12} />
-          <span>Refresh</span>
-        </button>
+          Refresh
+        </Button>
       </div>
 
       {/* Cloudhub Hero Banner Card */}
-      <div className="fb-page-header fb-hero-donor bg-white border border-slate-200 shadow-md">
+      <div className="fb-page-header fb-hero-donor bg-white dark:bg-[#11171F] border border-slate-200 dark:border-[#26313D] shadow-md">
         <div className="relative z-10">
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="flex items-center space-x-2 mb-2">
-                <span className="text-[11px] font-mono text-slate-400 font-bold">ID #{donation.donation_id}</span>
+                <span className="text-[11px] font-mono text-slate-400 dark:text-[#748296] font-bold">ID #{donation.donation_id}</span>
                 <StatusBadge status={donation.status} />
               </div>
-              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-tight">
+              <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-[#F5F7FA] leading-tight">
                 {donation.donation_title || `Donation #${donation.donation_id}`}
               </h1>
-              <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 mt-2.5 text-xs text-slate-500 font-medium">
+              <div className="flex flex-wrap items-center gap-x-5 gap-y-1.5 mt-2.5 text-xs text-slate-500 dark:text-[#A5B1C2] font-medium">
                 {qty && (
-                  <span className="flex items-center space-x-1.5 text-slate-900 font-bold">
-                    <Boxes size={14} className="text-[#FF553E] shrink-0" />
+                  <span className="flex items-center space-x-1.5 text-slate-900 dark:text-[#F5F7FA] font-bold">
+                    <Boxes size={14} className="text-[#FF5A2F] shrink-0" />
                     <span>{qty}</span>
                   </span>
                 )}
@@ -373,7 +384,7 @@ export const DonationDetailPage = () => {
                 </span>
               </div>
               {donation.description && (
-                <p className="text-xs text-slate-600 mt-3 leading-relaxed max-w-3xl font-normal">
+                <p className="text-xs text-slate-600 dark:text-[#AAB4C2] mt-3 leading-relaxed max-w-3xl font-normal">
                   {donation.description}
                 </p>
               )}
@@ -381,7 +392,7 @@ export const DonationDetailPage = () => {
           </div>
 
           {showExpirySection && (
-            <div className="mt-5 pt-4 border-t border-slate-100">
+            <div className="mt-5 pt-4 border-t border-slate-100 dark:border-[#242D38]">
               <ExpiryTimer
                 expiryTime={donation.expiry_time}
                 donationStatus={donation.status}
@@ -398,7 +409,7 @@ export const DonationDetailPage = () => {
           <Stepper
             initialStep={currentJourneyStep}
             currentStep={currentJourneyStep}
-            activeColor="#FF553E"
+            activeColor="#FF5A2F"
             completeColor="#10B981"
             hideFooter={true}
             disableStepIndicators={false}
@@ -412,35 +423,35 @@ export const DonationDetailPage = () => {
 
               return (
                 <Step key={step.num}>
-                  <div className="bg-slate-50/80 border border-slate-200/90 rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                  <div className="bg-slate-50/80 dark:bg-[#171E27] border border-slate-200/90 dark:border-[#26313D] rounded-2xl p-4 sm:p-5 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className="flex items-start space-x-3.5">
                       <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 border ${
                         isCurrent
-                          ? 'bg-orange-50 text-[#FF553E] border-orange-200 shadow-sm'
+                          ? 'bg-orange-50 dark:bg-orange-500/15 text-[#FF5A2F] border-orange-200 dark:border-orange-500/30 shadow-sm'
                           : isDone
-                          ? 'bg-emerald-50 text-emerald-600 border-emerald-200'
-                          : 'bg-white text-slate-400 border-slate-200'
+                          ? 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30'
+                          : 'bg-white dark:bg-[#11171F] text-slate-400 dark:text-slate-500 border-slate-200 dark:border-[#26313D]'
                       }`}>
                         <Icon size={18} />
                       </div>
                       <div>
                         <div className="flex items-center space-x-2">
-                          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400">
+                          <span className="text-[10px] font-mono font-bold uppercase tracking-wider text-slate-400 dark:text-[#748296]">
                             Stage {step.num} of 7
                           </span>
                           {isCurrent && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#FF553E] text-white">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-[#FF5A2F] text-white">
                               Active Stage
                             </span>
                           )}
                           {isDone && (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[9px] font-bold bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30">
                               Completed
                             </span>
                           )}
                         </div>
-                        <h3 className="text-sm font-bold text-slate-900 mt-0.5">{step.title}</h3>
-                        <p className="text-xs text-slate-500 mt-0.5 leading-relaxed font-medium">{step.desc}</p>
+                        <h3 className="text-sm font-bold text-slate-900 dark:text-[#F5F7FA] mt-0.5">{step.title}</h3>
+                        <p className="text-xs text-slate-500 dark:text-[#AAB4C2] mt-0.5 leading-relaxed font-medium">{step.desc}</p>
                       </div>
                     </div>
 

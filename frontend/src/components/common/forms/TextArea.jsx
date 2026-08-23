@@ -45,37 +45,19 @@ export const TextArea = forwardRef(({
         readOnly={readOnly}
         aria-invalid={!!error}
         aria-required={required}
-        className={`w-full text-slate-900 placeholder:text-slate-400 font-sans transition-all duration-150 outline-none p-3.5 ${inputClassName}`}
+        className={`w-full font-sans transition-all duration-150 outline-none p-3.5 rounded-[10px] text-[13.5px] min-h-[80px] ${
+          disabled
+            ? 'bg-slate-50 dark:bg-[#11171F] text-slate-400 dark:text-slate-600 border-slate-200 dark:border-[#26313D] cursor-not-allowed'
+            : error
+            ? 'bg-white dark:bg-[#171E27] text-slate-900 dark:text-[#F5F7FA] border-red-500 ring-2 ring-red-500/20'
+            : 'bg-white dark:bg-[#171E27] text-slate-900 dark:text-[#F5F7FA] border border-slate-200 dark:border-[#26313D] placeholder-slate-400 dark:placeholder-[#748296] focus:border-[#FF5A2F] focus:ring-2 focus:ring-[#FF5A2F]/20'
+        } ${inputClassName}`}
         style={{
-          borderRadius: 10,
-          backgroundColor: disabled ? '#F8FAFC' : '#FFFFFF',
-          border: error
-            ? '1.5px solid #EF4444'
-            : '1px solid #E2E8F0',
-          fontSize: 13.5,
-          color: disabled ? '#94A3B8' : '#0F172A',
-          cursor: disabled ? 'not-allowed' : 'text',
-          boxShadow: error
-            ? '0 0 0 3px rgba(239, 68, 68, 0.12)'
-            : '0 1px 2px rgba(0, 0, 0, 0.02)',
           resize: 'vertical',
-          minHeight: 80,
           ...inputStyle,
         }}
-        onFocusCapture={(e) => {
-          if (!error) {
-            e.currentTarget.style.borderColor = '#FF5A36';
-            e.currentTarget.style.boxShadow = '0 0 0 3px rgba(255, 90, 54, 0.15)';
-          }
-          if (onFocus) onFocus(e);
-        }}
-        onBlurCapture={(e) => {
-          if (!error) {
-            e.currentTarget.style.borderColor = '#E2E8F0';
-            e.currentTarget.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.02)';
-          }
-          if (onBlur) onBlur(e);
-        }}
+        onFocus={onFocus}
+        onBlur={onBlur}
         {...restProps}
       />
     </div>

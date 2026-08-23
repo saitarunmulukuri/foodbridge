@@ -35,7 +35,7 @@ export const MobileNav = () => {
   if (items.length === 0) return null;
 
   return (
-    <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 h-16 flex items-stretch bg-white/95 backdrop-blur-md border-t border-slate-200 shadow-lg">
+    <nav className="md:hidden fixed bottom-0 inset-x-0 z-40 h-16 flex items-stretch bg-white/95 dark:bg-[#11171F]/95 backdrop-blur-md border-t border-slate-200 dark:border-[#26313D] shadow-lg">
       {items.map((item) => {
         const Icon = item.icon;
         return (
@@ -45,7 +45,7 @@ export const MobileNav = () => {
             end={item.end}
             className={({ isActive }) =>
               `flex-1 flex flex-col items-center justify-center gap-1 text-[10px] font-bold transition-colors relative
-              ${isActive ? 'text-[#FF553E]' : 'text-slate-400 hover:text-slate-700'}`
+              ${isActive ? 'text-[#FF5A2F]' : 'text-slate-400 dark:text-[#748296] hover:text-slate-700 dark:hover:text-[#F5F7FA]'}`
             }
           >
             {({ isActive }) => (
@@ -53,13 +53,12 @@ export const MobileNav = () => {
                 {/* Active indicator at top */}
                 <span
                   className={`absolute top-0 left-1/2 -translate-x-1/2 h-1 rounded-full transition-all duration-200 ${
-                    isActive ? 'w-10 bg-[#FF553E]' : 'w-0 bg-transparent'
+                    isActive ? 'w-10 bg-[#FF5A2F]' : 'w-0 bg-transparent'
                   }`}
                 />
                 <Icon
                   size={20}
-                  className={`transition-colors ${isActive ? 'text-[#FF553E]' : 'text-slate-400'}`}
-                  strokeWidth={isActive ? 2.5 : 1.75}
+                  className={`shrink-0 transition-transform ${isActive ? 'scale-110 text-[#FF5A2F]' : ''}`}
                 />
                 <span>{item.label}</span>
               </>

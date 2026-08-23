@@ -1,13 +1,29 @@
 /**
- * VolunteerDashboard — Volunteer Logistics Driver dashboard.
- * Authentic Cloudhub SaaS light design.
+ * VolunteerDashboard — Complete Volunteer Driver Experience.
+ *
+ * Features:
+ *  • Large 3D truck hero (visual identity of the Volunteer Driver page)
+ *  • Pickup → In Transit → Delivery logistics flow
+ *  • Online / Offline status toggle (maps to operational_status: AVAILABLE / OFFLINE)
+ *  • Available / Unavailable session toggle (local session preference)
+ *  • Pending assignments: Accept / Reject + Accept All / Reject All (with confirmation)
+ *  • Active delivery: progress tracker + state-appropriate actions
+ *  • Completed deliveries history
+ *  • Empty states per driver status
+ *  • Reduced-motion support
+ *  • Attribution: "Truck by Poly by Google" — Poly Pizza (CC-BY)
+ *
+ * All API calls use the existing volunteerService — no new backend endpoints.
  */
-import { useEffect, useState, useMemo } from 'react';
+
+import { useEffect, useState, useMemo, useCallback, Fragment } from 'react';
 import { volunteerService } from '../services/volunteerService';
 import { useAuth } from '../contexts/AuthContext';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { ExpiryTimer } from '../components/common/ExpiryTimer';
-import { AnimatedList } from '../components/common/AnimatedList';
+import { Button } from '../components/common/Button';
+import { TruckViewer } from '../components/volunteer/TruckViewer';
+import { PendingAssignmentCard } from '../components/volunteer/PendingAssignmentCard';
 import {
   RefreshCw,
   AlertCircle,
@@ -15,207 +31,385 @@ import {
   MapPin,
   Boxes,
   Clock,
-  ShieldCheck,
-  ShieldOff,
   History,
   ClipboardList,
-  Navigation,
+  Wifi,
+  WifiOff,
+  ShieldCheck,
+  ShieldOff,
+  Package,
+  Truck,
+  Home,
+  ChevronRight,
+  CheckCheck,
+  XCircle,
+  X,
+  AlertTriangle,
 } from 'lucide-react';
 
-const ACTIVE_STATUSES = new Set(['PENDING', 'ASSIGNED', 'ACCEPTED', 'PICKUP_IN_PROGRESS', 'IN_TRANSIT']);
-const DONE_STATUSES   = new Set(['DELIVERED', 'COMPLETED', 'DECLINED', 'CANCELLED']);
+// ── Status sets ────────────────────────────────────────────────────────────────
+
+const PENDING_STATUSES = new Set(['PENDING', 'ASSIGNED']);
+const ACTIVE_STATUSES = new Set(['ACCEPTED', 'PICKUP_IN_PROGRESS', 'IN_TRANSIT']);
+const DONE_STATUSES = new Set(['DELIVERED', 'COMPLETED', 'DECLINED', 'CANCELLED']);
+
+// ── Delivery progress steps (visual only) ─────────────────────────────────────
+
+const DELIVERY_STEPS = [
+  { key: 'ASSIGNED', label: 'Assigned', Icon: ClipboardList },
+  { key: 'ACCEPTED', label: 'Accepted', Icon: CheckCircle2 },
+  { key: 'PICKUP_IN_PROGRESS', label: 'Picked Up', Icon: Package },
+  { key: 'IN_TRANSIT', label: 'In Transit', Icon: Truck },
+  { key: 'DELIVERED', label: 'Delivered', Icon: Home },
+];
+
+function getDeliveryStepIndex(status) {
+  const map = {
+    PENDING: 0, ASSIGNED: 0,
+    ACCEPTED: 1,
+    PICKUP_IN_PROGRESS: 2,
+    IN_TRANSIT: 3,
+    DELIVERED: 4, COMPLETED: 4,
+  };
+  return map[status] ?? 0;
+}
+
+// ── Helpers ────────────────────────────────────────────────────────────────────
 
 function formatShortDate(iso) {
   if (!iso) return '—';
   const d = new Date(iso);
   if (isNaN(d.getTime())) return '—';
-  return d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+  return d.toLocaleDateString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
 }
+
+function useReducedMotion() {
+  return useMemo(() => {
+    if (typeof window === 'undefined') return false;
+    return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  }, []);
+}
+
+// ── Sub-components ─────────────────────────────────────────────────────────────
 
 const AlertBanner = ({ type, message, onDismiss }) => {
   const styles = {
-    success: 'bg-emerald-50 border-emerald-200 text-emerald-800',
-    error:   'bg-red-50 border-red-200 text-red-800',
+    success: 'bg-emerald-50 dark:bg-emerald-500/10 border-emerald-200 dark:border-emerald-500/25 text-emerald-800 dark:text-emerald-300',
+    error: 'bg-red-50 dark:bg-red-500/10 border-red-200 dark:border-red-500/25 text-red-800 dark:text-red-300',
   };
   const Icon = type === 'success' ? CheckCircle2 : AlertCircle;
   return (
-    <div className={`flex items-center justify-between px-4 py-3 rounded-md border text-xs font-medium ${styles[type] || styles.error}`}>
+    <div
+      className={`flex items-center justify-between px-4 py-3 rounded-lg border text-xs font-medium ${styles[type] || styles.error}`}
+      role="alert"
+    >
       <div className="flex items-center space-x-2.5">
-        <Icon size={15} className="shrink-0" />
+        <Icon size={14} className="shrink-0" />
         <span>{message}</span>
       </div>
       {onDismiss && (
-        <button onClick={onDismiss} className="ml-3 opacity-60 hover:opacity-100 transition text-xs">✕</button>
+        <button
+          onClick={onDismiss}
+          className="ml-3 text-slate-400 hover:text-slate-700 dark:hover:text-[#F5F7FA] p-0.5 rounded transition-colors"
+          aria-label="Dismiss notification"
+        >
+          <X size={14} className="shrink-0" />
+        </button>
       )}
     </div>
   );
 };
 
-const StatusToggle = ({ profile, onToggle, loading }) => {
-  const isAvailable = profile?.operational_status === 'AVAILABLE';
+// ── Hero: Logistics flow indicator ───────────────────────────────────────────
 
-  return (
-    <div className="bg-white border border-slate-200 rounded-lg p-5">
-      <div className="flex items-center justify-between gap-3">
-        <div className="flex items-center space-x-3">
-          <div className={`w-9 h-9 rounded-md flex items-center justify-center shrink-0 ${isAvailable ? 'bg-emerald-50 text-emerald-600 border border-emerald-200' : 'bg-slate-100 text-slate-400 border border-slate-200'}`}>
-            {isAvailable ? <ShieldCheck size={20} /> : <ShieldOff size={20} />}
-          </div>
-          <div>
-            <p className="text-sm font-bold text-slate-900">
-              {isAvailable ? 'Available for Immediate Pickups' : 'Currently Offline'}
-            </p>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">
-              {profile?.vehicle_type ? `Vehicle: ${profile.vehicle_type}` : 'Set your driver availability'}
-            </p>
-          </div>
-        </div>
-        <div className="flex space-x-2">
-          <button
-            id="status-available-btn"
-            onClick={() => onToggle('AVAILABLE')}
-            disabled={loading || isAvailable}
-            className={`px-3.5 py-1.5 rounded-md text-xs font-semibold ${isAvailable ? 'bg-emerald-600 text-white cursor-default' : 'bg-slate-100 text-slate-600 hover:bg-slate-200 border border-slate-200'}`}
+// Journey stage definitions
+const JOURNEY_STAGES = [
+  { key: 'pickup',   label: 'Pickup',     Icon: Package },
+  { key: 'transit',  label: 'In Transit', Icon: Truck   },
+  { key: 'delivery', label: 'Delivery',   Icon: Home    },
+];
+
+/**
+ * LogisticsFlow — shows Pickup → In Transit → Delivery progress.
+ * activeStep: -1 idle, 0 pickup current, 1 transit current, 2 delivery current, 3 all done
+ */
+const LogisticsFlow = ({ activeStep = -1 }) => (
+  <div className="vd-logistics-flow" aria-label="Delivery flow: Pickup, In Transit, Delivery">
+    {JOURNEY_STAGES.map((stage, idx) => {
+      const isDone     = activeStep > idx;
+      const isCurrent  = activeStep === idx;
+      return (
+        <Fragment key={stage.key}>
+          <div
+            className={`vd-flow-step${isCurrent ? ' vd-flow-step--active' : isDone ? ' vd-flow-step--done' : ''}`}
           >
-            {loading && isAvailable ? <RefreshCw size={13} className="animate-spin" /> : 'Available'}
-          </button>
-          <button
-            id="status-offline-btn"
-            onClick={() => onToggle('OFFLINE')}
-            disabled={loading || !isAvailable}
-            className={`px-3.5 py-1.5 rounded-md text-xs font-semibold ${!isAvailable ? 'bg-slate-200 text-slate-600 cursor-default' : 'bg-white text-slate-500 hover:text-red-600 border border-slate-200'}`}
-          >
-            Offline
-          </button>
-        </div>
+            {isDone
+              ? <CheckCircle2 size={15} className="vd-flow-step-icon vd-flow-step-icon--done" aria-hidden="true" />
+              : <stage.Icon   size={15} className={`vd-flow-step-icon${isCurrent ? ' vd-flow-step-icon--active' : ''}`} aria-hidden="true" />
+            }
+            <span>{stage.label}</span>
+          </div>
+          {idx < JOURNEY_STAGES.length - 1 && (
+            <ChevronRight
+              size={13}
+              className={`vd-flow-arrow${isDone ? ' vd-flow-arrow--done' : ''}`}
+              aria-hidden="true"
+            />
+          )}
+        </Fragment>
+      );
+    })}
+  </div>
+);
+
+// ── Driver Status Controls ─────────────────────────────────────────────────────
+
+const DriverStatusControls = ({ isOnline, isAvailable, onToggleOnline, onToggleAvailable, loading }) => (
+  <div className="vd-status-controls">
+    {/* Online / Offline */}
+    <div className="vd-status-group">
+      <p className="vd-status-group-label">Connection</p>
+      <div className="vd-pill-group" role="group" aria-label="Online or Offline status">
+        <button
+          id="status-online-btn"
+          className={`vd-pill ${isOnline ? 'vd-pill--online' : ''}`}
+          onClick={() => !isOnline && onToggleOnline(true)}
+          disabled={loading || isOnline}
+          aria-pressed={isOnline}
+        >
+          <Wifi size={13} aria-hidden="true" />
+          Online
+          {isOnline && <span className="vd-pill-dot vd-pill-dot--green" aria-hidden="true" />}
+        </button>
+        <button
+          id="status-offline-btn"
+          className={`vd-pill ${!isOnline ? 'vd-pill--offline' : ''}`}
+          onClick={() => isOnline && onToggleOnline(false)}
+          disabled={loading || !isOnline}
+          aria-pressed={!isOnline}
+        >
+          <WifiOff size={13} aria-hidden="true" />
+          Offline
+          {!isOnline && <span className="vd-pill-dot vd-pill-dot--gray" aria-hidden="true" />}
+        </button>
       </div>
     </div>
-  );
-};
 
-const ActiveAssignmentCard = ({ assignment, onAccept, onDecline, onComplete, loading }) => {
-  const donation     = assignment.donation || {};
-  const title        = donation.donation_title || assignment.donation_title || `Assignment #${assignment.assignment_id}`;
-  const address      = donation.pickup_address || assignment.pickup_address || '';
-  const city         = address ? address.split(',').slice(-2, -1)[0]?.trim() : '';
-  const totalQty     = donation.total_quantity || assignment.total_quantity;
-  const unit         = donation.quantity_unit  || assignment.quantity_unit;
-  const expiryTime   = donation.expiry_time    || assignment.expiry_time;
-  const status       = assignment.status;
+    <div className="vd-status-divider" aria-hidden="true" />
+
+    {/* Available / Unavailable */}
+    <div className="vd-status-group">
+      <p className="vd-status-group-label">
+        Availability
+        <span className="vd-status-session-tag">Session</span>
+      </p>
+      <div className="vd-pill-group" role="group" aria-label="Availability status">
+        <button
+          id="status-available-btn"
+          className={`vd-pill ${isAvailable ? 'vd-pill--available' : ''}`}
+          onClick={() => !isAvailable && onToggleAvailable(true)}
+          disabled={!isOnline}
+          aria-pressed={isAvailable}
+          title={!isOnline ? 'Go online to set availability' : undefined}
+        >
+          <ShieldCheck size={13} aria-hidden="true" />
+          Available
+        </button>
+        <button
+          id="status-unavailable-btn"
+          className={`vd-pill ${!isAvailable ? 'vd-pill--unavailable' : ''}`}
+          onClick={() => isAvailable && onToggleAvailable(false)}
+          disabled={!isOnline}
+          aria-pressed={!isAvailable}
+          title={!isOnline ? 'Go online to set availability' : undefined}
+        >
+          <ShieldOff size={13} aria-hidden="true" />
+          Unavailable
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+
+// ── Active Delivery Card ───────────────────────────────────────────────────────
+
+const ActiveDeliveryCard = ({ assignment, onComplete, loading }) => {
+  const donation = assignment.donation || {};
+  const title = donation.donation_title || assignment.donation_title || `Assignment #${assignment.assignment_id || assignment.id}`;
+  const address = donation.pickup_address || assignment.pickup_address || '';
+  const totalQty = donation.total_quantity || assignment.total_quantity;
+  const unit = donation.quantity_unit || assignment.quantity_unit;
+  const expiryTime = donation.expiry_time || assignment.expiry_time;
+  const status = assignment.status;
   const assignmentId = assignment.assignment_id || assignment.id;
+  const stepIndex = getDeliveryStepIndex(status);
 
-  const isPending   = ['PENDING', 'ASSIGNED'].includes(status);
-  const isAccepted  = ['ACCEPTED', 'PICKUP_IN_PROGRESS', 'IN_TRANSIT'].includes(status);
+  const canComplete = ACTIVE_STATUSES.has(status);
 
   return (
-    <div className="bg-white border border-slate-200 rounded-lg p-5 space-y-4">
-      <div className="flex items-start justify-between gap-3">
-        <div className="min-w-0">
-          <p className="text-[10px] font-bold text-blue-600 uppercase tracking-widest mb-1">
-            {isPending ? 'Incoming Pickup Request' : 'Active Delivery Assignment'}
-          </p>
-          <h2 className="text-lg font-bold text-slate-900 leading-snug">{title}</h2>
+    <div className="vd-active-card">
+      <div className="vd-active-card-header">
+        <div>
+          <p className="vd-active-card-eyebrow">Active Delivery</p>
+          <h3 className="vd-active-card-title">{title}</h3>
         </div>
         <StatusBadge status={status} />
       </div>
 
-      {expiryTime && (
-        <div className="p-3 bg-slate-50 border border-slate-200 rounded-md">
-          <ExpiryTimer expiryTime={expiryTime} showBar compact />
-        </div>
-      )}
+      {/* Progress track */}
+      <div className="vd-progress-track" role="list" aria-label="Delivery progress">
+        {DELIVERY_STEPS.map((step, idx) => {
+          const isCompleted = idx < stepIndex;
+          const isCurrent = idx === stepIndex;
+          return (
+            <div key={step.key} className="vd-progress-step" role="listitem">
+              <div
+                className={`vd-progress-dot ${isCompleted ? 'vd-progress-dot--done' :
+                    isCurrent ? 'vd-progress-dot--current' :
+                      'vd-progress-dot--pending'
+                  }`}
+                aria-label={`${step.label}: ${isCompleted ? 'complete' : isCurrent ? 'current' : 'upcoming'}`}
+              >
+                {isCompleted
+                  ? <CheckCircle2 size={14} aria-hidden="true" />
+                  : <step.Icon size={13} aria-hidden="true" />
+                }
+              </div>
+              <span className={`vd-progress-label ${isCurrent ? 'vd-progress-label--current' : ''}`}>
+                {step.label}
+              </span>
+              {idx < DELIVERY_STEPS.length - 1 && (
+                <div
+                  className={`vd-progress-connector ${idx < stepIndex ? 'vd-progress-connector--done' : ''}`}
+                  aria-hidden="true"
+                />
+              )}
+            </div>
+          );
+        })}
+      </div>
 
-      <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs text-slate-600">
+      {/* Assignment details */}
+      <div className="vd-active-card-details">
         {totalQty && (
-          <span className="flex items-center space-x-1.5 font-bold text-slate-900">
-            <Boxes size={14} className="text-[#FF553E] shrink-0" />
+          <div className="vd-active-detail-item">
+            <Boxes size={14} className="text-[#FF5A2F]" aria-hidden="true" />
             <span>{totalQty}{unit ? ` ${unit.toLowerCase()}s` : ''}</span>
-          </span>
+          </div>
         )}
-        {city && (
-          <span className="flex items-center space-x-1.5">
-            <MapPin size={14} className="text-slate-400 shrink-0" />
-            <span>{city}</span>
-          </span>
+        {address && (
+          <div className="vd-active-detail-item">
+            <MapPin size={14} className="text-slate-400" aria-hidden="true" />
+            <span>{address}</span>
+          </div>
         )}
-        {assignment.created_at && (
-          <span className="flex items-center space-x-1.5 text-slate-400">
-            <Clock size={14} className="shrink-0" />
-            <span>Assigned {formatShortDate(assignment.created_at)}</span>
-          </span>
+        {expiryTime && (
+          <div className="vd-active-detail-item">
+            <Clock size={14} className="text-slate-400" aria-hidden="true" />
+            <ExpiryTimer expiryTime={expiryTime} compact />
+          </div>
         )}
       </div>
 
-      {address && (
-        <div className="flex items-start space-x-2.5 px-4 py-2.5 bg-slate-50 border border-slate-200 rounded-xl">
-          <Navigation size={15} className="text-blue-600 shrink-0 mt-0.5" />
-          <p className="text-xs text-slate-700 leading-relaxed font-medium">{address}</p>
-        </div>
-      )}
-
-      <div className="flex items-center space-x-3 pt-2">
-        {isPending && (
-          <>
-            <button
-              id={`accept-assignment-${assignmentId}`}
-              onClick={() => onAccept(assignmentId)}
-              disabled={loading}
-              className="flex-1 fb-btn-primary py-2.5 text-xs"
-            >
-              {loading ? <RefreshCw size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-              <span>Accept Pickup</span>
-            </button>
-            <button
-              id={`decline-assignment-${assignmentId}`}
-              onClick={() => onDecline(assignmentId)}
-              disabled={loading}
-              className="px-5 py-2.5 rounded-md bg-white border border-slate-200 text-slate-600 hover:text-red-600 hover:bg-red-50 text-xs font-semibold"
-            >
-              Decline
-            </button>
-          </>
-        )}
-        {isAccepted && (
-          <button
-            id={`complete-delivery-${assignmentId}`}
+      {canComplete && (
+        <div className="mt-4">
+          <Button
+            id={`complete-${assignmentId}`}
             onClick={() => onComplete(assignmentId)}
             disabled={loading}
-            className="flex-1 fb-btn-primary py-2.5 text-xs"
+            loading={loading}
+            loadingText="Marking delivered…"
+            variant="primary"
+            size="md"
+            icon={CheckCircle2}
+            fullWidth
           >
-            {loading ? <RefreshCw size={14} className="animate-spin" /> : <CheckCircle2 size={14} />}
-            <span>Mark as Delivered</span>
-          </button>
-        )}
-      </div>
+            Mark as Delivered
+          </Button>
+        </div>
+      )}
     </div>
   );
 };
 
-const AssignmentRow = ({ assignment }) => {
-  const title = assignment.donation?.donation_title || assignment.donation_title || `Assignment #${assignment.assignment_id}`;
+// ── Completed Assignment Row ───────────────────────────────────────────────────
+
+const CompletedRow = ({ assignment }) => {
+  const title = assignment.donation?.donation_title || assignment.donation_title || `Assignment #${assignment.assignment_id || assignment.id}`;
   return (
-    <div className="flex items-center justify-between px-5 py-3.5 hover:bg-slate-50 transition border-b border-slate-100 last:border-0">
-      <div className="min-w-0">
-        <p className="text-xs sm:text-sm font-bold text-slate-900 truncate">{title}</p>
-        <p className="text-[11px] text-slate-400 mt-0.5 font-medium">{formatShortDate(assignment.updated_at || assignment.created_at)}</p>
+    <div className="vd-history-row">
+      <div>
+        <p className="vd-history-title">{title}</p>
+        <p className="vd-history-date">{formatShortDate(assignment.updated_at || assignment.created_at)}</p>
       </div>
-      <div className="ml-3 shrink-0">
-        <StatusBadge status={assignment.status} />
-      </div>
+      <StatusBadge status={assignment.status} />
     </div>
   );
 };
+
+// ── Reject All Confirmation Dialog ────────────────────────────────────────────
+
+const RejectAllConfirm = ({ count, onConfirm, onCancel, loading }) => (
+  <div className="vd-confirm-overlay" role="dialog" aria-modal="true" aria-labelledby="reject-all-title">
+    <div className="vd-confirm-box">
+      <div className="vd-confirm-icon" aria-hidden="true">
+        <AlertTriangle size={22} className="text-red-500" />
+      </div>
+      <h3 id="reject-all-title" className="vd-confirm-title">Reject all {count} assignments?</h3>
+      <p className="vd-confirm-body">
+        This will decline all {count} pending assignments. Each rejection will be sent to the server. This action cannot be undone.
+      </p>
+      <div className="vd-confirm-actions">
+        <Button
+          id="reject-all-confirm-btn"
+          onClick={onConfirm}
+          disabled={loading}
+          loading={loading}
+          loadingText="Rejecting…"
+          variant="danger"
+          size="sm"
+          icon={XCircle}
+        >
+          Yes, Reject All
+        </Button>
+        <Button
+          id="reject-all-cancel-btn"
+          onClick={onCancel}
+          disabled={loading}
+          variant="secondary"
+          size="sm"
+        >
+          Cancel
+        </Button>
+      </div>
+    </div>
+  </div>
+);
+
+// ── Main Dashboard ─────────────────────────────────────────────────────────────
 
 export const VolunteerDashboard = () => {
   const { user } = useAuth();
-  const [profile,     setProfile]     = useState(null);
-  const [assignments, setAssignments] = useState([]);
-  const [loading,     setLoading]     = useState(true);
-  const [actionLoading, setActionLoading] = useState(false);
-  const [error,       setError]       = useState(null);
-  const [flash,       setFlash]       = useState(null);
+  const prefersReducedMotion = useReducedMotion();
 
-  const fetchData = async () => {
+  const [profile, setProfile] = useState(null);
+  const [assignments, setAssignments] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [actionLoading, setActionLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [flash, setFlash] = useState(null);
+
+  // Local session preference — not persisted to backend (no endpoint for it)
+  // Defaults to true when online, so driver is ready to receive assignments.
+  const [isAvailableLocal, setIsAvailableLocal] = useState(true);
+
+  // Reject All confirmation state
+  const [showRejectAllConfirm, setShowRejectAllConfirm] = useState(false);
+
+  // ── Data fetching ──────────────────────────────────────────────────────────
+
+  const fetchData = useCallback(async () => {
     setLoading(true);
     setError(null);
     try {
@@ -230,41 +424,90 @@ export const VolunteerDashboard = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  useEffect(() => { fetchData(); }, []);
+  useEffect(() => { fetchData(); }, [fetchData]);
 
-  const handleToggleStatus = async (newStatus) => {
+  // Auto-dismiss flash after 5 seconds
+  useEffect(() => {
+    if (!flash) return;
+    const t = setTimeout(() => setFlash(null), 5000);
+    return () => clearTimeout(t);
+  }, [flash]);
+
+  // ── Computed values ────────────────────────────────────────────────────────
+
+  const isOnline = profile?.operational_status === 'AVAILABLE';
+
+  const pendingAssignments = useMemo(
+    () => assignments.filter(a => PENDING_STATUSES.has(a.status))
+      .sort((a, b) => new Date(a.created_at ?? 0) - new Date(b.created_at ?? 0)),
+    [assignments]
+  );
+
+  const activeAssignments = useMemo(
+    () => assignments.filter(a => ACTIVE_STATUSES.has(a.status))
+      .sort((a, b) => new Date(a.created_at ?? 0) - new Date(b.created_at ?? 0)),
+    [assignments]
+  );
+
+  const historyAssignments = useMemo(
+    () => assignments.filter(a => DONE_STATUSES.has(a.status)).slice(0, 12),
+    [assignments]
+  );
+
+  const displayName = profile?.full_name || user?.email?.split('@')[0] || 'Volunteer';
+
+  // deliveryState drives TruckViewer animation and in-transit badge
+  const deliveryState = activeAssignments.some(a => a.status === 'IN_TRANSIT') ? 'transit' : 'idle';
+
+  // journeyStep: -1=idle, 0=pickup current, 1=transit current, 2=delivery current, 3=all done
+  const journeyStep = useMemo(() => {
+    if (activeAssignments.length === 0) return -1;
+    const s = activeAssignments[0]?.status;
+    if (s === 'ACCEPTED')           return 0; // Pickup phase
+    if (s === 'PICKUP_IN_PROGRESS') return 1; // Transit phase
+    if (s === 'IN_TRANSIT')         return 1; // Transit phase
+    if (s === 'DELIVERED')          return 3;
+    if (s === 'COMPLETED')          return 3;
+    return -1;
+  }, [activeAssignments]);
+
+  // ── Action handlers ────────────────────────────────────────────────────────
+
+  const handleToggleOnline = useCallback(async (goOnline) => {
     setActionLoading(true);
     setFlash(null);
+    const newStatus = goOnline ? 'AVAILABLE' : 'OFFLINE';
     try {
-      const lat = profile?.latitude  ?? 17.425;
+      const lat = profile?.latitude ?? 17.425;
       const lng = profile?.longitude ?? 78.415;
       await volunteerService.updateProfile({ operational_status: newStatus, latitude: lat, longitude: lng });
-      setFlash({ type: 'success', message: `Status updated to ${newStatus === 'AVAILABLE' ? 'Available' : 'Offline'}.` });
+      setFlash({ type: 'success', message: `You are now ${goOnline ? 'online and ready for assignments' : 'offline'}.` });
+      if (!goOnline) setIsAvailableLocal(true); // reset availability when going offline
       await fetchData();
     } catch (err) {
       setFlash({ type: 'error', message: err.message || 'Status update failed.' });
     } finally {
       setActionLoading(false);
     }
-  };
+  }, [profile, fetchData]);
 
-  const handleAccept = async (assignmentId) => {
+  const handleAccept = useCallback(async (assignmentId) => {
     setActionLoading(true);
     setFlash(null);
     try {
       await volunteerService.acceptAssignment(assignmentId);
-      setFlash({ type: 'success', message: 'Pickup accepted! Please proceed to pickup location.' });
+      setFlash({ type: 'success', message: 'Assignment accepted. Proceed to pickup location.' });
       await fetchData();
     } catch (err) {
       setFlash({ type: 'error', message: err.message || 'Accept failed.' });
     } finally {
       setActionLoading(false);
     }
-  };
+  }, [fetchData]);
 
-  const handleDecline = async (assignmentId) => {
+  const handleDecline = useCallback(async (assignmentId) => {
     setActionLoading(true);
     setFlash(null);
     try {
@@ -276,131 +519,367 @@ export const VolunteerDashboard = () => {
     } finally {
       setActionLoading(false);
     }
-  };
+  }, [fetchData]);
 
-  const handleComplete = async (assignmentId) => {
+  const handleComplete = useCallback(async (assignmentId) => {
     setActionLoading(true);
     setFlash(null);
     try {
       await volunteerService.completeDelivery(assignmentId);
-      setFlash({ type: 'success', message: 'Delivery marked as complete! Thank you.' });
+      setFlash({ type: 'success', message: 'Delivery complete. Thank you for helping!' });
       await fetchData();
     } catch (err) {
-      setFlash({ type: 'error', message: err.message || 'Complete failed.' });
+      setFlash({ type: 'error', message: err.message || 'Could not mark as delivered.' });
     } finally {
       setActionLoading(false);
     }
-  };
+  }, [fetchData]);
 
-  const activeAssignments = useMemo(() => {
-    const actives = assignments.filter(a => ACTIVE_STATUSES.has(a.status));
-    return actives.sort((a, b) => new Date(a.created_at ?? 0) - new Date(b.created_at ?? 0));
-  }, [assignments]);
+  // ── Bulk actions (sequential individual API calls — no bulk endpoint exists) ─
 
-  const historyAssignments = useMemo(
-    () => assignments.filter(a => DONE_STATUSES.has(a.status)).slice(0, 10),
-    [assignments]
-  );
+  const handleAcceptAll = useCallback(async () => {
+    if (pendingAssignments.length === 0) return;
+    setActionLoading(true);
+    setFlash(null);
+    let accepted = 0;
+    let failed = 0;
+    for (const a of pendingAssignments) {
+      const id = a.assignment_id || a.id;
+      try {
+        await volunteerService.acceptAssignment(id);
+        accepted++;
+      } catch {
+        failed++;
+      }
+    }
+    setFlash({
+      type: failed === 0 ? 'success' : 'error',
+      message: failed === 0
+        ? `Accepted all ${accepted} assignments.`
+        : `Accepted ${accepted}, failed ${failed}. Check your connection.`,
+    });
+    setActionLoading(false);
+    await fetchData();
+  }, [pendingAssignments, fetchData]);
 
-  const displayName = profile?.full_name || user?.email?.split('@')[0] || 'Volunteer';
+  const handleRejectAllConfirmed = useCallback(async () => {
+    setShowRejectAllConfirm(false);
+    setActionLoading(true);
+    setFlash(null);
+    let declined = 0;
+    let failed = 0;
+    for (const a of pendingAssignments) {
+      const id = a.assignment_id || a.id;
+      try {
+        await volunteerService.declineAssignment(id, '');
+        declined++;
+      } catch {
+        failed++;
+      }
+    }
+    setFlash({
+      type: failed === 0 ? 'success' : 'error',
+      message: failed === 0
+        ? `Rejected all ${declined} assignments.`
+        : `Declined ${declined}, failed ${failed}.`,
+    });
+    setActionLoading(false);
+    await fetchData();
+  }, [pendingAssignments, fetchData]);
+
+  // ── Loading skeleton ───────────────────────────────────────────────────────
 
   if (loading) {
     return (
-      <div className="p-6 space-y-5 max-w-4xl mx-auto">
-        {[...Array(3)].map((_, i) => (
-          <div key={i} className="h-28 bg-white border border-slate-200 rounded-lg fb-skeleton" />
-        ))}
+      <div className="vd-root">
+        <div className="vd-hero vd-hero--skeleton">
+          <div className="h-6 w-40 bg-slate-200 dark:bg-slate-700 rounded mb-3 fb-skeleton" />
+          <div className="h-10 w-64 bg-slate-200 dark:bg-slate-700 rounded mb-2 fb-skeleton" />
+          <div className="h-4 w-52 bg-slate-200 dark:bg-slate-700 rounded fb-skeleton" />
+          <div className="vd-truck-canvas-wrapper vd-truck-canvas-wrapper--skeleton fb-skeleton mt-6" />
+        </div>
       </div>
     );
   }
 
+  // ── Render ─────────────────────────────────────────────────────────────────
+
   return (
-    <div className="space-y-6 animate-fade-in-up max-w-5xl mx-auto">
+    <div className="vd-root animate-fade-in-up">
 
-      {/* Volunteer Hero Banner */}
-      <div className="fb-page-header">
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-2xl font-semibold text-slate-900">{displayName}</h1>
-            <p className="text-sm text-slate-500 mt-1">
-              Pickups assigned to you, with addresses and quantities.
-            </p>
-          </div>
-          <button
-            onClick={fetchData}
-            className="p-2 rounded-md bg-white border border-slate-200 text-slate-500 hover:text-slate-900 shrink-0"
-            title="Refresh"
-          >
-            <RefreshCw size={15} />
-          </button>
-        </div>
-      </div>
+      {/* ── Reject All Confirmation ── */}
+      {showRejectAllConfirm && (
+        <RejectAllConfirm
+          count={pendingAssignments.length}
+          onConfirm={handleRejectAllConfirmed}
+          onCancel={() => setShowRejectAllConfirm(false)}
+          loading={actionLoading}
+        />
+      )}
 
-      {/* Flash / Error */}
-      {flash && <AlertBanner type={flash.type} message={flash.message} onDismiss={() => setFlash(null)} />}
-      {error && <AlertBanner type="error" message={error} />}
+      {/* ══════════════════════════════════════════════
+          HERO — Identity + Controls + 3D Truck + Journey
+      ══════════════════════════════════════════════ */}
+      <section className="vd-hero" aria-label="Volunteer Driver hero">
 
-      {/* Status toggle */}
-      <StatusToggle profile={profile} onToggle={handleToggleStatus} loading={actionLoading} />
+        {/* Identity */}
+        <div className="vd-hero-identity">
+          <span className="vd-hero-role">Volunteer Driver</span>
 
-      {/* Active assignments queue with AnimatedList */}
-      {activeAssignments.length > 0 ? (
-        <div className="space-y-3.5">
-          <div className="flex items-center space-x-2.5">
-            <ClipboardList size={16} className="text-blue-600 shrink-0" />
-            <h2 className="text-sm font-semibold text-slate-800">Active assignments</h2>
-            <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-blue-50 text-blue-600 border border-blue-200">
-              {activeAssignments.length} active
+          <div className="vd-hero-name-row">
+            <h1 className="vd-hero-name">{displayName}</h1>
+            <span
+              className={`vd-hero-status-dot ${isOnline ? 'vd-hero-status-dot--online' : 'vd-hero-status-dot--offline'}`}
+              title={isOnline ? 'Online' : 'Offline'}
+              aria-label={isOnline ? 'Currently online' : 'Currently offline'}
+            />
+            <span className={`vd-hero-status-text ${isOnline ? 'vd-hero-status-text--online' : 'vd-hero-status-text--offline'}`}>
+              {isOnline ? 'Online' : 'Offline'}
             </span>
           </div>
 
-          <AnimatedList
-            items={activeAssignments}
-            showGradients={false}
-            displayScrollbar={false}
-            renderItem={(assignment) => (
-              <ActiveAssignmentCard
-                assignment={assignment}
+          <p className="vd-hero-tagline">
+            {isOnline && isAvailableLocal
+              ? 'Ready for your next delivery?'
+              : isOnline
+                ? 'You are online but marked unavailable.'
+                : 'Go online when you\'re ready to deliver.'}
+          </p>
+
+          {/* In-Transit indicator — only when actively moving a delivery */}
+          {deliveryState === 'transit' && (
+            <div className="vd-transit-badge" role="status" aria-live="polite">
+              <span className="vd-transit-badge-dot" aria-hidden="true" />
+              In Transit
+            </div>
+          )}
+        </div>
+
+        {/* Status + Availability controls — inline in hero, above truck */}
+        <div className="vd-hero-controls">
+          <DriverStatusControls
+            isOnline={isOnline}
+            isAvailable={isAvailableLocal}
+            onToggleOnline={handleToggleOnline}
+            onToggleAvailable={setIsAvailableLocal}
+            loading={actionLoading}
+          />
+        </div>
+
+        {/* 3D Truck — the visual identity */}
+        <div className="vd-truck-section">
+          <TruckViewer reducedMotion={prefersReducedMotion} deliveryState={deliveryState} />
+        </div>
+
+        {/* Logistics flow */}
+        <LogisticsFlow activeStep={journeyStep} />
+
+      </section>
+
+{/* ══════════════════════════════════════════════
+          FLASH / ERROR
+      ══════════════════════════════════════════════ */}
+      {flash && (
+        <AlertBanner
+          type={flash.type}
+          message={flash.message}
+          onDismiss={() => setFlash(null)}
+        />
+      )}
+      {error && <AlertBanner type="error" message={error} />}
+
+      {/* ── Refresh ── */}
+      <div className="vd-refresh-row">
+        <Button
+          onClick={fetchData}
+          variant="icon"
+          size="sm"
+          icon={RefreshCw}
+          loading={loading}
+          aria-label="Refresh assignments"
+          title="Refresh"
+        />
+      </div>
+
+      {/* ══════════════════════════════════════════════
+          PENDING ASSIGNMENTS
+      ══════════════════════════════════════════════ */}
+      <section className="vd-section" aria-label="Pending assignments">
+        <div className="vd-section-header">
+          <div>
+            <div className="vd-section-title-row">
+              <ClipboardList size={16} className="text-[#FF5A2F]" aria-hidden="true" />
+              <h2 className="vd-section-title">Pending Assignments</h2>
+              {pendingAssignments.length > 0 && (
+                <span className="vd-count-badge">{pendingAssignments.length} pending</span>
+              )}
+            </div>
+            <p className="vd-section-subtitle">Nearby donation opportunities ready for pickup.</p>
+          </div>
+
+          {/* Bulk actions — only when multiple pending */}
+          {pendingAssignments.length > 1 && (
+            <div className="vd-bulk-actions">
+              <Button
+                id="accept-all-btn"
+                onClick={handleAcceptAll}
+                disabled={actionLoading}
+                loading={actionLoading}
+                loadingText="Accepting…"
+                variant="primary"
+                size="sm"
+                icon={CheckCheck}
+              >
+                Accept All
+              </Button>
+              <Button
+                id="reject-all-btn"
+                onClick={() => setShowRejectAllConfirm(true)}
+                disabled={actionLoading}
+                variant="danger"
+                size="sm"
+                icon={XCircle}
+              >
+                Reject All
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {error ? (
+          <div className="vd-empty-state">
+            <AlertCircle size={28} className="vd-empty-icon text-red-500" aria-hidden="true" />
+            <p className="vd-empty-title">Unable to load assignments</p>
+            <p className="vd-empty-body">{error}</p>
+            <Button
+              onClick={fetchData}
+              variant="secondary"
+              size="sm"
+              icon={RefreshCw}
+              className="mt-3"
+            >
+              Try Again
+            </Button>
+          </div>
+        ) : pendingAssignments.length > 0 ? (
+          <div className="vd-assignment-grid">
+            {pendingAssignments.map(a => (
+              <PendingAssignmentCard
+                key={a.assignment_id ?? a.id}
+                assignment={a}
                 onAccept={handleAccept}
                 onDecline={handleDecline}
+                loading={actionLoading}
+              />
+            ))}
+          </div>
+        ) : (
+          <div className="vd-empty-state">
+            {!isOnline ? (
+              <>
+                <WifiOff size={28} className="vd-empty-icon" aria-hidden="true" />
+                <p className="vd-empty-title">You&apos;re currently offline.</p>
+                <p className="vd-empty-body">Go online when you&apos;re ready to receive delivery assignments.</p>
+              </>
+            ) : !isAvailableLocal ? (
+              <>
+                <ShieldOff size={28} className="vd-empty-icon" aria-hidden="true" />
+                <p className="vd-empty-title">You&apos;re currently unavailable.</p>
+                <p className="vd-empty-body">Set yourself as Available to accept incoming assignments.</p>
+              </>
+            ) : (
+              <>
+                <ClipboardList size={28} className="vd-empty-icon" aria-hidden="true" />
+                <p className="vd-empty-title">No pending assignments</p>
+                <p className="vd-empty-body">You&apos;re all caught up. New delivery opportunities will appear here.</p>
+              </>
+            )}
+          </div>
+        )}
+      </section>
+
+      {/* ══════════════════════════════════════════════
+          ACTIVE DELIVERY
+      ══════════════════════════════════════════════ */}
+      {activeAssignments.length > 0 && (
+        <section className="vd-section" aria-label="Active delivery">
+          <div className="vd-section-header">
+            <div className="vd-section-title-row">
+              <Truck size={16} className="text-[#FF5A2F]" aria-hidden="true" />
+              <h2 className="vd-section-title">Active Delivery</h2>
+              <span className="vd-count-badge vd-count-badge--active">{activeAssignments.length}</span>
+            </div>
+          </div>
+          <div className="vd-active-list">
+            {activeAssignments.map(a => (
+              <ActiveDeliveryCard
+                key={a.assignment_id ?? a.id}
+                assignment={a}
                 onComplete={handleComplete}
                 loading={actionLoading}
               />
-            )}
-          />
-        </div>
-      ) : (
-        <div className="fb-empty-state">
-          <ClipboardList size={28} className="text-slate-300 mb-2" />
-          <p className="text-sm font-bold text-slate-700">No active assignments right now</p>
-          <p className="text-xs text-slate-400 mt-0.5 font-medium">
-            {profile?.operational_status === 'AVAILABLE'
-              ? 'You are available — pickup dispatches will appear here.'
-              : 'Set your status to Available to receive pickup dispatches.'
-            }
-          </p>
-        </div>
-      )}
-
-      {/* History */}
-      {historyAssignments.length > 0 && (
-        <div className="fb-section-card overflow-hidden bg-white border border-slate-200 shadow-sm">
-          <div className="fb-section-card-header bg-slate-50/70 border-b border-slate-100 flex items-center">
-            <History size={15} className="text-[#FF553E]" />
-            <h2 className="text-sm font-semibold text-slate-900">Delivery history</h2>
-            <span className="text-xs text-slate-400 font-semibold ml-auto">{historyAssignments.length} records</span>
-          </div>
-          <div className="divide-y divide-slate-100">
-            {historyAssignments.map(a => (
-              <AssignmentRow key={a.assignment_id ?? a.id} assignment={a} />
             ))}
           </div>
-        </div>
+        </section>
       )}
+
+      {/* ══════════════════════════════════════════════
+          COMPLETED DELIVERIES
+      ══════════════════════════════════════════════ */}
+      {historyAssignments.length > 0 && (
+        <section className="vd-section" aria-label="Delivery history">
+          <div className="vd-section-header">
+            <div className="vd-section-title-row">
+              <History size={16} className="text-slate-400" aria-hidden="true" />
+              <h2 className="vd-section-title">Completed Deliveries</h2>
+              <span className="vd-count-badge vd-count-badge--muted">{historyAssignments.length}</span>
+            </div>
+          </div>
+          <div className="vd-history-list">
+            {historyAssignments.map(a => (
+              <CompletedRow key={a.assignment_id ?? a.id} assignment={a} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* ══════════════════════════════════════════════
+          ATTRIBUTION (CC-BY required)
+      ══════════════════════════════════════════════ */}
+      <footer className="vd-attribution" aria-label="3D model attribution">
+        <p>
+          3D truck model:{' '}
+          <a
+            href="https://poly.pizza/m/truck-poly-by-google"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="vd-attribution-link"
+          >
+            Truck by Poly by Google
+          </a>
+          {' '}via{' '}
+          <a
+            href="https://poly.pizza"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="vd-attribution-link"
+          >
+            Poly Pizza
+          </a>
+          {' '}·{' '}
+          <a
+            href="https://creativecommons.org/licenses/by/3.0/"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="vd-attribution-link"
+          >
+            CC-BY
+          </a>
+        </p>
+      </footer>
 
     </div>
   );
 };
 
 export default VolunteerDashboard;
-

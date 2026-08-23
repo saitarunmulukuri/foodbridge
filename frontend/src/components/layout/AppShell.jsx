@@ -34,7 +34,7 @@ export const AppShell = ({ children }) => {
   };
 
   return (
-    <div className="flex h-screen overflow-hidden bg-[#FAFAFC]">
+    <div className="flex h-screen overflow-hidden bg-[#FAFAFC] dark:bg-[#0B0F14] text-slate-900 dark:text-[#F5F7FA]">
 
       {/* Sidebar (Desktop fixed + collapsible, Mobile slide-over) */}
       <Sidebar
@@ -58,10 +58,6 @@ export const AppShell = ({ children }) => {
         {/* Scrollable Page Canvas */}
         <main
           className="flex-1 overflow-y-auto pb-16 md:pb-6"
-          style={{
-            backgroundImage: 'radial-gradient(#E2E8F0 1px, transparent 1px)',
-            backgroundSize: '24px 24px',
-          }}
         >
           <div className="p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto">
             {children}

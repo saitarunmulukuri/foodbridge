@@ -1,6 +1,6 @@
 /**
  * DonorDashboard — Primary operational hub for authenticated food donors.
- * Authentic Cloudhub SaaS light design with signature coral-orange accents.
+ * Authentic Cloudhub SaaS light & dark design with signature coral-orange accents.
  */
 import { useEffect, useState, useMemo } from 'react';
 import { Link } from 'react-router-dom';
@@ -8,6 +8,8 @@ import { donationService } from '../services/donationService';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { FoodJourney } from '../components/common/FoodJourney';
 import { ExpiryTimer } from '../components/common/ExpiryTimer';
+import { Button } from '../components/common/Button';
+import { GlareHover } from '../components/magicui/GlareHover';
 import {
   IN_PROGRESS_STATUSES,
   COMPLETED_STATUSES,
@@ -79,7 +81,7 @@ const StatCard = ({
       <div>
         {/* Eyebrow & subtle icon header */}
         <div className="flex items-center justify-between gap-2 pb-2">
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-slate-500 dark:text-[#AAB4C2]">
             {eyebrow}
           </span>
           {Icon && (
@@ -92,23 +94,23 @@ const StatCard = ({
         </div>
 
         {/* Strong metric */}
-        <div className="text-2xl sm:text-[26px] font-bold text-slate-900 tabular-nums leading-none tracking-tight my-1.5">
+        <div className="text-2xl sm:text-[26px] font-bold text-slate-900 dark:text-[#F5F7FA] tabular-nums leading-none tracking-tight my-1.5">
           {displayValue}
         </div>
 
         {/* Supporting description */}
-        <p className="text-xs text-slate-500 leading-snug mt-1">
+        <p className="text-xs text-slate-500 dark:text-[#AAB4C2] leading-snug mt-1">
           {description}
         </p>
       </div>
 
       {/* Integrated contextual footer */}
       {contextText && (
-        <div className="mt-3.5 pt-2.5 border-t border-slate-100 flex items-center justify-between text-[11px] text-slate-400 font-medium">
+        <div className="mt-3.5 pt-2.5 border-t border-slate-100 dark:border-[#242D38] flex items-center justify-between text-[11px] text-slate-400 dark:text-[#7F8A99] font-medium">
           <span>{contextText}</span>
           <ArrowRight
             size={12}
-            className="text-slate-300 group-hover:text-slate-600 group-hover:translate-x-0.5 transition-all duration-180"
+            className="text-slate-300 dark:text-slate-600 group-hover:text-slate-600 dark:group-hover:text-[#F5F7FA] group-hover:translate-x-0.5 transition-all duration-180"
           />
         </div>
       )}
@@ -132,86 +134,90 @@ const JourneyCard = ({ donation }) => {
   const city = extractCity(donation.pickup_address);
   const qty = formatQty(donation.total_quantity, donation.quantity_unit);
 
-  let stateLabel, stateColor, dotBg, accentGradient;
+  let stateLabel, stateColor, dotBg, accentClass;
   if (state.isCompleted) {
-    stateLabel = 'Completed'; stateColor = 'text-emerald-600'; dotBg = 'bg-emerald-500';
-    accentGradient = '#F6FDF9';
+    stateLabel = 'Completed'; stateColor = 'text-emerald-600 dark:text-emerald-400'; dotBg = 'bg-emerald-500';
+    accentClass = 'bg-emerald-50/60 dark:bg-emerald-500/10 border-emerald-100 dark:border-emerald-500/20';
   } else if (state.isExpired || state.isTerminal) {
-    stateLabel = 'Expired'; stateColor = 'text-red-600'; dotBg = 'bg-red-500';
-    accentGradient = '#FEF7F7';
+    stateLabel = 'Expired'; stateColor = 'text-red-600 dark:text-red-400'; dotBg = 'bg-red-500';
+    accentClass = 'bg-red-50/60 dark:bg-red-500/10 border-red-100 dark:border-red-500/20';
   } else {
     stateLabel = 'In Progress'; stateColor = 'text-[#FF5A2F]'; dotBg = 'bg-[#FF5A2F]';
-    accentGradient = '#FFF8F6';
+    accentClass = 'bg-orange-50/60 dark:bg-orange-500/10 border-orange-100 dark:border-orange-500/20';
   }
 
   return (
-    <div className="fb-card overflow-hidden">
-      <div
-        className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100"
-        style={{ background: accentGradient }}
-      >
-        <div className="flex items-center space-x-2">
-          <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${dotBg}`} />
-          <span className={`text-xs font-bold uppercase tracking-wider ${stateColor}`}>{stateLabel}</span>
-        </div>
-        <StatusBadge status={donation.status} />
-      </div>
-
-      <div className="p-5 space-y-4">
-        <div>
-          <h2 className="text-lg font-bold text-slate-900 leading-snug line-clamp-1">
-            {donation.donation_title || `Donation #${donation.donation_id}`}
-          </h2>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-xs text-slate-500 font-medium">
-            {qty && (
-              <span className="flex items-center space-x-1.5 text-slate-700 font-semibold">
-                <PackageOpen size={14} className="shrink-0 text-slate-400" />
-                <span>{qty}</span>
-              </span>
-            )}
-            {city && (
-              <span className="flex items-center space-x-1.5">
-                <MapPin size={14} className="shrink-0 text-slate-400" />
-                <span>{city}</span>
-              </span>
-            )}
-            <span className="flex items-center space-x-1.5">
-              <Calendar size={14} className="shrink-0 text-slate-400" />
-              <span>{formatShortDate(donation.created_at)}</span>
-            </span>
-          </div>
-        </div>
-
-        {state.showExpiry && (
-          <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-2xl">
-            <ExpiryTimer
-              expiryTime={donation.expiry_time}
-              donationStatus={donation.status}
-              showBar
-            />
-          </div>
-        )}
-
-        {state.isExpired && !state.isTerminal && (
-          <div className="fb-alert-error">
-            <AlertCircle size={15} className="shrink-0" />
-            <span>This donation was not matched before its food safety expiry threshold.</span>
-          </div>
-        )}
-
-        <div className="pt-1">
-          <FoodJourney status={donation.status} orientation="horizontal" compact />
-        </div>
-
-        <Link
-          to={`/donor/donations/${donation.donation_id}`}
-          className="flex items-center justify-between px-4 py-2.5 rounded-md text-xs font-semibold text-slate-800 bg-slate-50 hover:bg-[#FFF4F2] border border-slate-200 group"
+    <GlareHover className="rounded-2xl h-full" duration={600} opacity={0.55}>
+      <div className="fb-card overflow-hidden h-full">
+        <div
+          className={`flex items-center justify-between px-5 py-3.5 border-b ${accentClass}`}
         >
-          <span>View details</span>
-          <ArrowRight size={14} className="text-slate-400 group-hover:text-[#FF5A2F]" />
-        </Link>
+          <div className="flex items-center space-x-2">
+            <span className={`w-2.5 h-2.5 rounded-full shrink-0 ${dotBg}`} />
+            <span className={`text-xs font-bold uppercase tracking-wider ${stateColor}`}>{stateLabel}</span>
+          </div>
+          <StatusBadge status={donation.status} />
+        </div>
+
+        <div className="p-5 space-y-4">
+          <div>
+            <h2 className="text-lg font-bold text-slate-900 dark:text-[#F5F7FA] leading-snug line-clamp-1">
+              {donation.donation_title || `Donation #${donation.donation_id}`}
+            </h2>
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1.5 text-xs text-slate-500 dark:text-[#AAB4C2] font-medium">
+              {qty && (
+                <span className="flex items-center space-x-1.5 text-slate-700 dark:text-slate-300 font-semibold">
+                  <PackageOpen size={14} className="shrink-0 text-slate-400" />
+                  <span>{qty}</span>
+                </span>
+              )}
+              {city && (
+                <span className="flex items-center space-x-1.5">
+                  <MapPin size={14} className="shrink-0 text-slate-400" />
+                  <span>{city}</span>
+                </span>
+              )}
+              <span className="flex items-center space-x-1.5">
+                <Calendar size={14} className="shrink-0 text-slate-400" />
+                <span>{formatShortDate(donation.created_at)}</span>
+              </span>
+            </div>
+          </div>
+
+          {state.showExpiry && (
+            <div className="p-3.5 bg-slate-50 dark:bg-[#171D25] border border-slate-200 dark:border-[#242D38] rounded-2xl">
+              <ExpiryTimer
+                expiryTime={donation.expiry_time}
+                donationStatus={donation.status}
+                showBar
+              />
+            </div>
+          )}
+
+          {state.isExpired && !state.isTerminal && (
+            <div className="fb-alert-error">
+              <AlertCircle size={15} className="shrink-0" />
+              <span>This donation was not matched before its food safety expiry threshold.</span>
+            </div>
+          )}
+
+          <div className="pt-1">
+            <FoodJourney status={donation.status} orientation="horizontal" compact />
+          </div>
+
+          <Button
+            to={`/donor/donations/${donation.donation_id}`}
+            variant="secondary"
+            size="sm"
+            fullWidth
+            icon={ArrowRight}
+            iconPosition="right"
+          >
+            View Details
+          </Button>
+        </div>
       </div>
-    </div>
+    </GlareHover>
   );
 };
 
@@ -223,13 +229,13 @@ const DonationRow = ({ donation }) => {
   return (
     <Link
       to={`/donor/donations/${donation.donation_id}`}
-      className="flex items-center justify-between px-5 py-4 hover:bg-slate-50 transition-colors group border-b border-slate-100 last:border-0"
+      className="flex items-center justify-between px-5 py-4 hover:bg-slate-50 dark:hover:bg-[#171E27] transition-colors group border-b border-slate-100 dark:border-[#26313D] last:border-0"
     >
       <div className="min-w-0 flex-1 pr-3">
-        <p className="text-xs text-slate-900 truncate group-hover:text-[#FF5A2F]">
+        <p className="text-xs font-semibold text-slate-900 dark:text-[#F5F7FA] truncate group-hover:text-[#FF5A2F]">
           {donation.donation_title || `Donation #${donation.donation_id}`}
         </p>
-        <p className="text-[11px] text-slate-500 mt-0.5 flex items-center space-x-1.5 font-medium">
+        <p className="text-[11px] text-slate-500 dark:text-[#A5B1C2] mt-0.5 flex items-center space-x-1.5 font-medium">
           <span>{formatShortDate(donation.created_at)}</span>
           {city && <span>· {city}</span>}
           {qty && <span>· {qty}</span>}
@@ -237,7 +243,7 @@ const DonationRow = ({ donation }) => {
       </div>
       <div className="flex items-center space-x-3 shrink-0">
         <StatusBadge status={donation.status} />
-        <ChevronRight size={15} className="text-slate-300 group-hover:text-[#FF553E] transition-colors" />
+        <ChevronRight size={15} className="text-slate-300 dark:text-slate-600 group-hover:text-[#FF5A2F] transition-colors" />
       </div>
     </Link>
   );
@@ -304,11 +310,11 @@ export const DonorDashboard = () => {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="h-20 bg-white border border-slate-200 rounded-xl fb-skeleton" />
+        <div className="h-20 bg-white dark:bg-[#11171F] border border-slate-200 dark:border-[#26313D] rounded-xl fb-skeleton" />
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5 sm:gap-4">
-          {[0, 1, 2].map(i => <div key={i} className="h-28 bg-white border border-slate-200 rounded-xl fb-skeleton" />)}
+          {[0, 1, 2].map(i => <div key={i} className="h-28 bg-white dark:bg-[#11171F] border border-slate-200 dark:border-[#26313D] rounded-xl fb-skeleton" />)}
         </div>
-        <div className="h-56 bg-white border border-slate-200 rounded-xl fb-skeleton" />
+        <div className="h-56 bg-white dark:bg-[#11171F] border border-slate-200 dark:border-[#26313D] rounded-xl fb-skeleton" />
       </div>
     );
   }
@@ -320,23 +326,29 @@ export const DonorDashboard = () => {
       <div className="fb-page-header">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold text-slate-900">{getGreeting()}</h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-[#F5F7FA] tracking-tight">{getGreeting()}</h1>
+            <p className="text-sm text-slate-500 dark:text-[#AAB4C2] mt-1">
               Track your listings and see which ones are still moving.
             </p>
           </div>
           <div className="flex items-center space-x-2 shrink-0">
-            <button
+            <Button
               onClick={fetchDonations}
-              className="p-2 rounded-md text-slate-500 hover:text-slate-900 border border-slate-200 bg-white"
+              variant="icon"
+              size="sm"
+              icon={RefreshCw}
+              loading={loading}
+              aria-label="Refresh donations"
               title="Refresh"
+            />
+            <Button
+              to="/donor/create"
+              variant="primary"
+              size="sm"
+              icon={PlusCircle}
             >
-              <RefreshCw size={15} />
-            </button>
-            <Link to="/donor/create" className="fb-btn-primary text-xs">
-              <PlusCircle size={15} />
-              <span>Post Surplus Food</span>
-            </Link>
+              Post Surplus Food
+            </Button>
           </div>
         </div>
       </div>
@@ -358,7 +370,7 @@ export const DonorDashboard = () => {
             description="Food offers posted"
             contextText="All time"
             icon={PackageOpen}
-            iconColor="text-slate-400 group-hover:text-slate-600"
+            iconColor="text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300"
             to="/donor/list"
           />
           <StatCard
@@ -376,7 +388,7 @@ export const DonorDashboard = () => {
             description="Food successfully redistributed"
             contextText="Verified completed"
             icon={CheckCircle2}
-            iconColor="text-emerald-600"
+            iconColor="text-emerald-600 dark:text-emerald-400"
             to="/donor/impact"
           />
         </div>
@@ -385,17 +397,22 @@ export const DonorDashboard = () => {
       {/* Empty State */}
       {donations.length === 0 && !error && (
         <div className="fb-empty-state">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-[#FF553E] bg-orange-50 border border-orange-200 mb-4 shadow-sm">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-[#FF5A2F] bg-orange-50 dark:bg-orange-500/15 border border-orange-200 dark:border-orange-500/30 mb-4 shadow-sm">
             <PackageOpen size={28} />
           </div>
-          <h2 className="text-lg font-bold text-slate-900 mb-1">No donation offers yet</h2>
-          <p className="text-xs text-slate-500 max-w-sm mb-6 leading-relaxed">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-[#F5F7FA] mb-1">No donation offers yet</h2>
+          <p className="text-xs text-slate-500 dark:text-[#AAB4C2] max-w-sm mb-6 leading-relaxed">
             Post your surplus food listing to initiate automated matching with local NGOs and volunteer drivers.
           </p>
-          <Link to="/donor/create" className="fb-btn-primary shadow-md">
-            <PlusCircle size={15} />
-            <span>Post Surplus Food</span>
-          </Link>
+          <Button
+            to="/donor/create"
+            variant="primary"
+            size="md"
+            icon={PlusCircle}
+            className="shadow-md"
+          >
+            Post Surplus Food
+          </Button>
         </div>
       )}
 
@@ -406,20 +423,20 @@ export const DonorDashboard = () => {
           {/* Left 2 Cols: Current Food Journey */}
           <div className="lg:col-span-2 space-y-3.5">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-800">
+              <h2 className="text-sm font-semibold text-slate-800 dark:text-[#F5F7FA]">
                 Current listing
               </h2>
               {activeDonation && (
-                <span className="text-xs text-[#FF5A2F] font-medium">In progress</span>
+                <span className="text-xs text-[#FF5A2F] font-semibold">In progress</span>
               )}
             </div>
 
             {activeDonation ? (
               <JourneyCard donation={activeDonation} />
             ) : (
-              <div className="p-8 fb-card text-center space-y-3 bg-white">
-                <p className="text-xs text-slate-500 font-medium">No active donations currently in transit.</p>
-                <Link to="/donor/create" className="text-xs text-[#FF553E] hover:text-[#E02E14] font-bold inline-flex items-center space-x-1">
+              <div className="p-8 fb-card text-center space-y-3">
+                <p className="text-xs text-slate-500 dark:text-[#AAB4C2] font-medium">No active donations currently in transit.</p>
+                <Link to="/donor/create" className="text-xs text-[#FF5A2F] hover:underline font-bold inline-flex items-center space-x-1">
                   <span>Post new surplus food offer</span>
                   <ArrowRight size={13} />
                 </Link>
@@ -430,21 +447,21 @@ export const DonorDashboard = () => {
           {/* Right 1 Col: Recent Donations List */}
           <div className="space-y-3.5">
             <div className="flex items-center justify-between">
-              <h2 className="text-sm font-semibold text-slate-800">
+              <h2 className="text-sm font-semibold text-slate-800 dark:text-[#F5F7FA]">
                 Recent
               </h2>
-              <Link to="/donor/list" className="text-xs text-[#FF5A2F] hover:text-[#E04420] font-semibold">
+              <Link to="/donor/list" className="text-xs text-[#FF5A2F] hover:underline font-bold">
                 View all
               </Link>
             </div>
 
-            <div className="fb-card overflow-hidden bg-white">
+            <div className="fb-card overflow-hidden">
               {otherDonations.length > 0 ? (
                 otherDonations.map(d => (
                   <DonationRow key={d.donation_id} donation={d} />
                 ))
               ) : (
-                <div className="p-6 text-center text-xs text-slate-400 font-medium">
+                <div className="p-6 text-center text-xs text-slate-400 dark:text-[#7F8A99] font-medium">
                   No past donations recorded.
                 </div>
               )}
@@ -459,4 +476,3 @@ export const DonorDashboard = () => {
 };
 
 export default DonorDashboard;
-

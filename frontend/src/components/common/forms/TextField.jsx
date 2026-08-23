@@ -51,7 +51,7 @@ export const TextField = forwardRef(({
     <div className="relative w-full flex items-center">
       {/* Optional Leading Icon */}
       {Icon && (
-        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none flex items-center justify-center">
+        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none flex items-center justify-center">
           {renderIcon()}
         </div>
       )}
@@ -76,38 +76,19 @@ export const TextField = forwardRef(({
         onKeyDown={onKeyDown}
         aria-invalid={!!error}
         aria-required={required}
-        className={`w-full text-slate-900 placeholder:text-slate-400 font-sans transition-all duration-150 outline-none ${
+        className={`w-full font-sans transition-all duration-150 outline-none rounded-[10px] text-[13.5px] h-[44px] min-h-[44px] ${
           Icon ? 'pl-10' : 'pl-3.5'
         } ${
           isPassword || suffix ? 'pr-11' : 'pr-3.5'
+        } ${
+          disabled
+            ? 'bg-slate-50 dark:bg-[#11171F] text-slate-400 dark:text-slate-600 border-slate-200 dark:border-[#26313D] cursor-not-allowed'
+            : error
+            ? 'bg-white dark:bg-[#171E27] text-slate-900 dark:text-[#F5F7FA] border-red-500 ring-2 ring-red-500/20'
+            : 'bg-white dark:bg-[#171E27] text-slate-900 dark:text-[#F5F7FA] border border-slate-200 dark:border-[#26313D] placeholder-slate-400 dark:placeholder-[#748296] focus:border-[#FF5A2F] focus:ring-2 focus:ring-[#FF5A2F]/20'
         } ${inputClassName}`}
         style={{
-          height: 44,
-          minHeight: 44,
-          borderRadius: 10,
-          backgroundColor: disabled ? '#F8FAFC' : '#FFFFFF',
-          border: error
-            ? '1.5px solid #EF4444'
-            : '1px solid #E2E8F0',
-          fontSize: 13.5,
-          color: disabled ? '#94A3B8' : '#0F172A',
-          cursor: disabled ? 'not-allowed' : 'text',
-          boxShadow: error
-            ? '0 0 0 3px rgba(239, 68, 68, 0.12)'
-            : '0 1px 2px rgba(0, 0, 0, 0.02)',
           ...inputStyle,
-        }}
-        onFocusCapture={(e) => {
-          if (!error) {
-            e.currentTarget.style.borderColor = '#FF5A36';
-            e.currentTarget.style.boxShadow = '0 0 0 3px rgba(255, 90, 54, 0.15)';
-          }
-        }}
-        onBlurCapture={(e) => {
-          if (!error) {
-            e.currentTarget.style.borderColor = '#E2E8F0';
-            e.currentTarget.style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.02)';
-          }
         }}
         {...restProps}
       />
@@ -119,7 +100,7 @@ export const TextField = forwardRef(({
           tabIndex={-1}
           onClick={() => setShowPassword(prev => !prev)}
           aria-label={showPassword ? 'Hide password' : 'Show password'}
-          className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-slate-400 hover:text-slate-700 transition focus:outline-none"
+          className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition focus:outline-none"
         >
           {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
         </button>

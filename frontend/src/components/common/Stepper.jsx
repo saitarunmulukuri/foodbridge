@@ -237,7 +237,7 @@ function StepIndicator({
     >
       <motion.div
         variants={{
-          inactive: { scale: 1, backgroundColor: '#F1F5F9', color: '#94A3B8' },
+          inactive: { scale: 1, backgroundColor: 'var(--fb-surface-elevated)', color: 'var(--fb-text-muted)' },
           active:   { scale: 1.08, backgroundColor: activeColor, color: '#FFFFFF' },
           complete: { scale: 1, backgroundColor: completeColor, color: '#FFFFFF' }
         }}

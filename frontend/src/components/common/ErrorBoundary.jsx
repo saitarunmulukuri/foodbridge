@@ -1,5 +1,6 @@
 import React from 'react';
 import { AlertCircle, RefreshCw, Home, RotateCcw } from 'lucide-react';
+import { Button } from './Button';
 
 export class ErrorBoundary extends React.Component {
   constructor(props) {
@@ -116,66 +117,32 @@ export class ErrorBoundary extends React.Component {
                 marginBottom: '20px',
               }}
             >
-              <button
+              <Button
                 onClick={this.handleReload}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '10px 18px',
-                  borderRadius: '12px',
-                  backgroundColor: '#FF5A2F',
-                  color: '#FFFFFF',
-                  fontSize: '13px',
-                  fontWeight: 700,
-                  border: 'none',
-                  cursor: 'pointer',
-                  boxShadow: '0 2px 8px rgba(255, 90, 47, 0.3)',
-                }}
+                variant="primary"
+                size="md"
+                icon={RefreshCw}
               >
-                <RefreshCw size={14} />
-                <span>Reload Page</span>
-              </button>
+                Reload Page
+              </Button>
 
-              <button
+              <Button
                 onClick={this.handleReset}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '10px 18px',
-                  borderRadius: '12px',
-                  backgroundColor: '#FFFFFF',
-                  color: '#334155',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  border: '1px solid #CBD5E1',
-                  cursor: 'pointer',
-                }}
+                variant="secondary"
+                size="md"
+                icon={RotateCcw}
               >
-                <RotateCcw size={14} />
-                <span>Try Again</span>
-              </button>
+                Try Again
+              </Button>
 
-              <button
+              <Button
                 onClick={this.handleClearAndGoHome}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '8px',
-                  padding: '10px 18px',
-                  borderRadius: '12px',
-                  backgroundColor: '#F1F5F9',
-                  color: '#334155',
-                  fontSize: '13px',
-                  fontWeight: 600,
-                  border: '1px solid transparent',
-                  cursor: 'pointer',
-                }}
+                variant="ghost"
+                size="md"
+                icon={Home}
               >
-                <Home size={14} />
-                <span>Go to Home</span>
-              </button>
+                Go to Home
+              </Button>
             </div>
 
             {/* Error detail for debugging */}

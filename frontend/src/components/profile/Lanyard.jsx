@@ -475,7 +475,7 @@ export function Lanyard({
           setFrontTexture(tex);
         },
         undefined,
-        () => {}
+        () => { }
       );
     }
 
@@ -489,7 +489,7 @@ export function Lanyard({
           setBackTexture(tex);
         },
         undefined,
-        () => {}
+        () => { }
       );
     }
 
@@ -503,7 +503,7 @@ export function Lanyard({
           setStrapTexture(tex);
         },
         undefined,
-        () => {}
+        () => { }
       );
     }
   }, [frontImage, backImage, lanyardImage]);

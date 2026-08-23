@@ -12,10 +12,11 @@
 .step-circle-container {
   width: 100%;
   border-radius: 16px;
-  background-color: #ffffff;
-  border: 1px solid #E5E7EB;
-  box-shadow: 0 1px 4px 0 rgba(0,0,0,0.05), 0 1px 2px -1px rgba(0,0,0,0.03);
+  background-color: var(--fb-surface);
+  border: 1px solid var(--fb-border);
+  box-shadow: var(--shadow-card);
   overflow: hidden;
+  transition: background-color 200ms ease, border-color 200ms ease;
 }
 
 .step-indicator-row {
@@ -59,18 +60,24 @@
   transition: all 160ms ease;
   border-radius: 8px;
   padding: 0.5rem 1.125rem;
-  color: #4B5563;
+  color: var(--fb-text);
   font-size: 0.8125rem;
   font-weight: 600;
-  background-color: #F3F4F6;
-  border: 1px solid #E5E7EB;
+  background-color: var(--fb-surface-elevated);
+  border: 1px solid var(--fb-border);
   cursor: pointer;
   font-family: 'Inter', sans-serif;
+  outline: none;
 }
 
 .back-button:hover {
-  background-color: #E5E7EB;
-  color: #111827;
+  background-color: var(--fb-surface-hover);
+  border-color: var(--fb-border-strong);
+  color: var(--fb-text);
+}
+
+.back-button:focus-visible {
+  box-shadow: 0 0 0 2px var(--fb-bg), 0 0 0 4px #FF5A2F;
 }
 
 .back-button.inactive {
@@ -94,12 +101,17 @@
   border: none;
   font-family: 'Inter', sans-serif;
   box-shadow: 0 3px 10px rgba(255, 90, 47, 0.25);
+  outline: none;
 }
 
 .next-button:hover {
   background-color: #F04E25;
   box-shadow: 0 4px 14px rgba(255, 90, 47, 0.35);
   transform: translateY(-1px);
+}
+
+.next-button:focus-visible {
+  box-shadow: 0 0 0 2px var(--fb-bg), 0 0 0 4px #FF5A2F;
 }
 
 .next-button:active {
@@ -148,7 +160,7 @@
   min-width: 16px;
   overflow: hidden;
   border-radius: 2px;
-  background-color: #E5E7EB;
+  background-color: var(--fb-border);
 }
 
 .step-connector-inner {

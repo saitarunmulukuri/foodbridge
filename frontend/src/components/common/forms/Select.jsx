@@ -141,36 +141,26 @@ export const Select = ({
         aria-expanded={isOpen}
         aria-invalid={!!error}
         aria-required={required}
-        className={`w-full flex items-center justify-between px-3.5 text-left font-sans transition-all duration-150 outline-none ${triggerClassName}`}
+        className={`w-full flex items-center justify-between px-3.5 text-left font-sans transition-all duration-150 outline-none rounded-[10px] text-[13.5px] h-[44px] min-h-[44px] ${
+          disabled
+            ? 'bg-slate-50 dark:bg-[#11171F] text-slate-400 dark:text-slate-600 border border-slate-200 dark:border-[#26313D] cursor-not-allowed'
+            : error
+            ? 'bg-white dark:bg-[#171E27] text-slate-900 dark:text-[#F5F7FA] border-red-500 ring-2 ring-red-500/20'
+            : isOpen
+            ? 'bg-white dark:bg-[#171E27] text-slate-900 dark:text-[#F5F7FA] border border-[#FF5A2F] ring-2 ring-[#FF5A2F]/20'
+            : 'bg-white dark:bg-[#171E27] text-slate-900 dark:text-[#F5F7FA] border border-slate-200 dark:border-[#26313D] hover:border-slate-300 dark:hover:border-slate-600'
+        } ${triggerClassName}`}
         style={{
-          height: 44,
-          minHeight: 44,
-          borderRadius: 10,
-          backgroundColor: disabled ? '#F8FAFC' : '#FFFFFF',
-          border: error
-            ? '1.5px solid #EF4444'
-            : isOpen
-            ? '1.5px solid #FF5A36'
-            : '1px solid #E2E8F0',
-          color: selectedOption ? '#0F172A' : '#94A3B8',
-          fontSize: 13.5,
-          fontWeight: selectedOption ? 500 : 400,
-          cursor: disabled ? 'not-allowed' : 'pointer',
-          boxShadow: error
-            ? '0 0 0 3px rgba(239, 68, 68, 0.12)'
-            : isOpen
-            ? '0 0 0 3px rgba(255, 90, 54, 0.15)'
-            : '0 1px 2px rgba(0, 0, 0, 0.02)',
           ...triggerStyle,
         }}
       >
-        <span className="truncate">
+        <span className={`truncate ${!selectedOption ? 'text-slate-400 dark:text-[#748296]' : 'text-slate-900 dark:text-[#F5F7FA]'}`}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
         <ChevronDown
           size={16}
           className={`shrink-0 ml-2 transition-transform duration-150 ${
-            isOpen ? 'rotate-180 text-[#FF5A36]' : 'text-slate-400'
+            isOpen ? 'rotate-180 text-[#FF5A2F]' : 'text-slate-400 dark:text-slate-500'
           }`}
         />
       </button>
@@ -181,26 +171,10 @@ export const Select = ({
           ref={listboxRef}
           role="listbox"
           tabIndex={-1}
-          style={{
-            position: 'absolute',
-            top: 'calc(100% + 5px)',
-            left: 0,
-            right: 0,
-            zIndex: 999,
-            backgroundColor: '#FFFFFF',
-            borderRadius: 10,
-            border: '1px solid #E2E8F0',
-            boxShadow:
-              '0 12px 30px -4px rgba(0, 0, 0, 0.12), 0 4px 10px -2px rgba(0, 0, 0, 0.05)',
-            maxHeight: 220,
-            overflowY: 'auto',
-            padding: 4,
-            margin: 0,
-            listStyle: 'none',
-          }}
+          className="absolute top-[calc(100%+5px)] left-0 right-0 z-[999] bg-white dark:bg-[#171E27] border border-slate-200 dark:border-[#26313D] rounded-[10px] shadow-xl max-h-[220px] overflow-y-auto p-1 m-0 list-none"
         >
           {normalizedOptions.length === 0 ? (
-            <li className="px-3 py-2.5 text-xs text-slate-400 text-center">
+            <li className="px-3 py-2.5 text-xs text-slate-400 dark:text-slate-500 text-center">
               No options available
             </li>
           ) : (
@@ -215,19 +189,17 @@ export const Select = ({
                   aria-selected={isSelected}
                   onClick={() => handleSelect(opt.value)}
                   onMouseEnter={() => setHighlightedIndex(idx)}
-                  className="flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium cursor-pointer transition-colors duration-100"
-                  style={{
-                    backgroundColor: isSelected
-                      ? 'rgba(255, 90, 54, 0.08)'
+                  className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium cursor-pointer transition-colors duration-100 ${
+                    isSelected
+                      ? 'bg-orange-50 dark:bg-orange-500/15 text-[#FF5A2F] font-bold'
                       : isHighlighted
-                      ? '#F8FAFC'
-                      : 'transparent',
-                    color: isSelected ? '#FF5A36' : '#1E293B',
-                  }}
+                      ? 'bg-slate-50 dark:bg-[#1E2631] text-slate-900 dark:text-[#F5F7FA]'
+                      : 'text-slate-700 dark:text-[#A5B1C2]'
+                  }`}
                 >
                   <span className="truncate">{opt.label}</span>
                   {isSelected && (
-                    <Check size={14} className="text-[#FF5A36] shrink-0 ml-2" />
+                    <Check size={14} className="text-[#FF5A2F] shrink-0 ml-2" />
                   )}
                 </li>
               );

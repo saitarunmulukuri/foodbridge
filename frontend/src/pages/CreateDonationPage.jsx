@@ -13,6 +13,8 @@ import {
   NumberField,
   DateTimePicker,
 } from '../components/common/forms';
+import { Button } from '../components/common/Button';
+import { BorderBeam } from '../components/magicui/BorderBeam';
 import {
   Plus,
   Trash2,
@@ -21,7 +23,6 @@ import {
   MapPin,
   CheckCircle2,
   AlertCircle,
-  Loader2,
   RotateCcw,
   Calendar,
   Boxes,
@@ -36,17 +37,16 @@ const toLocalDatetimeString = (date = new Date()) => {
   return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
 };
 
-
 const SectionHeader = ({ title, number }) => (
-  <div className="fb-section-card-header bg-slate-50/60">
+  <div className="fb-section-card-header bg-slate-50/60 dark:bg-[#171E27] border-b border-slate-100 dark:border-[#26313D]">
     {number && (
       <div
-        className="w-7 h-7 rounded-xl flex items-center justify-center text-xs font-extrabold shrink-0 bg-orange-100 text-[#FF553E] border border-orange-200"
+        className="w-7 h-7 rounded-xl flex items-center justify-center text-xs font-extrabold shrink-0 bg-orange-100 dark:bg-orange-500/15 text-[#FF5A2F] border border-orange-200 dark:border-orange-500/30"
       >
         {number}
       </div>
     )}
-    <h2 className="text-xs font-bold text-slate-900 uppercase tracking-wider">{title}</h2>
+    <h2 className="text-xs font-bold text-slate-900 dark:text-[#F5F7FA] uppercase tracking-wider">{title}</h2>
   </div>
 );
 
@@ -58,40 +58,41 @@ const LivePreview = ({ formData, items }) => {
   const unit = (formData.quantity_unit || '').toLowerCase();
   const qty  = formData.total_quantity ? `${formData.total_quantity} ${unit}`.trim() : null;
 
-  const formatDT = (v) => {
-    if (!v) return null;
-    const d = new Date(v);
+  const formatDT = (iso) => {
+    if (!iso) return null;
+    const d = new Date(iso);
     if (isNaN(d.getTime())) return null;
     return d.toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
   };
 
   return (
-    <div className="fb-section-card overflow-hidden sticky top-6 bg-white border border-slate-200 shadow-md">
-      <div className="px-5 py-4 border-b border-slate-100 bg-slate-50/70 flex items-center justify-between">
+    <div className="fb-section-card relative overflow-hidden sticky top-6 bg-white dark:bg-[#11171F] border border-slate-200 dark:border-[#26313D] shadow-md">
+      <BorderBeam duration={8} size={100} colorFrom="#FF5A2F" colorTo="#FFA726" />
+      <div className="px-5 py-4 border-b border-slate-100 dark:border-[#26313D] bg-slate-50/70 dark:bg-[#171E27] flex items-center justify-between">
         <div>
-          <p className="text-xs font-bold text-slate-900 uppercase tracking-wider">Live Preview</p>
-          <p className="text-[11px] text-slate-400 mt-0.5">Updates in real-time</p>
+          <p className="text-xs font-bold text-slate-900 dark:text-[#F5F7FA] uppercase tracking-wider">Live Preview</p>
+          <p className="text-[11px] text-slate-400 dark:text-[#748296] mt-0.5">Updates in real-time</p>
         </div>
-        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200">
+        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700">
           Draft
         </span>
       </div>
 
       <div className="p-5 space-y-4">
         <div>
-          <h3 className={`text-base font-bold leading-snug ${hasTitle ? 'text-slate-900' : 'text-slate-400'}`}>
+          <h3 className={`text-base font-bold leading-snug ${hasTitle ? 'text-slate-900 dark:text-[#F5F7FA]' : 'text-slate-400 dark:text-[#748296]'}`}>
             {hasTitle ? formData.donation_title : 'Donation title will appear here'}
           </h3>
           {formData.description && (
-            <p className="text-xs text-slate-600 mt-1.5 line-clamp-2 leading-relaxed">{formData.description}</p>
+            <p className="text-xs text-slate-600 dark:text-[#A5B1C2] mt-1.5 line-clamp-2 leading-relaxed">{formData.description}</p>
           )}
         </div>
 
-        <div className="space-y-2 text-xs text-slate-600 font-medium">
+        <div className="space-y-2 text-xs text-slate-600 dark:text-[#A5B1C2] font-medium">
           {qty && (
             <div className="flex items-center space-x-2">
-              <Boxes size={14} className="text-[#FF553E] shrink-0" />
-              <span>{qty}</span>
+              <Boxes size={14} className="text-[#FF5A2F] shrink-0" />
+              <span className="text-slate-900 dark:text-[#F5F7FA] font-bold">{qty}</span>
             </div>
           )}
           {city && (
@@ -107,22 +108,22 @@ const LivePreview = ({ formData, items }) => {
             </div>
           )}
           {formData.expiry_time && (
-            <div className="flex items-center space-x-2">
-              <Calendar size={14} className="text-slate-400 shrink-0" />
+            <div className="flex items-center space-x-2 text-amber-600 dark:text-amber-400 font-semibold">
+              <Sparkles size={14} className="shrink-0" />
               <span>Expires {formatDT(formData.expiry_time)}</span>
             </div>
           )}
         </div>
 
-        {items.filter(i => i.item_name?.trim()).length > 0 && (
-          <div className="border-t border-slate-100 pt-3">
-            <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-2">Food Items Manifest</p>
+        {items.some(i => i.item_name?.trim()) && (
+          <div className="border-t border-slate-100 dark:border-[#26313D] pt-3">
+            <p className="text-[10px] font-bold text-slate-400 dark:text-[#748296] uppercase tracking-widest mb-2">Food Items Manifest</p>
             <div className="space-y-1.5">
               {items.filter(i => i.item_name?.trim()).map((item, idx) => (
-                <div key={idx} className="flex items-center justify-between text-xs text-slate-700">
+                <div key={idx} className="flex items-center justify-between text-xs text-slate-700 dark:text-[#F5F7FA]">
                   <span className="truncate font-medium">{item.item_name}</span>
                   {item.quantity && (
-                    <span className="tabular-nums ml-2 text-slate-500 font-semibold shrink-0">
+                    <span className="tabular-nums ml-2 text-slate-500 dark:text-[#A5B1C2] font-semibold shrink-0">
                       {item.quantity} {(item.unit || '').toLowerCase()}
                     </span>
                   )}
@@ -269,7 +270,7 @@ export const CreateDonationPage = () => {
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 animate-fade-in-up">
-      <Link to="/donor" className="inline-flex items-center space-x-1.5 text-xs text-slate-500 hover:text-slate-900 transition font-semibold">
+      <Link to="/donor" className="inline-flex items-center space-x-1.5 text-xs text-slate-500 dark:text-[#A5B1C2] hover:text-slate-900 dark:hover:text-[#F5F7FA] transition font-semibold">
         <ArrowLeft size={14} />
         <span>Back to Dashboard</span>
       </Link>
@@ -277,12 +278,12 @@ export const CreateDonationPage = () => {
       {/* Cloudhub Hero Banner */}
       <div className="fb-page-header fb-hero-donor">
         <div className="relative z-10">
-          <div className="flex items-center space-x-2 mb-1 text-[#FF553E] text-xs font-bold uppercase tracking-wider">
+          <div className="flex items-center space-x-2 mb-1 text-[#FF5A2F] text-xs font-bold uppercase tracking-wider">
             <Sparkles size={14} />
             <span>Listing Wizard</span>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">Post Surplus Food</h1>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">
+          <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-[#F5F7FA] tracking-tight">Post Surplus Food</h1>
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-[#A5B1C2] mt-1 font-medium">
             Saved as draft — submit to start automated matching with nearby accredited NGOs.
           </p>
         </div>
@@ -302,7 +303,7 @@ export const CreateDonationPage = () => {
         <div className="space-y-5">
 
           {/* Section 1: Overview */}
-          <div className="fb-section-card bg-white relative z-20 overflow-visible">
+          <div className="fb-section-card relative z-20 overflow-visible">
             <SectionHeader title="Donation Overview" number="01" />
             <div className="p-6 space-y-4">
               <TextField
@@ -371,18 +372,23 @@ export const CreateDonationPage = () => {
           </div>
 
           {/* Section 2: Food Items */}
-          <div className="fb-section-card bg-white">
+          <div className="fb-section-card">
             <div className="flex items-center justify-between">
               <SectionHeader title={`Food Items (${items.length})`} number="02" />
-              <button type="button" onClick={addItem}
-                className="mr-5 text-xs text-[#FF553E] hover:text-[#E02E14] font-bold flex items-center space-x-1 transition">
-                <Plus size={14} />
-                <span>Add item</span>
-              </button>
+              <Button
+                type="button"
+                onClick={addItem}
+                variant="secondary"
+                size="sm"
+                icon={Plus}
+                className="mr-5"
+              >
+                Add item
+              </Button>
             </div>
             <div className="px-6 pb-6 space-y-3">
               {items.map((item, idx) => (
-                <div key={idx} className="bg-slate-50/80 border border-slate-200 rounded-xl p-3.5 grid grid-cols-1 sm:grid-cols-4 gap-3 items-start">
+                <div key={idx} className="bg-slate-50/80 dark:bg-[#171E27] border border-slate-200 dark:border-[#26313D] rounded-xl p-3.5 grid grid-cols-1 sm:grid-cols-4 gap-3 items-start">
                   <div className="sm:col-span-2">
                     <TextField
                       label="Item Name"
@@ -401,7 +407,7 @@ export const CreateDonationPage = () => {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-bold text-slate-700 mb-1.5 select-none">
+                    <label className="block text-xs font-bold text-slate-700 dark:text-[#F5F7FA] mb-1.5 select-none">
                       Quantity <span className="text-red-500">*</span>
                     </label>
                     <div className="flex items-center space-x-1">
@@ -415,11 +421,14 @@ export const CreateDonationPage = () => {
                         className="flex-1 min-w-0"
                       />
                       {items.length > 1 && (
-                        <button type="button" onClick={() => removeItem(idx)}
+                        <Button
+                          type="button"
+                          onClick={() => removeItem(idx)}
+                          variant="danger"
+                          size="md"
+                          icon={Trash2}
                           aria-label="Remove item"
-                          className="h-[44px] px-2.5 rounded-lg text-slate-400 hover:text-red-600 hover:bg-red-50 transition flex items-center justify-center border border-slate-200">
-                          <Trash2 size={14} />
-                        </button>
+                        />
                       )}
                     </div>
                   </div>
@@ -429,49 +438,39 @@ export const CreateDonationPage = () => {
           </div>
 
           {/* Section 3: Pickup Location */}
-          <div className="fb-section-card bg-white">
+          <div className="fb-section-card">
             <div className="flex items-center justify-between">
               <SectionHeader title="Pickup Location" number="03" />
-              <button
+              <Button
                 type="button"
                 id="use-my-location-btn"
                 onClick={handleDetectLocation}
                 disabled={locationStatus === 'loading'}
-                className={`mr-5 px-3.5 py-1.5 rounded-full text-xs font-bold flex items-center space-x-2 transition border shrink-0 ${
-                  locationStatus === 'loading'
-                    ? 'bg-slate-100 text-slate-500 border-slate-200 cursor-wait'
-                    : locationStatus === 'success'
-                    ? 'bg-emerald-50 border-emerald-300 text-emerald-700 hover:bg-emerald-100'
+                loading={locationStatus === 'loading'}
+                loadingText="Detecting location…"
+                variant={
+                  locationStatus === 'success'
+                    ? 'success'
                     : locationStatus === 'error'
-                    ? 'bg-red-50 border-red-300 text-red-700 hover:bg-red-100'
-                    : 'fb-btn-primary'
-                }`}
+                    ? 'danger'
+                    : 'secondary'
+                }
+                size="sm"
+                icon={
+                  locationStatus === 'success'
+                    ? CheckCircle2
+                    : locationStatus === 'error'
+                    ? RotateCcw
+                    : MapPin
+                }
+                className="mr-5 shrink-0"
               >
-                {locationStatus === 'loading' && (
-                  <>
-                    <Loader2 size={13} className="animate-spin" />
-                    <span>Detecting location…</span>
-                  </>
-                )}
-                {locationStatus === 'success' && (
-                  <>
-                    <CheckCircle2 size={13} />
-                    <span>Location detected</span>
-                  </>
-                )}
-                {locationStatus === 'error' && (
-                  <>
-                    <RotateCcw size={13} />
-                    <span>Retry</span>
-                  </>
-                )}
-                {locationStatus === 'idle' && (
-                  <>
-                    <MapPin size={13} />
-                    <span>Use My Location</span>
-                  </>
-                )}
-              </button>
+                {locationStatus === 'success'
+                  ? 'Location detected'
+                  : locationStatus === 'error'
+                  ? 'Retry'
+                  : 'Use My Location'}
+              </Button>
             </div>
 
             <div className="p-6 space-y-4">
@@ -480,8 +479,8 @@ export const CreateDonationPage = () => {
                 <div
                   className={`flex items-start space-x-2 px-3.5 py-2.5 rounded-xl text-xs ${
                     locationStatus === 'error'
-                      ? 'bg-red-50 border border-red-200 text-red-700'
-                      : 'bg-amber-50 border border-amber-200 text-amber-800'
+                      ? 'bg-red-50 dark:bg-red-500/15 border border-red-200 dark:border-red-500/30 text-red-700 dark:text-red-400'
+                      : 'bg-amber-50 dark:bg-amber-500/15 border border-amber-200 dark:border-amber-500/30 text-amber-800 dark:text-amber-400'
                   }`}
                 >
                   <AlertCircle size={14} className="shrink-0 mt-0.5" />
@@ -564,12 +563,18 @@ export const CreateDonationPage = () => {
 
           {/* Submit CTA */}
           <div className="flex justify-end pt-2">
-            <button type="submit"
+            <Button
+              type="submit"
               disabled={loading || !!timeError}
-              className="fb-btn-primary px-8 py-3 text-sm font-bold shadow-lg">
-              <Send size={15} />
-              <span>{loading ? 'Creating…' : 'Create Donation Offer'}</span>
-            </button>
+              loading={loading}
+              loadingText="Creating…"
+              variant="primary"
+              size="lg"
+              icon={Send}
+              className="px-8 shadow-lg"
+            >
+              Create Donation Offer
+            </Button>
           </div>
         </div>
 

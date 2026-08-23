@@ -9,6 +9,8 @@ import { StatusBadge } from '../components/common/StatusBadge';
 import { ExpiryTimer } from '../components/common/ExpiryTimer';
 import { SpotlightCard } from '../components/common/SpotlightCard';
 import { TextField, Select } from '../components/common/forms';
+import { Button } from '../components/common/Button';
+import { GlareHover } from '../components/magicui/GlareHover';
 import {
   IN_PROGRESS_STATUSES,
   COMPLETED_STATUSES,
@@ -116,10 +118,10 @@ export const DonationsListPage = () => {
   }, [donations, searchQuery, statusFilter, sortBy]);
 
   const TABS = [
-    { key: 'ALL',       label: 'All Offers',         count: counts.total,     activeClass: 'bg-orange-50 text-[#FF553E] border-orange-200 font-bold' },
-    { key: 'ACTIVE',    label: 'In Progress',        count: counts.active,    activeClass: 'bg-blue-50 text-blue-700 border-blue-200 font-bold' },
-    { key: 'COMPLETED', label: 'Delivered',          count: counts.completed, activeClass: 'bg-emerald-50 text-emerald-700 border-emerald-200 font-bold' },
-    ...(counts.terminal > 0 ? [{ key: 'TERMINAL', label: 'Expired / Cancelled', count: counts.terminal, activeClass: 'bg-red-50 text-red-700 border-red-200 font-bold' }] : []),
+    { key: 'ALL',       label: 'All Offers',         count: counts.total,     activeClass: 'bg-orange-50 dark:bg-orange-500/15 text-[#FF5A2F] border-orange-200 dark:border-orange-500/30 font-bold' },
+    { key: 'ACTIVE',    label: 'In Progress',        count: counts.active,    activeClass: 'bg-blue-50 dark:bg-blue-500/15 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/30 font-bold' },
+    { key: 'COMPLETED', label: 'Delivered',          count: counts.completed, activeClass: 'bg-emerald-50 dark:bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/30 font-bold' },
+    ...(counts.terminal > 0 ? [{ key: 'TERMINAL', label: 'Expired / Cancelled', count: counts.terminal, activeClass: 'bg-red-50 dark:bg-red-500/15 text-red-700 dark:text-red-400 border-red-200 dark:border-red-500/30 font-bold' }] : []),
   ];
 
   return (
@@ -129,24 +131,30 @@ export const DonationsListPage = () => {
       <div className="fb-page-header">
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-semibold text-slate-900">My Donations</h1>
-            <p className="text-sm text-slate-500 mt-1">
+            <h1 className="text-2xl font-semibold text-slate-900 dark:text-[#F5F7FA]">My Donations</h1>
+            <p className="text-sm text-slate-500 dark:text-[#A5B1C2] mt-1">
               {donations.length} listing{donations.length === 1 ? '' : 's'} · search and filter below
             </p>
           </div>
           <div className="flex items-center space-x-2 shrink-0">
-            <button
+            <Button
               onClick={fetchDonations}
               disabled={loading}
-              className="p-2 rounded-md text-slate-500 hover:text-slate-900 bg-white border border-slate-200"
+              variant="icon"
+              size="sm"
+              icon={RefreshCw}
+              loading={loading}
+              aria-label="Refresh donations"
               title="Refresh"
+            />
+            <Button
+              to="/donor/create"
+              variant="primary"
+              size="sm"
+              icon={PlusCircle}
             >
-              <RefreshCw size={15} className={loading ? 'animate-spin' : ''} />
-            </button>
-            <Link to="/donor/create" className="fb-btn-primary text-xs">
-              <PlusCircle size={15} />
-              <span>Post Surplus Food</span>
-            </Link>
+              Post Surplus Food
+            </Button>
           </div>
         </div>
       </div>
@@ -161,7 +169,7 @@ export const DonationsListPage = () => {
 
       {/* Filter and Search Toolbar */}
       {donations.length > 0 && (
-        <div className="bg-white border border-slate-200 rounded-lg p-4 space-y-3">
+        <div className="bg-white dark:bg-[#11171F] border border-slate-200 dark:border-[#26313D] rounded-xl p-4 space-y-3">
           {/* Tab Filter Pills */}
           <div className="flex items-center space-x-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
             {TABS.map(tab => (
@@ -171,17 +179,17 @@ export const DonationsListPage = () => {
                 className={`px-3 py-1.5 rounded-md text-xs font-medium whitespace-nowrap flex items-center space-x-2 border ${
                   statusFilter === tab.key
                     ? tab.activeClass
-                    : 'bg-white border-slate-200 text-slate-600 hover:text-slate-900 hover:border-slate-300'
+                    : 'bg-white dark:bg-[#171E27] border-slate-200 dark:border-[#26313D] text-slate-600 dark:text-[#A5B1C2] hover:text-slate-900 dark:hover:text-[#F5F7FA] hover:border-slate-300 dark:hover:border-slate-600'
                 }`}
               >
                 <span>{tab.label}</span>
-                <span className="tabular-nums text-[10px] opacity-80 px-1.5 py-0.2 rounded-full bg-black/5 font-bold">{tab.count}</span>
+                <span className="tabular-nums text-[10px] opacity-80 px-1.5 py-0.2 rounded-full bg-black/5 dark:bg-white/10 font-bold">{tab.count}</span>
               </button>
             ))}
           </div>
 
           {/* Search + Sort Bar */}
-          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2 border-t border-slate-100">
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-2 border-t border-slate-100 dark:border-[#26313D]">
             <div className="flex-1">
               <TextField
                 icon={Search}
@@ -194,7 +202,7 @@ export const DonationsListPage = () => {
                       type="button"
                       onClick={() => setSearchQuery('')}
                       aria-label="Clear search"
-                      className="text-slate-400 hover:text-slate-700 p-1 transition"
+                      className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-300 p-1 transition"
                     >
                       <X size={14} />
                     </button>
@@ -225,47 +233,54 @@ export const DonationsListPage = () => {
       {loading && (
         <div className="space-y-3">
           {[0, 1, 2, 3].map(i => (
-            <div key={i} className="h-20 bg-white border border-slate-200 rounded-2xl fb-skeleton" />
+            <div key={i} className="h-20 bg-white dark:bg-[#11171F] border border-slate-200 dark:border-[#26313D] rounded-2xl fb-skeleton" />
           ))}
         </div>
       )}
 
       {!loading && donations.length === 0 && !error && (
         <div className="fb-empty-state">
-          <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-[#FF553E] bg-orange-50 border border-orange-200 mb-4 shadow-sm">
+          <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-[#FF5A2F] bg-orange-50 dark:bg-orange-500/15 border border-orange-200 dark:border-orange-500/30 mb-4 shadow-sm">
             <PackageOpen size={28} />
           </div>
-          <h2 className="text-lg font-bold text-slate-900 mb-1">No donations created yet</h2>
-          <p className="text-xs text-slate-500 max-w-sm mb-6 leading-relaxed font-medium">
+          <h2 className="text-lg font-bold text-slate-900 dark:text-[#F5F7FA] mb-1">No donations created yet</h2>
+          <p className="text-xs text-slate-500 dark:text-[#A5B1C2] max-w-sm mb-6 leading-relaxed font-medium">
             Post surplus food from your kitchen or event to start matching with accredited NGOs.
           </p>
-          <Link to="/donor/create" className="fb-btn-primary shadow-md">
-            <PlusCircle size={15} />
-            <span>Post Surplus Food</span>
-          </Link>
+          <Button
+            to="/donor/create"
+            variant="primary"
+            size="md"
+            icon={PlusCircle}
+            className="shadow-md"
+          >
+            Post Surplus Food
+          </Button>
         </div>
       )}
 
       {/* Empty Filter State */}
       {!loading && donations.length > 0 && filtered.length === 0 && (
-        <div className="text-center py-12 border border-slate-200 rounded-2xl bg-white p-6 shadow-sm">
-          <Filter size={24} className="mx-auto text-slate-400 mb-2 opacity-60" />
-          <p className="text-xs font-bold text-slate-700">No donations match your selected filters</p>
-          <button
+        <div className="text-center py-12 border border-slate-200 dark:border-[#26313D] rounded-2xl bg-white dark:bg-[#11171F] p-6 shadow-sm">
+          <Filter size={24} className="mx-auto text-slate-400 dark:text-slate-500 mb-2 opacity-60" />
+          <p className="text-xs font-bold text-slate-700 dark:text-[#F5F7FA]">No donations match your selected filters</p>
+          <Button
             onClick={() => { setSearchQuery(''); setStatusFilter('ALL'); }}
-            className="mt-3 px-4 py-2 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition"
+            variant="secondary"
+            size="sm"
+            className="mt-3"
           >
             Clear filters
-          </button>
+          </Button>
         </div>
       )}
 
       {/* Desktop Data Table / List */}
       {!loading && filtered.length > 0 && (
-        <div className="fb-card overflow-hidden bg-white">
+        <div className="fb-card overflow-hidden">
           {/* Table Header */}
           <div
-            className="hidden lg:grid grid-cols-[2fr_1fr_1.2fr_1fr_1fr_80px] gap-4 px-6 py-3.5 border-b border-slate-100 bg-slate-50/80 text-[11px] font-bold uppercase tracking-wider text-slate-400"
+            className="hidden lg:grid grid-cols-[2fr_1fr_1.2fr_1fr_1fr_80px] gap-4 px-6 py-3.5 border-b border-slate-100 dark:border-[#26313D] bg-slate-50/80 dark:bg-[#171E27] text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-[#A5B1C2]"
           >
             <div>Donation Offer</div>
             <div>Quantity</div>
@@ -276,7 +291,7 @@ export const DonationsListPage = () => {
           </div>
 
           {/* Table Rows */}
-          <div className="divide-y divide-slate-100">
+          <div className="divide-y divide-slate-100 dark:divide-[#26313D]">
             {filtered.map((d, index) => {
               if (!d) return null;
               const donationId = d.donation_id ?? index;
@@ -287,60 +302,62 @@ export const DonationsListPage = () => {
               const showExpiry = IN_PROGRESS_STATUSES.has(d.status) && expMs !== null && expMs > now;
 
               return (
-                <SpotlightCard
-                  key={donationId}
-                  spotlightColor="rgba(255, 85, 62, 0.12)"
-                  className="p-4 sm:px-6 sm:py-4 hover:bg-slate-50/70 transition-colors flex flex-col lg:grid lg:grid-cols-[2fr_1fr_1.2fr_1fr_1fr_80px] gap-3 lg:gap-4 lg:items-center relative"
-                >
-                  {/* Donation Title */}
-                  <div className="min-w-0 relative z-10">
-                    <Link
-                      to={`/donor/donations/${donationId}`}
-                      className="text-xs sm:text-sm font-bold text-slate-900 hover:text-[#FF553E] transition truncate block"
-                    >
-                      {d.donation_title || `Donation #${donationId}`}
-                    </Link>
-                    {showExpiry && (
-                      <div className="mt-1">
-                        <ExpiryTimer expiryTime={d.expiry_time} donationStatus={d.status} compact />
-                      </div>
-                    )}
-                  </div>
+                <GlareHover key={donationId} duration={600} opacity={0.45}>
+                  <SpotlightCard
+                    spotlightColor="rgba(255, 85, 62, 0.12)"
+                    className="p-4 sm:px-6 sm:py-4 hover:bg-slate-50/70 dark:hover:bg-[#171E27]/70 transition-colors flex flex-col lg:grid lg:grid-cols-[2fr_1fr_1.2fr_1fr_1fr_80px] gap-3 lg:gap-4 lg:items-center relative"
+                  >
+                    {/* Donation Title */}
+                    <div className="min-w-0 relative z-10">
+                      <Link
+                        to={`/donor/donations/${donationId}`}
+                        className="text-xs sm:text-sm font-bold text-slate-900 dark:text-[#F5F7FA] hover:text-[#FF5A2F] dark:hover:text-[#FF5A2F] transition truncate block"
+                      >
+                        {d.donation_title || `Donation #${donationId}`}
+                      </Link>
+                      {showExpiry && (
+                        <div className="mt-1">
+                          <ExpiryTimer expiryTime={d.expiry_time} donationStatus={d.status} compact />
+                        </div>
+                      )}
+                    </div>
 
-                  {/* Quantity */}
-                  <div className="text-xs text-slate-600 flex items-center space-x-1.5 relative z-10">
-                    <Boxes size={13} className="text-slate-400 shrink-0 lg:hidden" />
-                    <span className="font-bold text-slate-900 tabular-nums">{qty || '—'}</span>
-                  </div>
+                    {/* Quantity */}
+                    <div className="text-xs text-slate-700 dark:text-[#A5B1C2] flex items-center space-x-1.5 relative z-10">
+                      <Boxes size={13} className="text-slate-400 dark:text-[#748296] shrink-0 lg:hidden" />
+                      <span className="font-semibold text-slate-900 dark:text-[#F5F7FA] tabular-nums">{qty || '—'}</span>
+                    </div>
 
-                  {/* Location */}
-                  <div className="text-xs text-slate-500 flex items-center space-x-1.5 truncate font-medium relative z-10">
-                    <MapPin size={13} className="text-slate-400 shrink-0 lg:hidden" />
-                    <span className="truncate">{city}</span>
-                  </div>
+                    {/* Location */}
+                    <div className="text-xs text-slate-600 dark:text-[#A5B1C2] flex items-center space-x-1.5 truncate font-medium relative z-10">
+                      <MapPin size={13} className="text-slate-400 dark:text-[#748296] shrink-0 lg:hidden" />
+                      <span className="truncate">{city}</span>
+                    </div>
 
-                  {/* Status Badge */}
-                  <div className="relative z-10">
-                    <StatusBadge status={d.status} />
-                  </div>
+                    {/* Status Badge */}
+                    <div className="relative z-10">
+                      <StatusBadge status={d.status} />
+                    </div>
 
-                  {/* Created Date */}
-                  <div className="text-xs text-slate-400 flex items-center space-x-1.5 font-medium relative z-10">
-                    <Calendar size={13} className="text-slate-400 shrink-0 lg:hidden" />
-                    <span>{formatShortDate(d.created_at)}</span>
-                  </div>
+                    {/* Created Date */}
+                    <div className="text-xs text-slate-500 dark:text-[#A5B1C2] flex items-center space-x-1.5 font-medium relative z-10">
+                      <Calendar size={13} className="text-slate-400 dark:text-[#748296] shrink-0 lg:hidden" />
+                      <span>{formatShortDate(d.created_at)}</span>
+                    </div>
 
-                  {/* View Details Action */}
-                  <div className="flex items-center justify-end relative z-10">
-                    <Link
-                      to={`/donor/donations/${d.donation_id}`}
-                      className="p-2 rounded-xl bg-slate-50 hover:bg-orange-50 border border-slate-200 hover:border-orange-200 text-slate-400 hover:text-[#FF553E] transition shadow-sm"
-                      title="View Details"
-                    >
-                      <ArrowRight size={14} />
-                    </Link>
-                  </div>
-                </SpotlightCard>
+                    {/* View Details Action */}
+                    <div className="flex items-center justify-end relative z-10">
+                      <Button
+                        to={`/donor/donations/${d.donation_id}`}
+                        variant="icon"
+                        size="sm"
+                        icon={ArrowRight}
+                        aria-label="View Details"
+                        title="View Details"
+                      />
+                    </div>
+                  </SpotlightCard>
+                </GlareHover>
               );
             })}
           </div>

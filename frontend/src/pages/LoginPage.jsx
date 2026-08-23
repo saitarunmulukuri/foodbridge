@@ -8,6 +8,8 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { GoogleSignInButton } from '../components/auth/GoogleSignInButton';
 import { TextField } from '../components/common/forms';
+import { Button } from '../components/common/Button';
+import { BorderBeam } from '../components/magicui/BorderBeam';
 import {
   UtensilsCrossed,
   ArrowRight,
@@ -26,8 +28,8 @@ const QUICK_ACCOUNTS = [
     desc: "Dave's Kitchen",
     icon: UtensilsCrossed,
     color: '#FF5A2F',
-    bgColor: '#FFF4F2',
-    borderColor: '#FFD0C8',
+    bgClass: 'bg-[#FFF4F2] dark:bg-[#1A222C]',
+    borderClass: 'border-[#FFD0C8] dark:border-orange-500/30',
   },
   {
     role: 'NGO',
@@ -36,8 +38,8 @@ const QUICK_ACCOUNTS = [
     desc: 'Community Meals NGO',
     icon: Building2,
     color: '#10B981',
-    bgColor: '#F0FDF4',
-    borderColor: '#BBF7D0',
+    bgClass: 'bg-[#F0FDF4] dark:bg-[#1A222C]',
+    borderClass: 'border-[#BBF7D0] dark:border-emerald-500/30',
   },
   {
     role: 'VOLUNTEER',
@@ -46,8 +48,8 @@ const QUICK_ACCOUNTS = [
     desc: 'Rapid Dispatch Driver',
     icon: Truck,
     color: '#3B82F6',
-    bgColor: '#EFF6FF',
-    borderColor: '#BFDBFE',
+    bgClass: 'bg-[#EFF6FF] dark:bg-[#1A222C]',
+    borderClass: 'border-[#BFDBFE] dark:border-blue-500/30',
   },
 ];
 
@@ -123,18 +125,12 @@ export const LoginPage = () => {
   return (
     <div className="w-full flex items-center justify-center py-4 px-4">
       <div
-        className="w-full animate-fade-in"
+        className="w-full animate-fade-in relative overflow-hidden bg-white dark:bg-[#11171F] border border-slate-200 dark:border-[#26313D] shadow-2xl rounded-[20px] grid grid-cols-1 sm:grid-cols-2"
         style={{
           maxWidth: 860,
-          borderRadius: 20,
-          overflow: 'hidden',
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          background: '#FFFFFF',
-          border: '1px solid #E5E7EB',
-          boxShadow: '0 20px 48px -8px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)',
         }}
       >
+        <BorderBeam duration={8} size={150} colorFrom="#FF5A2F" colorTo="#FFA726" />
 
         {/* ── Left: Brand Panel ── */}
         <div
@@ -275,37 +271,24 @@ export const LoginPage = () => {
 
         {/* ── Right: Auth Form ── */}
         <div
-          style={{
-            padding: '44px 40px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            background: '#FFFFFF',
-          }}
-          className="login-right-panel"
+          className="login-right-panel bg-white dark:bg-[#11171F] p-8 sm:p-11 flex flex-col justify-center transition-colors duration-200"
         >
           {/* Form header */}
-          <div style={{ marginBottom: 26 }}>
+          <div className="mb-6">
             <h1
-              style={{
-                fontWeight: 750,
-                fontSize: 24,
-                color: '#111827',
-                margin: '0 0 6px',
-                letterSpacing: '-0.02em',
-              }}
+              className="text-2xl font-bold text-slate-900 dark:text-[#F5F7FA] tracking-tight mb-1.5"
             >
               Sign In to FoodBridge
             </h1>
-            <p style={{ color: '#6B7280', fontSize: 13, margin: 0, lineHeight: 1.5, fontWeight: 400 }}>
+            <p className="text-xs sm:text-[13px] text-slate-500 dark:text-[#A5B1C2] leading-relaxed">
               Access your FoodBridge account to manage surplus food redistribution.
             </p>
           </div>
 
           {/* Error */}
           {errorMessage && (
-            <div className="fb-alert-error" style={{ marginBottom: 20 }}>
-              <AlertCircle size={15} style={{ flexShrink: 0 }} />
+            <div className="fb-alert-error mb-5">
+              <AlertCircle size={15} className="shrink-0" />
               <span>{errorMessage}</span>
             </div>
           )}
@@ -337,38 +320,27 @@ export const LoginPage = () => {
             />
 
             {/* Submit */}
-            <button
+            <Button
               id="signin-btn"
               type="submit"
-              disabled={loading}
-              className="fb-btn-auth"
+              variant="primary"
+              size="lg"
+              fullWidth
+              loading={loading}
+              loadingText="Signing in…"
+              icon={ArrowRight}
+              iconPosition="right"
             >
-              <span>{loading ? 'Signing in…' : 'Sign In'}</span>
-              {!loading && <ArrowRight size={16} className="btn-arrow" />}
-            </button>
+              Sign In
+            </Button>
 
             {/* ─── Divider ─── */}
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                margin: '18px 0',
-                gap: 12,
-              }}
-            >
-              <div style={{ flex: 1, height: 1, background: '#E5E7EB' }} />
-              <span
-                style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: '#9CA3AF',
-                  letterSpacing: '0.06em',
-                  textTransform: 'uppercase',
-                }}
-              >
+            <div className="flex items-center my-4 gap-3">
+              <div className="flex-1 h-px bg-slate-200 dark:bg-[#26313D]" />
+              <span className="text-[11px] font-semibold text-slate-400 dark:text-[#748296] tracking-wider uppercase">
                 OR
               </span>
-              <div style={{ flex: 1, height: 1, background: '#E5E7EB' }} />
+              <div className="flex-1 h-px bg-slate-200 dark:bg-[#26313D]" />
             </div>
 
             {/* ─── Google Sign-In Button ─── */}
@@ -379,11 +351,11 @@ export const LoginPage = () => {
               text="Continue with Google"
             />
 
-            <div style={{ textAlign: 'center', marginTop: 18 }}>
-              <span style={{ color: '#6B7280', fontSize: 13 }}>New to FoodBridge? </span>
+            <div className="text-center mt-4">
+              <span className="text-xs sm:text-[13px] text-slate-500 dark:text-[#AAB4C2]">New to FoodBridge? </span>
               <Link
                 to="/register"
-                style={{ color: '#FF5A2F', fontWeight: 600, fontSize: 13, textDecoration: 'none' }}
+                className="text-[#FF5A2F] font-bold text-xs sm:text-[13px] hover:underline"
               >
                 Create an Account →
               </Link>
@@ -391,32 +363,12 @@ export const LoginPage = () => {
           </form>
 
           {/* Developer / Test Personas */}
-          <div style={{ marginTop: 28 }}>
-            <div
-              style={{
-                borderRadius: 10,
-                border: '1px solid #F3F4F6',
-                background: '#FAFAFA',
-                overflow: 'hidden',
-              }}
-            >
+          <div className="mt-6">
+            <div className="rounded-xl border border-slate-200 dark:border-[#26313D] bg-slate-50 dark:bg-[#171E27] overflow-hidden">
               <button
                 type="button"
                 onClick={() => setShowPersonas((v) => !v)}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  padding: '10px 14px',
-                  background: 'none',
-                  border: 'none',
-                  cursor: 'pointer',
-                  color: '#9CA3AF',
-                  fontSize: 12,
-                  fontWeight: 500,
-                  fontFamily: 'Inter, sans-serif',
-                }}
+                className="w-full flex items-center justify-between p-2.5 px-3.5 bg-transparent border-none cursor-pointer text-slate-500 dark:text-[#A5B1C2] text-xs font-medium"
               >
                 <span>Developer / Test Login</span>
                 {showPersonas ? <ChevronUp size={13} /> : <ChevronDown size={13} />}
@@ -424,15 +376,7 @@ export const LoginPage = () => {
 
               {showPersonas && (
                 <div
-                  style={{
-                    padding: '0 10px 10px',
-                    borderTop: '1px solid #F3F4F6',
-                    paddingTop: 10,
-                    display: 'grid',
-                    gridTemplateColumns: 'repeat(3, 1fr)',
-                    gap: 8,
-                  }}
-                  className="animate-fade-in"
+                  className="p-2.5 pt-2 border-t border-slate-200 dark:border-[#26313D] grid grid-cols-3 gap-2 animate-fade-in"
                 >
                   {QUICK_ACCOUNTS.map((acc) => {
                     const Icon = acc.icon;
@@ -442,31 +386,15 @@ export const LoginPage = () => {
                         type="button"
                         onClick={() => handleQuickLogin(acc.email)}
                         disabled={loading}
-                        style={{
-                          padding: '10px 10px',
-                          borderRadius: 8,
-                          border: `1px solid ${acc.borderColor}`,
-                          background: acc.bgColor,
-                          textAlign: 'left',
-                          cursor: 'pointer',
-                          fontFamily: 'Inter, sans-serif',
-                          transition: 'opacity 150ms ease',
-                        }}
+                        className={`p-2.5 rounded-lg border text-left cursor-pointer transition ${acc.bgClass} ${acc.borderClass}`}
                       >
-                        <div
-                          style={{
-                            display: 'flex',
-                            alignItems: 'center',
-                            justifyContent: 'space-between',
-                            marginBottom: 4,
-                          }}
-                        >
-                          <span style={{ fontSize: 11, fontWeight: 700, color: '#111827' }}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-[11px] font-bold text-slate-900 dark:text-[#F5F7FA]">
                             {acc.label}
                           </span>
                           <Icon size={12} style={{ color: acc.color }} />
                         </div>
-                        <span style={{ fontSize: 10, color: '#9CA3AF', fontWeight: 500 }}>
+                        <span className="text-[10px] text-slate-400 dark:text-[#748296] font-medium block truncate">
                           {acc.desc}
                         </span>
                       </button>
@@ -483,10 +411,6 @@ export const LoginPage = () => {
       <style>{`
         @media (max-width: 640px) {
           .login-left-panel { display: none !important; }
-          .login-right-panel { padding: 36px 28px !important; }
-          [style*="grid-template-columns: 1fr 1fr"] {
-            grid-template-columns: 1fr !important;
-          }
         }
       `}</style>
     </div>
@@ -494,4 +418,3 @@ export const LoginPage = () => {
 };
 
 export default LoginPage;
-

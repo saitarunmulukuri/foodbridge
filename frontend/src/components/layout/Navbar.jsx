@@ -58,7 +58,7 @@ export const Navbar = () => {
 
   return (
     <nav
-      className="sticky top-0 z-40 px-6 py-3.5 bg-white/90 backdrop-blur-md border-b border-slate-200"
+      className="sticky top-0 z-40 px-6 py-3.5 bg-white/90 dark:bg-[#11171F]/90 backdrop-blur-md border-b border-slate-200 dark:border-[#26313D]"
       style={{
         boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.03)',
       }}
@@ -72,26 +72,26 @@ export const Navbar = () => {
           aria-label="Go to FoodBridge home"
           title="Go to FoodBridge home"
         >
-          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#FF5E3A] to-[#FF4500] flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform">
+          <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#FF5A2F] to-[#FF4500] flex items-center justify-center text-white shadow-md group-hover:scale-105 transition-transform">
             <UtensilsCrossed size={18} strokeWidth={2.4} />
           </div>
           <div>
-            <span className="text-base font-extrabold text-slate-900 tracking-tight block">FoodBridge</span>
-            <span className="text-[10px] text-slate-400 block -mt-0.5 font-semibold">Redistribution Platform</span>
+            <span className="text-base font-extrabold text-slate-900 dark:text-[#F5F7FA] tracking-tight block">FoodBridge</span>
+            <span className="text-[10px] text-slate-400 dark:text-[#748296] block -mt-0.5 font-semibold">Redistribution Platform</span>
           </div>
         </Link>
 
         {/* Authenticated Navigation Links */}
         {isAuthenticated && (
-          <div className="hidden md:flex items-center space-x-1 border border-slate-200 bg-slate-50/80 p-1 rounded-full">
+          <div className="hidden md:flex items-center space-x-1 border border-slate-200 dark:border-[#26313D] bg-slate-50/80 dark:bg-[#171E27] p-1 rounded-full">
             {role === 'DONOR' && (
               <>
                 <Link
                   to="/donor/list"
                   className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition flex items-center space-x-1.5 ${
                     isActive('/donor/list')
-                      ? 'bg-white text-slate-900 shadow-sm'
-                      : 'text-slate-600 hover:text-slate-900'
+                      ? 'bg-white dark:bg-[#11171F] text-slate-900 dark:text-[#F5F7FA] shadow-sm'
+                      : 'text-slate-600 dark:text-[#A5B1C2] hover:text-slate-900 dark:hover:text-[#F5F7FA]'
                   }`}
                 >
                   <ListFilter size={13} />
@@ -101,8 +101,8 @@ export const Navbar = () => {
                   to="/donor/create"
                   className={`px-3.5 py-1.5 rounded-full text-xs font-bold transition flex items-center space-x-1.5 ${
                     isActive('/donor/create')
-                      ? 'bg-[#FF553E] text-white shadow'
-                      : 'text-[#FF553E] hover:bg-orange-50'
+                      ? 'bg-[#FF5A2F] text-white shadow'
+                      : 'text-[#FF5A2F] hover:bg-orange-50 dark:hover:bg-orange-500/15'
                   }`}
                 >
                   <PlusCircle size={13} />
@@ -116,8 +116,8 @@ export const Navbar = () => {
                 to="/ngo"
                 className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition flex items-center space-x-1.5 ${
                   isActive('/ngo')
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-white dark:bg-[#11171F] text-slate-900 dark:text-[#F5F7FA] shadow-sm'
+                    : 'text-slate-600 dark:text-[#A5B1C2] hover:text-slate-900 dark:hover:text-[#F5F7FA]'
                 }`}
               >
                 <Building2 size={13} />
@@ -130,8 +130,8 @@ export const Navbar = () => {
                 to="/volunteer"
                 className={`px-3.5 py-1.5 rounded-full text-xs font-semibold transition flex items-center space-x-1.5 ${
                   isActive('/volunteer')
-                    ? 'bg-white text-slate-900 shadow-sm'
-                    : 'text-slate-600 hover:text-slate-900'
+                    ? 'bg-white dark:bg-[#11171F] text-slate-900 dark:text-[#F5F7FA] shadow-sm'
+                    : 'text-slate-600 dark:text-[#A5B1C2] hover:text-slate-900 dark:hover:text-[#F5F7FA]'
                 }`}
               >
                 <Truck size={13} />
@@ -146,13 +146,13 @@ export const Navbar = () => {
           {isAuthenticated ? (
             <div className="flex items-center space-x-3">
               <div className="text-right hidden sm:block">
-                <span className="text-xs text-slate-900 font-bold block leading-tight">{user?.email}</span>
+                <span className="text-xs text-slate-900 dark:text-[#F5F7FA] font-bold block leading-tight">{user?.email}</span>
                 <div className="flex justify-end mt-0.5">{getRoleBadge()}</div>
               </div>
               <button
                 id="logout-btn"
                 onClick={handleLogout}
-                className="p-2 rounded-full bg-slate-100 border border-slate-200 text-slate-600 hover:text-red-600 hover:border-red-200 hover:bg-red-50 transition"
+                className="p-2 rounded-full bg-slate-100 dark:bg-[#171E27] border border-slate-200 dark:border-[#26313D] text-slate-600 dark:text-[#A5B1C2] hover:text-red-600 hover:border-red-200 dark:hover:border-red-500/20 hover:bg-red-50 dark:hover:bg-red-500/10 transition cursor-pointer"
                 title="Sign out"
                 aria-label="Sign out"
               >
@@ -163,7 +163,7 @@ export const Navbar = () => {
             <div className="flex items-center space-x-2">
               <Link
                 to="/register"
-                className="px-4 py-2 text-xs font-bold rounded-full text-slate-700 hover:text-slate-900 hover:bg-slate-100 transition flex items-center space-x-1.5"
+                className="px-4 py-2 text-xs font-bold rounded-full text-slate-700 dark:text-[#F5F7FA] hover:text-slate-900 hover:bg-slate-100 dark:hover:bg-[#171E27] transition flex items-center space-x-1.5"
               >
                 <UserPlus size={14} />
                 <span>Create Account</span>

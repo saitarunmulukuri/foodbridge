@@ -114,8 +114,8 @@ export const AuthLayout = ({ children }) => {
   ];
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F7F8FA', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ paddingTop: '12px' }}>
+    <div className="min-h-screen bg-[#F7F8FA] dark:bg-[#0B0F14] text-slate-900 dark:text-[#F5F7FA] flex flex-col transition-colors duration-200">
+      <div className="pt-3">
         <PillNav
           items={navItems}
           activeHref={location.pathname}
@@ -127,15 +127,8 @@ export const AuthLayout = ({ children }) => {
         />
       </div>
 
-      <main style={{ flex: 1, overflowY: 'auto', paddingBottom: '2.5rem' }}>
-        <div
-          style={{
-            maxWidth: '1200px',
-            margin: '0 auto',
-            padding: '24px 20px',
-          }}
-          className="auth-layout-content"
-        >
+      <main className="flex-1 overflow-y-auto pb-10">
+        <div className="max-w-[1200px] mx-auto p-5 sm:p-6 auth-layout-content">
           {children}
         </div>
       </main>

@@ -149,7 +149,7 @@ export const DateTimePicker = ({
     }
   }, [value]);
 
-  const handleToggle = (e) => {
+  const handleToggleOpen = (e) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
@@ -382,71 +382,48 @@ export const DateTimePicker = ({
       {label && (
         <label
           htmlFor={id}
-          className="block text-xs font-bold text-slate-700 mb-1.5"
+          className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1.5"
         >
           {label}
           {required && <span className="text-red-500 ml-0.5">*</span>}
         </label>
       )}
-
-      {/* ── Visible Trigger Field ── */}
+      {/* ── Custom Trigger Input Button ── */}
       <button
-        type="button"
         id={id}
         name={name}
-        onClick={handleToggle}
+        type="button"
         disabled={disabled}
+        onClick={handleToggleOpen}
         aria-haspopup="dialog"
         aria-expanded={isOpen}
-        style={{
-          width: '100%',
-          height: 44,
-          minHeight: 44,
-          padding: '0 14px',
-          borderRadius: 10,
-          background: disabled ? '#F8FAFC' : '#FFFFFF',
-          border: error
-            ? '1.5px solid #EF4444'
+        className={`w-full h-11 min-h-[44px] px-3.5 rounded-xl flex items-center justify-between text-[13.5px] font-medium outline-none transition-all duration-150 cursor-pointer ${
+          disabled
+            ? 'bg-slate-100 dark:bg-slate-800/60 text-slate-400 dark:text-slate-600 cursor-not-allowed border border-slate-200 dark:border-[#242D38]'
+            : error
+            ? 'bg-white dark:bg-[#171D25] border-2 border-red-500 text-slate-900 dark:text-[#F5F7FA]'
             : isOpen
-            ? '1.5px solid #FF5A36'
-            : '1px solid #E2E8F0',
-          color: displayString ? '#111827' : '#94A3B8',
-          fontSize: 13.5,
-          fontWeight: displayString ? 500 : 400,
-          fontFamily: 'inherit',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          cursor: disabled ? 'not-allowed' : 'pointer',
-          outline: 'none',
-          boxShadow: isOpen
-            ? '0 0 0 3px rgba(255, 90, 54, 0.15), 0 1px 2px rgba(0, 0, 0, 0.05)'
-            : '0 1px 2px rgba(0, 0, 0, 0.02)',
-          transition: 'all 150ms ease',
-        }}
+            ? 'bg-white dark:bg-[#171D25] border-2 border-[#FF5A2F] text-slate-900 dark:text-[#F5F7FA] shadow-[0_0_0_3px_rgba(255,90,47,0.15)]'
+            : 'bg-white dark:bg-[#171D25] border border-slate-200 dark:border-[#242D38] text-slate-900 dark:text-[#F5F7FA] hover:border-slate-300 dark:hover:border-slate-600'
+        }`}
       >
-        <span className="truncate">
+        <span className={`truncate ${!displayString ? 'text-slate-400 dark:text-[#7F8A99] font-normal' : 'text-slate-900 dark:text-[#F5F7FA]'}`}>
           {displayString || placeholder}
         </span>
         <CalendarIcon
           size={16}
-          style={{
-            color: isOpen ? '#FF5A36' : '#64748B',
-            flexShrink: 0,
-            marginLeft: 8,
-            transition: 'color 150ms ease',
-          }}
+          className={`shrink-0 ml-2 transition-colors duration-150 ${isOpen ? 'text-[#FF5A2F]' : 'text-slate-400 dark:text-[#7F8A99]'}`}
         />
       </button>
 
       {/* Helper / Error Text */}
       {error ? (
-        <p className="text-[10px] text-red-600 mt-1 flex items-center space-x-1 font-semibold">
+        <p className="text-[10px] text-red-600 dark:text-red-400 mt-1 flex items-center space-x-1 font-semibold">
           <AlertCircle size={11} className="shrink-0" />
           <span>{error}</span>
         </p>
       ) : helperText ? (
-        <p className="text-[10px] text-slate-400 mt-1">{helperText}</p>
+        <p className="text-[10px] text-slate-400 dark:text-[#7F8A99] mt-1">{helperText}</p>
       ) : null}
 
       {/* ── Custom Popover ── */}
@@ -456,64 +433,20 @@ export const DateTimePicker = ({
           role="dialog"
           aria-label="Date and time picker"
           onClick={(e) => e.stopPropagation()}
-          style={{
-            position: 'absolute',
-            top: 'calc(100% + 6px)',
-            left: 0,
-            zIndex: 1000,
-            width: 320,
-            maxWidth: 'calc(100vw - 32px)',
-            background: '#FFFFFF',
-            borderRadius: 14,
-            border: '1px solid #E2E8F0',
-            boxShadow:
-              '0 20px 40px -4px rgba(0, 0, 0, 0.18), 0 8px 16px -2px rgba(0, 0, 0, 0.08)',
-            padding: 16,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 12,
-            animation: 'fb-fade-in 150ms ease-out',
-          }}
+          className="absolute top-[calc(100%+6px)] left-0 z-50 w-[320px] max-w-[calc(100vw-32px)] bg-white dark:bg-[#11171F] rounded-2xl border border-slate-200 dark:border-[#26313D] shadow-2xl p-4 flex flex-col gap-3 animate-fade-in-up"
         >
           {/* Month Header Navigation */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
+          <div className="flex items-center justify-between">
             <button
               type="button"
               onClick={handlePrevMonth}
               aria-label="Previous month"
-              style={{
-                width: 30,
-                height: 30,
-                borderRadius: 8,
-                border: '1px solid #E2E8F0',
-                background: '#FFFFFF',
-                color: '#475569',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'all 120ms ease',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = '#F8FAFC')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = '#FFFFFF')}
+              className="w-7 h-7 rounded-lg border border-slate-200 dark:border-[#26313D] bg-white dark:bg-[#171E27] text-slate-600 dark:text-[#F5F7FA] hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer transition-colors"
             >
               <ChevronLeft size={16} />
             </button>
 
-            <span
-              style={{
-                fontWeight: 700,
-                fontSize: 14,
-                color: '#0F172A',
-                letterSpacing: '-0.01em',
-              }}
-            >
+            <span className="font-bold text-sm text-slate-900 dark:text-[#F5F7FA] tracking-tight">
               {MONTH_NAMES[viewMonth]} {viewYear}
             </span>
 
@@ -521,44 +454,18 @@ export const DateTimePicker = ({
               type="button"
               onClick={handleNextMonth}
               aria-label="Next month"
-              style={{
-                width: 30,
-                height: 30,
-                borderRadius: 8,
-                border: '1px solid #E2E8F0',
-                background: '#FFFFFF',
-                color: '#475569',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-                transition: 'all 120ms ease',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = '#F8FAFC')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = '#FFFFFF')}
+              className="w-7 h-7 rounded-lg border border-slate-200 dark:border-[#26313D] bg-white dark:bg-[#171E27] text-slate-600 dark:text-[#F5F7FA] hover:bg-slate-50 dark:hover:bg-slate-800 flex items-center justify-center cursor-pointer transition-colors"
             >
               <ChevronRight size={16} />
             </button>
           </div>
 
           {/* 7-Column Days of Week */}
-          <div
-            style={{
-              display: 'grid',
-              gridTemplateColumns: 'repeat(7, 1fr)',
-              textAlign: 'center',
-              gap: 2,
-            }}
-          >
+          <div className="grid grid-cols-7 text-center gap-0.5">
             {DAYS_OF_WEEK.map((d) => (
               <div
                 key={d}
-                style={{
-                  fontSize: 11,
-                  fontWeight: 600,
-                  color: '#94A3B8',
-                  padding: '4px 0',
-                }}
+                className="text-[11px] font-semibold text-slate-400 dark:text-[#748296] py-1"
               >
                 {d}
               </div>
@@ -568,15 +475,7 @@ export const DateTimePicker = ({
             {prevMonthDays.map((d, i) => (
               <div
                 key={`prev-${i}`}
-                style={{
-                  height: 32,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: 12,
-                  color: '#CBD5E1',
-                  opacity: 0.5,
-                }}
+                className="h-8 flex items-center justify-center text-xs text-slate-300 dark:text-slate-700 opacity-40 select-none"
               >
                 {d}
               </div>
@@ -595,43 +494,15 @@ export const DateTimePicker = ({
                   type="button"
                   onClick={() => handleSelectDay(dayNum)}
                   disabled={disabledDay}
-                  style={{
-                    height: 32,
-                    borderRadius: 8,
-                    border: selected
-                      ? 'none'
+                  className={`h-8 rounded-lg text-xs font-semibold flex items-center justify-center transition-all cursor-pointer ${
+                    selected
+                      ? 'bg-[#FF5A2F] text-white font-bold shadow-sm'
                       : today
-                      ? '1.5px solid #FF5A36'
-                      : '1px solid transparent',
-                    background: selected
-                      ? '#FF5A36'
-                      : 'transparent',
-                    color: selected
-                      ? '#FFFFFF'
+                      ? 'border border-[#FF5A2F] text-[#FF5A2F] hover:bg-orange-50 dark:hover:bg-orange-500/15'
                       : disabledDay
-                      ? '#CBD5E1'
-                      : '#1E293B',
-                    fontWeight: selected ? 700 : today ? 600 : 500,
-                    fontSize: 12.5,
-                    cursor: disabledDay ? 'not-allowed' : 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    transition: 'all 120ms ease',
-                    outline: 'none',
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!selected && !disabledDay) {
-                      e.currentTarget.style.background = '#FFF4F2';
-                      e.currentTarget.style.color = '#FF5A36';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!selected && !disabledDay) {
-                      e.currentTarget.style.background = 'transparent';
-                      e.currentTarget.style.color = '#1E293B';
-                    }
-                  }}
+                      ? 'text-slate-300 dark:text-slate-700 cursor-not-allowed'
+                      : 'text-slate-700 dark:text-[#F5F7FA] hover:bg-orange-50 dark:hover:bg-orange-500/15 hover:text-[#FF5A2F]'
+                  }`}
                 >
                   {dayNum}
                 </button>
@@ -640,64 +511,25 @@ export const DateTimePicker = ({
           </div>
 
           {/* ── Time Selector Section ── */}
-          <div
-            style={{
-              borderTop: '1px solid #F1F5F9',
-              paddingTop: 12,
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 8,
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-              }}
-            >
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 5,
-                  fontSize: 11,
-                  fontWeight: 700,
-                  color: '#64748B',
-                  letterSpacing: '0.04em',
-                  textTransform: 'uppercase',
-                }}
-              >
-                <Clock size={12} style={{ color: '#FF5A36' }} />
+          <div className="border-t border-slate-100 dark:border-[#26313D] pt-3 flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-1.5 text-[11px] font-bold text-slate-500 dark:text-[#A5B1C2] uppercase tracking-wider">
+                <Clock size={12} className="text-[#FF5A2F]" />
                 <span>Time Selection</span>
               </div>
 
               {/* AM / PM Segmented Control */}
-              <div
-                style={{
-                  display: 'inline-flex',
-                  borderRadius: 6,
-                  padding: 2,
-                  background: '#F1F5F9',
-                  border: '1px solid #E2E8F0',
-                }}
-              >
+              <div className="inline-flex rounded-lg p-0.5 bg-slate-100 dark:bg-[#171E27] border border-slate-200 dark:border-[#26313D]">
                 {['AM', 'PM'].map((p) => (
                   <button
                     key={p}
                     type="button"
                     onClick={() => setSelectedPeriod(p)}
-                    style={{
-                      padding: '2px 8px',
-                      borderRadius: 4,
-                      border: 'none',
-                      background: selectedPeriod === p ? '#FF5A36' : 'transparent',
-                      color: selectedPeriod === p ? '#FFFFFF' : '#64748B',
-                      fontSize: 11,
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      transition: 'all 120ms ease',
-                    }}
+                    className={`px-2 py-0.5 rounded-md text-[11px] font-bold cursor-pointer transition-colors ${
+                      selectedPeriod === p
+                        ? 'bg-[#FF5A2F] text-white'
+                        : 'text-slate-500 dark:text-[#A5B1C2] hover:text-slate-900 dark:hover:text-[#F5F7FA]'
+                    }`}
                   >
                     {p}
                   </button>
@@ -706,45 +538,19 @@ export const DateTimePicker = ({
             </div>
 
             {/* Hour & Minute Pickers */}
-            <div
-              style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                gap: 8,
-              }}
-            >
+            <div className="grid grid-cols-2 gap-2">
               {/* Hour Dropdown */}
               <div>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: 10,
-                    fontWeight: 600,
-                    color: '#94A3B8',
-                    marginBottom: 3,
-                  }}
-                >
+                <label className="block text-[10px] font-semibold text-slate-400 dark:text-[#748296] mb-1 uppercase tracking-wider">
                   Hour
                 </label>
                 <select
                   value={selectedHour}
                   onChange={(e) => setSelectedHour(e.target.value)}
-                  style={{
-                    width: '100%',
-                    height: 34,
-                    padding: '0 8px',
-                    borderRadius: 6,
-                    border: '1px solid #E2E8F0',
-                    background: '#FFFFFF',
-                    color: '#0F172A',
-                    fontSize: 13,
-                    fontWeight: 600,
-                    outline: 'none',
-                    cursor: 'pointer',
-                  }}
+                  className="w-full h-8.5 px-2 rounded-lg border border-slate-200 dark:border-[#26313D] bg-white dark:bg-[#171E27] text-slate-900 dark:text-[#F5F7FA] text-xs font-semibold outline-none cursor-pointer"
                 >
                   {HOURS_12.map((h) => (
-                    <option key={h} value={h}>
+                    <option key={h} value={h} className="bg-white dark:bg-[#171E27] text-slate-900 dark:text-[#F5F7FA]">
                       {h}
                     </option>
                   ))}
@@ -753,36 +559,16 @@ export const DateTimePicker = ({
 
               {/* Minute Dropdown */}
               <div>
-                <label
-                  style={{
-                    display: 'block',
-                    fontSize: 10,
-                    fontWeight: 600,
-                    color: '#94A3B8',
-                    marginBottom: 3,
-                  }}
-                >
+                <label className="block text-[10px] font-semibold text-slate-400 dark:text-[#748296] mb-1 uppercase tracking-wider">
                   Minute
                 </label>
                 <select
                   value={selectedMinute}
                   onChange={(e) => setSelectedMinute(e.target.value)}
-                  style={{
-                    width: '100%',
-                    height: 34,
-                    padding: '0 8px',
-                    borderRadius: 6,
-                    border: '1px solid #E2E8F0',
-                    background: '#FFFFFF',
-                    color: '#0F172A',
-                    fontSize: 13,
-                    fontWeight: 600,
-                    outline: 'none',
-                    cursor: 'pointer',
-                  }}
+                  className="w-full h-8.5 px-2 rounded-lg border border-slate-200 dark:border-[#26313D] bg-white dark:bg-[#171E27] text-slate-900 dark:text-[#F5F7FA] text-xs font-semibold outline-none cursor-pointer"
                 >
                   {MINUTE_PRESETS.map((m) => (
-                    <option key={m} value={m}>
+                    <option key={m} value={m} className="bg-white dark:bg-[#171E27] text-slate-900 dark:text-[#F5F7FA]">
                       :{m}
                     </option>
                   ))}
@@ -792,21 +578,9 @@ export const DateTimePicker = ({
           </div>
 
           {/* ── Selection Summary Banner ── */}
-          <div
-            style={{
-              padding: '6px 10px',
-              borderRadius: 8,
-              background: '#F8FAFC',
-              border: '1px solid #E2E8F0',
-              fontSize: 11.5,
-              color: '#475569',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-            }}
-          >
-            <span style={{ color: '#94A3B8', fontWeight: 500 }}>Selected:</span>
-            <span style={{ fontWeight: 700, color: '#0F172A' }}>
+          <div className="px-2.5 py-1.5 rounded-lg bg-slate-50 dark:bg-[#171E27] border border-slate-200 dark:border-[#26313D] text-[11.5px] flex items-center justify-between">
+            <span className="text-slate-400 dark:text-[#748296] font-medium">Selected:</span>
+            <span className="font-bold text-slate-900 dark:text-[#F5F7FA]">
               {selectedDate
                 ? `${selectedDate.getDate()} ${SHORT_MONTHS[selectedDate.getMonth()]} ${selectedDate.getFullYear()}, ${selectedHour}:${selectedMinute} ${selectedPeriod}`
                 : 'None'}
@@ -814,37 +588,12 @@ export const DateTimePicker = ({
           </div>
 
           {/* ── Footer Actions ── */}
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              paddingTop: 4,
-            }}
-          >
-            <div style={{ display: 'flex', gap: 6 }}>
+          <div className="flex items-center justify-between pt-1">
+            <div className="flex gap-1.5">
               <button
                 type="button"
                 onClick={handleClear}
-                style={{
-                  padding: '6px 10px',
-                  borderRadius: 6,
-                  border: '1px solid #E2E8F0',
-                  background: '#FFFFFF',
-                  color: '#64748B',
-                  fontSize: 11.5,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'all 120ms ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#F8FAFC';
-                  e.currentTarget.style.color = '#0F172A';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#FFFFFF';
-                  e.currentTarget.style.color = '#64748B';
-                }}
+                className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-[#26313D] bg-white dark:bg-[#171E27] text-slate-600 dark:text-[#A5B1C2] hover:text-slate-900 dark:hover:text-[#F5F7FA] text-xs font-semibold cursor-pointer transition-colors"
               >
                 Clear
               </button>
@@ -852,23 +601,7 @@ export const DateTimePicker = ({
               <button
                 type="button"
                 onClick={handleToday}
-                style={{
-                  padding: '6px 10px',
-                  borderRadius: 6,
-                  border: '1px solid #E2E8F0',
-                  background: '#FFFFFF',
-                  color: '#FF5A36',
-                  fontSize: 11.5,
-                  fontWeight: 600,
-                  cursor: 'pointer',
-                  transition: 'all 120ms ease',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.background = '#FFF5F3';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.background = '#FFFFFF';
-                }}
+                className="px-2.5 py-1 rounded-lg border border-slate-200 dark:border-[#26313D] bg-white dark:bg-[#171E27] text-[#FF5A2F] text-xs font-semibold cursor-pointer hover:bg-orange-50 dark:hover:bg-orange-500/15 transition-colors"
               >
                 Today
               </button>
@@ -877,23 +610,7 @@ export const DateTimePicker = ({
             <button
               type="button"
               onClick={handleApply}
-              style={{
-                padding: '6px 16px',
-                borderRadius: 6,
-                border: 'none',
-                background: '#FF5A36',
-                color: '#FFFFFF',
-                fontSize: 12,
-                fontWeight: 700,
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: 5,
-                boxShadow: '0 2px 6px rgba(255, 90, 54, 0.25)',
-                transition: 'all 120ms ease',
-              }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = '#E04A28')}
-              onMouseLeave={(e) => (e.currentTarget.style.background = '#FF5A36')}
+              className="px-4 py-1 rounded-lg bg-[#FF5A2F] hover:bg-[#E04420] text-white text-xs font-bold flex items-center gap-1.5 shadow-sm cursor-pointer transition-colors"
             >
               <Check size={13} strokeWidth={2.5} />
               <span>Apply</span>
@@ -903,7 +620,7 @@ export const DateTimePicker = ({
       )}
 
       <style>{`
-        @keyframes fb-fade-in {
+        @keyframes fade-in-up {
           from {
             opacity: 0;
             transform: translateY(-4px);

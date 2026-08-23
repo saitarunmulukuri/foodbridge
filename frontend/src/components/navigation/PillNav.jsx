@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { UtensilsCrossed, LogOut, ChevronLeft } from 'lucide-react';
+import { AnimatedThemeToggler } from '../magicui/AnimatedThemeToggler';
 import './PillNav.css';
 
 /**
@@ -24,10 +25,10 @@ export const PillNav = ({
   activeHref,
   className = '',
   ease = 'power2.out',
-  baseColor = '#FFFFFF',
-  pillColor = '#F8F9FB',
-  hoveredPillTextColor = '#FFFFFF',
-  pillTextColor = '#101828',
+  baseColor,
+  pillColor,
+  hoveredPillTextColor,
+  pillTextColor,
   onMobileMenuClick,
   initialLoadAnimation = true,
   isAuthNav = false,
@@ -310,10 +311,10 @@ export const PillNav = ({
   const homeHref = logoHref || '/';
 
   const cssVars = {
-    '--base': baseColor,
-    '--pill-bg': pillColor,
-    '--hover-text': hoveredPillTextColor,
-    '--pill-text': pillTextColor,
+    ...(baseColor ? { '--base': baseColor } : {}),
+    ...(pillColor ? { '--pill-bg': pillColor } : {}),
+    ...(hoveredPillTextColor ? { '--hover-text': hoveredPillTextColor } : {}),
+    ...(pillTextColor ? { '--pill-text': pillTextColor } : {}),
   };
 
   const renderPillLink = (item, i) => {
@@ -495,6 +496,11 @@ export const PillNav = ({
             </div>
           )}
 
+          {/* Theme Toggler Button */}
+          <div className="pill-nav-theme-slot">
+            <AnimatedThemeToggler />
+          </div>
+
           {/* Circular Collapse Button */}
           <button
             type="button"
@@ -578,6 +584,12 @@ export const PillNav = ({
               })}
             </>
           )}
+          {/* Theme Switcher in Mobile Popover */}
+          <li><div className="mobile-menu-divider" /></li>
+          <li className="mobile-menu-theme-row">
+            <span className="mobile-menu-theme-label">Appearance</span>
+            <AnimatedThemeToggler />
+          </li>
         </ul>
       </div>
     </div>

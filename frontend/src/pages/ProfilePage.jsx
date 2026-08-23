@@ -2,24 +2,17 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { FoodBridgeProfileCard } from '../components/profile/FoodBridgeProfileCard';
+import { Button } from '../components/common/Button';
 import { donationService } from '../services/donationService';
 import { ngoService } from '../services/ngoService';
 import { volunteerService } from '../services/volunteerService';
 import {
   ShieldCheck,
-  User,
-  Mail,
-  MapPin,
-  Calendar,
-  Activity,
   CheckCircle2,
   Lock,
   LogOut,
   ArrowRight,
   TrendingUp,
-  Award,
-  Fingerprint,
-  Layers,
 } from 'lucide-react';
 
 const ROLE_CONFIG = {
@@ -136,167 +129,103 @@ export function ProfilePage() {
     .join(' ');
 
   return (
-    <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+    <div className="max-w-[1200px] mx-auto animate-fade-in-up">
       {/* Top Banner & Eyebrow */}
-      <div style={{ marginBottom: '28px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+      <div className="mb-7">
+        <div className="flex items-center gap-2 mb-1.5">
           <span
-            style={{
-              fontSize: '11px',
-              fontWeight: 700,
-              letterSpacing: '0.08em',
-              textTransform: 'uppercase',
-              color: config.accentColor,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px',
-            }}
+            style={{ color: config.accentColor }}
+            className="text-[11px] font-bold tracking-wider uppercase inline-flex items-center gap-1"
           >
             <ShieldCheck size={14} />
             FoodBridge Digital ID System
           </span>
-          <span style={{ color: '#CBD5E1' }}>•</span>
-          <span style={{ fontSize: '12px', color: '#64748B' }}>Verified Credentials</span>
+          <span className="text-slate-300 dark:text-slate-600">•</span>
+          <span className="text-xs text-slate-500 dark:text-[#AAB4C2]">Verified Credentials</span>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: '16px' }}>
+        <div className="flex justify-between items-end flex-wrap gap-4">
           <div>
-            <h1
-              style={{
-                fontSize: '28px',
-                fontWeight: 800,
-                color: '#0F172A',
-                letterSpacing: '-0.02em',
-                margin: 0,
-              }}
-            >
+            <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-[#F5F7FA] tracking-tight">
               Identity & Operational Card
             </h1>
-            <p style={{ fontSize: '14px', color: '#64748B', margin: '4px 0 0 0' }}>
-              Your authenticated 3D digital pass for authorized food donations, relief claims, and transit dispatch.
+            <p className="text-sm text-slate-500 dark:text-[#AAB4C2] mt-1">
+              Your authenticated digital pass for authorized food donations, relief claims, and transit dispatch.
             </p>
           </div>
 
-          <button
+          <Button
             onClick={() => navigate(config.homeRoute)}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '8px 16px',
-              borderRadius: '10px',
-              border: '1px solid #E2E8F0',
-              background: '#FFFFFF',
-              color: '#0F172A',
-              fontSize: '13px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.03)',
-            }}
+            variant="secondary"
+            size="sm"
+            icon={ArrowRight}
+            iconPosition="right"
           >
-            <span>Back to Dashboard</span>
-            <ArrowRight size={14} />
-          </button>
+            Back to Dashboard
+          </Button>
         </div>
       </div>
 
       {/* Main Grid: 3D Lanyard on Left, Identity Details on Right */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-          gap: '24px',
-          alignItems: 'start',
-        }}
-      >
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.3fr] gap-6 items-start">
         {/* Left Column: Interactive 3D Lanyard Card */}
         <div>
           <FoodBridgeProfileCard user={user} stats={stats} />
         </div>
 
         {/* Right Column: Profile Specs & Activity Overview */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+        <div className="flex flex-col gap-5">
           {/* Card 1: Identity & Credentials Summary */}
-          <div
-            style={{
-              background: '#FFFFFF',
-              borderRadius: '20px',
-              border: '1px solid #E2E8F0',
-              padding: '24px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                paddingBottom: '16px',
-                borderBottom: '1px solid #F1F5F9',
-                marginBottom: '18px',
-              }}
-            >
+          <div className="bg-white dark:bg-[#11171F] rounded-2xl border border-slate-200 dark:border-[#26313D] p-6 shadow-sm">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-[#26313D] mb-4.5">
               <div>
-                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', margin: 0 }}>
+                <h3 className="text-base font-bold text-slate-900 dark:text-[#F5F7FA]">
                   Account Verification
                 </h3>
-                <p style={{ fontSize: '13px', color: '#64748B', margin: '2px 0 0 0' }}>
+                <p className="text-xs text-slate-500 dark:text-[#A5B1C2] mt-0.5">
                   Authenticated cryptographic identity details
                 </p>
               </div>
 
-              <span
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '5px',
-                  padding: '4px 10px',
-                  borderRadius: '9999px',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                  background: '#ECFDF5',
-                  color: '#059669',
-                  border: '1px solid #A7F3D0',
-                }}
-              >
+              <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-50 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-200 dark:border-emerald-500/30">
                 <CheckCircle2 size={13} />
                 Active & Verified
               </span>
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
-                <div style={{ fontSize: '11px', fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                <div className="text-[11px] font-semibold text-slate-400 dark:text-[#748296] uppercase tracking-wider">
                   Member Name
                 </div>
-                <div style={{ fontSize: '15px', fontWeight: 700, color: '#0F172A', marginTop: '3px' }}>
+                <div className="text-sm font-bold text-slate-900 dark:text-[#F5F7FA] mt-1">
                   {formattedName}
                 </div>
               </div>
 
               <div>
-                <div style={{ fontSize: '11px', fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                <div className="text-[11px] font-semibold text-slate-400 dark:text-[#748296] uppercase tracking-wider">
                   System Role
                 </div>
-                <div style={{ fontSize: '15px', fontWeight: 700, color: config.accentColor, marginTop: '3px' }}>
+                <div style={{ color: config.accentColor }} className="text-sm font-bold mt-1">
                   {config.label}
                 </div>
               </div>
 
               <div>
-                <div style={{ fontSize: '11px', fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                <div className="text-[11px] font-semibold text-slate-400 dark:text-[#748296] uppercase tracking-wider">
                   Registered Email
                 </div>
-                <div style={{ fontSize: '14px', fontWeight: 500, color: '#0F172A', marginTop: '3px', wordBreak: 'break-all' }}>
+                <div className="text-sm font-medium text-slate-800 dark:text-[#F5F7FA] mt-1 break-all">
                   {user?.email || 'partner@foodbridge.org'}
                 </div>
               </div>
 
               <div>
-                <div style={{ fontSize: '11px', fontWeight: 600, color: '#94A3B8', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                <div className="text-[11px] font-semibold text-slate-400 dark:text-[#748296] uppercase tracking-wider">
                   Operating Hub
                 </div>
-                <div style={{ fontSize: '14px', fontWeight: 500, color: '#0F172A', marginTop: '3px' }}>
+                <div className="text-sm font-medium text-slate-800 dark:text-[#F5F7FA] mt-1">
                   {config.region}
                 </div>
               </div>
@@ -304,30 +233,13 @@ export function ProfilePage() {
           </div>
 
           {/* Card 2: Live Network Stats & Metrics */}
-          <div
-            style={{
-              background: '#FFFFFF',
-              borderRadius: '20px',
-              border: '1px solid #E2E8F0',
-              padding: '24px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-            }}
-          >
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                paddingBottom: '16px',
-                borderBottom: '1px solid #F1F5F9',
-                marginBottom: '18px',
-              }}
-            >
+          <div className="bg-white dark:bg-[#11171F] rounded-2xl border border-slate-200 dark:border-[#26313D] p-6 shadow-sm">
+            <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-[#26313D] mb-4.5">
               <div>
-                <h3 style={{ fontSize: '16px', fontWeight: 700, color: '#0F172A', margin: 0 }}>
+                <h3 className="text-base font-bold text-slate-900 dark:text-[#F5F7FA]">
                   Operational Metrics
                 </h3>
-                <p style={{ fontSize: '13px', color: '#64748B', margin: '2px 0 0 0' }}>
+                <p className="text-xs text-slate-500 dark:text-[#A5B1C2] mt-0.5">
                   Real-time pipeline & logistics contribution
                 </p>
               </div>
@@ -336,111 +248,147 @@ export function ProfilePage() {
             </div>
 
             {role === 'DONOR' && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-                <div style={{ padding: '16px', borderRadius: '12px', background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                  <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', textTransform: 'uppercase' }}>
-                    Total Donations
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#171E27] border border-slate-200 dark:border-[#26313D]">
+                  <div className="text-[11px] font-semibold text-slate-500 dark:text-[#A5B1C2] uppercase">
+                    Donations
                   </div>
-                  <div style={{ fontSize: '26px', fontWeight: 800, color: '#0F172A', marginTop: '4px' }}>
-                    {stats.totalDonations ?? '08'}
-                  </div>
-                  <div style={{ fontSize: '12px', color: '#10B981', marginTop: '4px' }}>
-                    ↑ 100% Quality pass
+                  <div className="text-xl font-extrabold text-slate-900 dark:text-[#F5F7FA] mt-1">
+                    {stats?.total ?? 0}
                   </div>
                 </div>
 
-                <div style={{ padding: '16px', borderRadius: '12px', background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                  <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', textTransform: 'uppercase' }}>
-                    Meals Rescued
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#171E27] border border-slate-200 dark:border-[#26313D]">
+                  <div className="text-[11px] font-semibold text-slate-500 dark:text-[#A5B1C2] uppercase">
+                    In Transit
                   </div>
-                  <div style={{ fontSize: '26px', fontWeight: 800, color: '#FF5A2F', marginTop: '4px' }}>
-                    {stats.totalMeals ? stats.totalMeals.toLocaleString() : '1,000+'}
+                  <div className="text-xl font-extrabold text-[#FF5A2F] mt-1">
+                    {stats?.inProgress ?? 0}
                   </div>
-                  <div style={{ fontSize: '12px', color: '#64748B', marginTop: '4px' }}>
-                    Direct community impact
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#171E27] border border-slate-200 dark:border-[#26313D]">
+                  <div className="text-[11px] font-semibold text-slate-500 dark:text-[#A5B1C2] uppercase">
+                    Delivered
+                  </div>
+                  <div className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">
+                    {stats?.completed ?? 0}
+                  </div>
+                </div>
+
+                <div className="p-3.5 rounded-xl bg-slate-50 dark:bg-[#171E27] border border-slate-200 dark:border-[#26313D]">
+                  <div className="text-[11px] font-semibold text-slate-500 dark:text-[#A5B1C2] uppercase">
+                    Impact Ratio
+                  </div>
+                  <div className="text-xl font-extrabold text-blue-600 dark:text-blue-400 mt-1">
+                    {stats?.total > 0 ? `${Math.round(((stats?.completed || 0) / stats.total) * 100)}%` : '100%'}
                   </div>
                 </div>
               </div>
             )}
 
             {role === 'NGO' && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-                <div style={{ padding: '16px', borderRadius: '12px', background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                  <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', textTransform: 'uppercase' }}>
-                    Intake Capacity
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#171E27] border border-slate-200 dark:border-[#26313D]">
+                  <div className="text-[11px] font-semibold text-slate-500 dark:text-[#A5B1C2] uppercase">
+                    Accepted Loads
                   </div>
-                  <div style={{ fontSize: '26px', fontWeight: 800, color: '#0F172A', marginTop: '4px' }}>
-                    {stats.capacity ? `${stats.capacity} kg` : '350 kg'}
+                  <div className="text-xl font-extrabold text-slate-900 dark:text-[#F5F7FA] mt-1">
+                    {stats?.acceptedCount ?? 0}
                   </div>
-                  <div style={{ fontSize: '12px', color: '#10B981', marginTop: '4px' }}>
-                    Daily intake allocated
+                  <div className="text-xs text-slate-500 dark:text-[#A5B1C2] mt-1">
+                    Active claims
                   </div>
                 </div>
 
-                <div style={{ padding: '16px', borderRadius: '12px', background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                  <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', textTransform: 'uppercase' }}>
-                    Meals Distributed
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#171E27] border border-slate-200 dark:border-[#26313D]">
+                  <div className="text-[11px] font-semibold text-slate-500 dark:text-[#A5B1C2] uppercase">
+                    Redistributed
                   </div>
-                  <div style={{ fontSize: '26px', fontWeight: 800, color: '#10B981', marginTop: '4px' }}>
-                    {stats.mealsReceived ? stats.mealsReceived.toLocaleString() : '480+'}
+                  <div className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">
+                    {stats?.deliveredCount ?? 0}
                   </div>
-                  <div style={{ fontSize: '12px', color: '#64748B', marginTop: '4px' }}>
-                    Through local relief hubs
+                  <div className="text-xs text-slate-500 dark:text-[#A5B1C2] mt-1">
+                    Total completed
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#171E27] border border-slate-200 dark:border-[#26313D]">
+                  <div className="text-[11px] font-semibold text-slate-500 dark:text-[#A5B1C2] uppercase">
+                    Meals Managed
+                  </div>
+                  <div className="text-xl font-extrabold text-[#FF5A2F] mt-1">
+                    {stats?.mealsCount ?? 0}
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-[#A5B1C2] mt-1">
+                    Estimated portions
                   </div>
                 </div>
               </div>
             )}
 
             {role === 'VOLUNTEER' && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-                <div style={{ padding: '16px', borderRadius: '12px', background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                  <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', textTransform: 'uppercase' }}>
-                    Completed Runs
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#171E27] border border-slate-200 dark:border-[#26313D]">
+                  <div className="text-[11px] font-semibold text-slate-500 dark:text-[#A5B1C2] uppercase">
+                    Completed Trips
                   </div>
-                  <div style={{ fontSize: '26px', fontWeight: 800, color: '#0F172A', marginTop: '4px' }}>
-                    {stats.deliveries ?? '14'}
+                  <div className="text-xl font-extrabold text-slate-900 dark:text-[#F5F7FA] mt-1">
+                    {stats?.completedTrips ?? 0}
                   </div>
-                  <div style={{ fontSize: '12px', color: '#3B82F6', marginTop: '4px' }}>
-                    99.4% On-time delivery
+                  <div className="text-xs text-slate-500 dark:text-[#A5B1C2] mt-1">
+                    Verified drop-offs
                   </div>
                 </div>
 
-                <div style={{ padding: '16px', borderRadius: '12px', background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                  <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', textTransform: 'uppercase' }}>
-                    Active Missions
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#171E27] border border-slate-200 dark:border-[#26313D]">
+                  <div className="text-[11px] font-semibold text-slate-500 dark:text-[#A5B1C2] uppercase">
+                    Dispatch Score
                   </div>
-                  <div style={{ fontSize: '26px', fontWeight: 800, color: '#3B82F6', marginTop: '4px' }}>
-                    {stats.activeRescues ?? '02'}
+                  <div className="text-xl font-extrabold text-blue-600 dark:text-blue-400 mt-1">
+                    {stats?.dispatchScore ?? '98%'}
                   </div>
-                  <div style={{ fontSize: '12px', color: '#10B981', marginTop: '4px' }}>
-                    Available for dispatch
+                  <div className="text-xs text-slate-500 dark:text-[#A5B1C2] mt-1">
+                    On-time reliability
+                  </div>
+                </div>
+
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#171E27] border border-slate-200 dark:border-[#26313D]">
+                  <div className="text-[11px] font-semibold text-slate-500 dark:text-[#A5B1C2] uppercase">
+                    Carbon Saved
+                  </div>
+                  <div className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">
+                    {stats?.co2Saved ?? '42 kg'}
+                  </div>
+                  <div className="text-xs text-slate-500 dark:text-[#A5B1C2] mt-1">
+                    Emissions diverted
                   </div>
                 </div>
               </div>
             )}
 
-            {role === 'ADMIN' && (
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-                <div style={{ padding: '16px', borderRadius: '12px', background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                  <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', textTransform: 'uppercase' }}>
-                    System Status
+            {!['DONOR', 'NGO', 'VOLUNTEER'].includes(role) && (
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#171E27] border border-slate-200 dark:border-[#26313D]">
+                  <div className="text-[11px] font-semibold text-slate-500 dark:text-[#A5B1C2] uppercase">
+                    Status
                   </div>
-                  <div style={{ fontSize: '22px', fontWeight: 800, color: '#10B981', marginTop: '4px' }}>
+                  <div className="text-xl font-extrabold text-emerald-600 dark:text-emerald-400 mt-1">
                     Operational
                   </div>
-                  <div style={{ fontSize: '12px', color: '#64748B', marginTop: '4px' }}>
+                  <div className="text-xs text-slate-500 dark:text-[#A5B1C2] mt-1">
                     All services green
                   </div>
                 </div>
 
-                <div style={{ padding: '16px', borderRadius: '12px', background: '#F8FAFC', border: '1px solid #E2E8F0' }}>
-                  <div style={{ fontSize: '11px', fontWeight: 600, color: '#64748B', textTransform: 'uppercase' }}>
+                <div className="p-4 rounded-xl bg-slate-50 dark:bg-[#171E27] border border-slate-200 dark:border-[#26313D]">
+                  <div className="text-[11px] font-semibold text-slate-500 dark:text-[#A5B1C2] uppercase">
                     Protocol
                   </div>
-                  <div style={{ fontSize: '22px', fontWeight: 800, color: '#8B5CF6', marginTop: '4px' }}>
+                  <div className="text-xl font-extrabold text-purple-600 dark:text-purple-400 mt-1">
                     v2.4 Core
                   </div>
-                  <div style={{ fontSize: '12px', color: '#64748B', marginTop: '4px' }}>
+                  <div className="text-xs text-slate-500 dark:text-[#A5B1C2] mt-1">
                     SHA-256 Enabled
                   </div>
                 </div>
@@ -449,66 +397,30 @@ export function ProfilePage() {
           </div>
 
           {/* Card 3: Security & Session Actions */}
-          <div
-            style={{
-              background: '#FFFFFF',
-              borderRadius: '20px',
-              border: '1px solid #E2E8F0',
-              padding: '24px',
-              boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-              display: 'flex',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              flexWrap: 'wrap',
-              gap: '16px',
-            }}
-          >
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <div
-                style={{
-                  width: '40px',
-                  height: '40px',
-                  borderRadius: '10px',
-                  background: '#F1F5F9',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  color: '#475569',
-                }}
-              >
+          <div className="bg-white dark:bg-[#11171F] rounded-2xl border border-slate-200 dark:border-[#26313D] p-6 shadow-sm flex justify-between items-center flex-wrap gap-4">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-600 dark:text-slate-300">
                 <Lock size={18} />
               </div>
               <div>
-                <div style={{ fontSize: '14px', fontWeight: 700, color: '#0F172A' }}>
+                <div className="text-sm font-bold text-slate-900 dark:text-[#F5F7FA]">
                   Secure Session Active
                 </div>
-                <div style={{ fontSize: '12px', color: '#64748B' }}>
+                <div className="text-xs text-slate-500 dark:text-[#AAB4C2]">
                   Authorized JWT Token · Encrypted Connection
                 </div>
               </div>
             </div>
 
-            <button
+            <Button
               id="profile-page-signout-btn"
               onClick={handleLogout}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px',
-                padding: '8px 16px',
-                borderRadius: '10px',
-                border: '1px solid #FCA5A5',
-                background: '#FEF2F2',
-                color: '#DC2626',
-                fontSize: '13px',
-                fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'background 0.15s ease',
-              }}
+              variant="danger"
+              size="sm"
+              icon={LogOut}
             >
-              <LogOut size={14} />
-              <span>Sign Out</span>
-            </button>
+              Sign Out
+            </Button>
           </div>
         </div>
       </div>

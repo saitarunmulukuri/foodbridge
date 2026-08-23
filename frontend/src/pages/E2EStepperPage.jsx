@@ -6,9 +6,9 @@ import { ngoService } from '../services/ngoService';
 import { volunteerService } from '../services/volunteerService';
 import { setStoredToken, setStoredUser } from '../services/apiClient';
 import { StatusBadge } from '../components/common/StatusBadge';
+import { Button } from '../components/common/Button';
 import {
   Play,
-  RefreshCw,
   Layers,
   Zap,
 } from 'lucide-react';
@@ -170,28 +170,32 @@ export const E2EStepperPage = () => {
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <div className="flex items-center space-x-2.5">
-            <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">Interactive E2E Lifecycle Controller</h1>
-            <span className="bg-orange-50 text-[#FF553E] border border-orange-200 text-[10px] px-2.5 py-0.5 rounded-full font-bold">
+            <h1 className="text-2xl font-extrabold text-slate-900 dark:text-[#F5F7FA] tracking-tight">Interactive E2E Lifecycle Controller</h1>
+            <span className="bg-orange-50 dark:bg-orange-500/15 text-[#FF5A2F] border border-orange-200 dark:border-orange-500/30 text-[10px] px-2.5 py-0.5 rounded-full font-bold">
               SYSTEM TEST RUNNER
             </span>
           </div>
-          <p className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">
+          <p className="text-xs sm:text-sm text-slate-500 dark:text-[#A5B1C2] mt-1 font-medium">
             Execute the complete 9-stage multi-party food redistribution process in real-time.
           </p>
         </div>
 
-        <button
+        <Button
           onClick={runFullE2EDemo}
           disabled={isAutomating}
-          className="fb-btn-primary py-3 px-6 text-xs font-bold shadow-md"
+          loading={isAutomating}
+          loadingText="Executing Live Cycle..."
+          variant="primary"
+          size="md"
+          icon={Play}
+          className="shadow-md"
         >
-          {isAutomating ? <RefreshCw size={14} className="animate-spin" /> : <Play size={14} />}
-          <span>{isAutomating ? 'Executing Live Cycle...' : 'Run 1-Click Automated E2E Demo'}</span>
-        </button>
+          Run 1-Click Automated E2E Demo
+        </Button>
       </div>
 
       {/* Stepper Progress Bar */}
-      <div className="bg-white border border-slate-200 rounded-3xl p-6 shadow-sm">
+      <div className="bg-white dark:bg-[#11171F] border border-slate-200 dark:border-[#26313D] rounded-3xl p-6 shadow-sm">
         <div className="grid grid-cols-3 md:grid-cols-9 gap-2.5">
           {steps.map((step, idx) => {
             const stepNum = idx + 1;
@@ -203,17 +207,17 @@ export const E2EStepperPage = () => {
                 key={idx}
                 className={`p-3.5 rounded-2xl border text-center transition flex flex-col justify-between ${
                   isCurrent
-                    ? 'bg-orange-50/90 border-orange-400 text-slate-900 shadow-sm ring-2 ring-orange-200'
+                    ? 'bg-orange-50/90 dark:bg-orange-500/15 border-orange-400 dark:border-orange-500/40 text-slate-900 dark:text-[#F5F7FA] shadow-sm ring-2 ring-orange-200 dark:ring-orange-500/20'
                     : isCompleted
-                    ? 'bg-emerald-50 border-emerald-300 text-emerald-900'
-                    : 'bg-slate-50 border-slate-200 text-slate-400'
+                    ? 'bg-emerald-50 dark:bg-emerald-500/15 border-emerald-300 dark:border-emerald-500/30 text-emerald-900 dark:text-emerald-400'
+                    : 'bg-slate-50 dark:bg-[#171E27] border-slate-200 dark:border-[#26313D] text-slate-400 dark:text-[#748296]'
                 }`}
               >
                 <div>
-                  <span className="text-[10px] font-bold block text-slate-400 mb-1">STEP 0{stepNum}</span>
+                  <span className="text-[10px] font-bold block text-slate-400 dark:text-[#748296] mb-1">STEP 0{stepNum}</span>
                   <strong className="text-xs block leading-tight font-bold">{step.title}</strong>
                 </div>
-                <span className="text-[10px] text-slate-500 mt-2 block font-medium">{step.desc}</span>
+                <span className="text-[10px] text-slate-500 dark:text-[#A5B1C2] mt-2 block font-medium">{step.desc}</span>
               </div>
             );
           })}
@@ -223,48 +227,48 @@ export const E2EStepperPage = () => {
       {/* Live Log Console & Current State */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* State Summary */}
-        <div className="bg-white border border-slate-200 rounded-3xl p-6 space-y-4 shadow-sm">
-          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 flex items-center space-x-2">
-            <Zap size={14} className="text-[#FF553E]" />
+        <div className="bg-white dark:bg-[#11171F] border border-slate-200 dark:border-[#26313D] rounded-3xl p-6 space-y-4 shadow-sm">
+          <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-[#748296] flex items-center space-x-2">
+            <Zap size={14} className="text-[#FF5A2F]" />
             <span>Active Live State</span>
           </h2>
 
           <div className="space-y-3 text-xs">
-            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-              <span className="text-slate-500 font-medium">Target Donation ID:</span>
-              <strong className="text-slate-900 font-mono font-bold">{demoState.donationId || 'Not created'}</strong>
+            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#171E27] border border-slate-200 dark:border-[#26313D] flex items-center justify-between">
+              <span className="text-slate-500 dark:text-[#A5B1C2] font-medium">Target Donation ID:</span>
+              <strong className="text-slate-900 dark:text-[#F5F7FA] font-mono font-bold">{demoState.donationId || 'Not created'}</strong>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-              <span className="text-slate-500 font-medium">Donation Status:</span>
+            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#171E27] border border-slate-200 dark:border-[#26313D] flex items-center justify-between">
+              <span className="text-slate-500 dark:text-[#A5B1C2] font-medium">Donation Status:</span>
               <StatusBadge status={demoState.donationStatus} />
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-              <span className="text-slate-500 font-medium">Matched NGO Request ID:</span>
-              <strong className="text-blue-600 font-mono font-bold">{demoState.requestId || 'N/A'}</strong>
+            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#171E27] border border-slate-200 dark:border-[#26313D] flex items-center justify-between">
+              <span className="text-slate-500 dark:text-[#A5B1C2] font-medium">Matched NGO Request ID:</span>
+              <strong className="text-blue-600 dark:text-blue-400 font-mono font-bold">{demoState.requestId || 'N/A'}</strong>
             </div>
 
-            <div className="p-3.5 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
-              <span className="text-slate-500 font-medium">Volunteer Assignment ID:</span>
-              <strong className="text-indigo-600 font-mono font-bold">{demoState.assignmentId || 'N/A'}</strong>
+            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-[#171E27] border border-slate-200 dark:border-[#26313D] flex items-center justify-between">
+              <span className="text-slate-500 dark:text-[#A5B1C2] font-medium">Volunteer Assignment ID:</span>
+              <strong className="text-indigo-600 dark:text-indigo-400 font-mono font-bold">{demoState.assignmentId || 'N/A'}</strong>
             </div>
           </div>
         </div>
 
         {/* Real-Time API Log Console */}
-        <div className="lg:col-span-2 bg-white border border-slate-200 rounded-3xl p-6 space-y-4 shadow-sm">
+        <div className="lg:col-span-2 bg-white dark:bg-[#11171F] border border-slate-200 dark:border-[#26313D] rounded-3xl p-6 space-y-4 shadow-sm">
           <div className="flex items-center justify-between">
-            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 font-mono flex items-center space-x-2">
-              <Layers size={14} className="text-[#FF553E]" />
+            <h2 className="text-xs font-bold uppercase tracking-widest text-slate-400 dark:text-[#748296] font-mono flex items-center space-x-2">
+              <Layers size={14} className="text-[#FF5A2F]" />
               <span>Real-Time Execution Console Log</span>
             </h2>
-            <span className="text-[10px] text-slate-400 font-mono font-bold">{logs.length} events logged</span>
+            <span className="text-[10px] text-slate-400 dark:text-[#748296] font-mono font-bold">{logs.length} events logged</span>
           </div>
 
-          <div className="bg-slate-900 text-slate-100 border border-slate-800 rounded-2xl p-4 h-64 overflow-y-auto font-mono text-xs space-y-2 shadow-inner">
+          <div className="bg-slate-900 dark:bg-[#090E13] text-slate-100 border border-slate-800 dark:border-[#26313D] rounded-2xl p-4 h-64 overflow-y-auto font-mono text-xs space-y-2 shadow-inner">
             {logs.length === 0 ? (
-              <div className="text-slate-500 text-center py-12">
+              <div className="text-slate-500 dark:text-[#7F8A99] text-center py-12">
                 Click &quot;Run 1-Click Automated E2E Demo&quot; above to watch all API calls execute live.
               </div>
             ) : (
@@ -273,7 +277,7 @@ export const E2EStepperPage = () => {
                   key={i}
                   className={`flex items-start space-x-2 ${
                     log.type === 'highlight'
-                      ? 'text-[#FF553E] font-bold'
+                      ? 'text-[#FF5A2F] font-bold'
                       : log.type === 'success'
                       ? 'text-emerald-400 font-semibold'
                       : log.type === 'error'

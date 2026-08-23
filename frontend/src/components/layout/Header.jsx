@@ -80,7 +80,7 @@ export const Header = ({ onToggleMobileSidebar, isMobileSidebarOpen }) => {
   const homeRoute = getHomeRoute();
 
   return (
-    <header className="sticky top-0 z-30 flex items-center justify-between h-16 px-4 sm:px-6 shrink-0 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm">
+    <header className="sticky top-0 z-30 flex items-center justify-between h-16 px-4 sm:px-6 shrink-0 bg-white/90 dark:bg-[#11171F]/90 backdrop-blur-md border-b border-slate-200 dark:border-[#26313D] shadow-sm">
 
       {/* Left: Mobile hamburger + Mobile Brand + Desktop Breadcrumb */}
       <div className="flex items-center space-x-3 min-w-0">
@@ -88,7 +88,7 @@ export const Header = ({ onToggleMobileSidebar, isMobileSidebarOpen }) => {
         <button
           type="button"
           onClick={onToggleMobileSidebar}
-          className="md:hidden p-2 rounded-xl text-slate-500 hover:text-slate-900 hover:bg-slate-100 border border-slate-200 transition"
+          className="md:hidden p-2 rounded-xl text-slate-500 dark:text-[#A5B1C2] hover:text-slate-900 dark:hover:text-[#F5F7FA] hover:bg-slate-100 dark:hover:bg-[#171E27] border border-slate-200 dark:border-[#26313D] transition cursor-pointer"
           aria-label="Toggle navigation"
         >
           {isMobileSidebarOpen ? <X size={18} /> : <Menu size={18} />}
@@ -101,23 +101,23 @@ export const Header = ({ onToggleMobileSidebar, isMobileSidebarOpen }) => {
           aria-label="Go to FoodBridge home"
           title="Go to FoodBridge home"
         >
-          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#FF5E3A] to-[#FF4500] flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform">
+          <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-[#FF5A2F] to-[#FF4500] flex items-center justify-center text-white shadow-sm group-hover:scale-105 transition-transform">
             <UtensilsCrossed size={15} />
           </div>
-          <span className="text-sm font-extrabold text-slate-900 tracking-tight">FoodBridge</span>
+          <span className="text-sm font-extrabold text-slate-900 dark:text-[#F5F7FA] tracking-tight">FoodBridge</span>
         </Link>
 
         {/* Desktop Breadcrumbs */}
         <div className="hidden md:flex items-center space-x-2 text-xs">
           <Link
             to={homeRoute}
-            className="text-slate-400 hover:text-slate-700 font-semibold transition"
+            className="text-slate-400 dark:text-[#748296] hover:text-slate-700 dark:hover:text-slate-200 font-semibold transition"
             title="Go to home"
           >
             {getSectionLabel()}
           </Link>
-          <ChevronRight size={13} className="text-slate-300" />
-          <span className="text-slate-800 font-bold">{getPageTitle()}</span>
+          <ChevronRight size={13} className="text-slate-300 dark:text-slate-600" />
+          <span className="text-slate-800 dark:text-[#F5F7FA] font-bold">{getPageTitle()}</span>
         </div>
       </div>
 
@@ -128,10 +128,7 @@ export const Header = ({ onToggleMobileSidebar, isMobileSidebarOpen }) => {
         {role === 'DONOR' && (
           <Link
             to="/donor/create"
-            className="hidden sm:inline-flex items-center space-x-1.5 px-4 py-2 rounded-full text-white text-xs font-bold transition shadow-md hover:shadow-lg"
-            style={{
-              background: 'linear-gradient(135deg, #FF5E3A 0%, #FF4500 100%)',
-            }}
+            className="hidden sm:inline-flex items-center space-x-1.5 px-4 py-2 rounded-full text-white text-xs font-bold transition shadow-md hover:shadow-lg bg-gradient-to-r from-[#FF5A2F] to-[#FF4500]"
           >
             <PlusCircle size={14} />
             <span>Post Surplus Food</span>
@@ -145,14 +142,14 @@ export const Header = ({ onToggleMobileSidebar, isMobileSidebarOpen }) => {
         </span>
 
         {/* User Email + Sign Out */}
-        <div className="flex items-center space-x-2 pl-2 border-l border-slate-200">
-          <span className="hidden lg:inline text-xs text-slate-600 font-bold truncate max-w-[140px]">
+        <div className="flex items-center space-x-2 pl-2 border-l border-slate-200 dark:border-[#26313D]">
+          <span className="hidden lg:inline text-xs text-slate-600 dark:text-[#A5B1C2] font-bold truncate max-w-[140px]">
             {user?.email}
           </span>
           <button
             id="topbar-logout-btn"
             onClick={handleLogout}
-            className="p-2 rounded-full text-slate-400 hover:text-red-600 hover:bg-red-50 transition"
+            className="p-2 rounded-full text-slate-400 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/10 transition cursor-pointer"
             title="Sign out"
             aria-label="Sign out"
           >

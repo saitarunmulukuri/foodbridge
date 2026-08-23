@@ -14,6 +14,8 @@ import {
   NumberField,
   Select,
 } from '../components/common/forms';
+import { Button } from '../components/common/Button';
+import { BorderBeam } from '../components/magicui/BorderBeam';
 import {
   UtensilsCrossed,
   Building2,
@@ -61,9 +63,9 @@ function RoleCard({ role, isSelected, onSelect }) {
       <div className="fb-role-card-icon">
         <Icon size={17} strokeWidth={2.1} />
       </div>
-      <div style={{ flex: 1, textAlign: 'left' }}>
-        <div style={{ fontWeight: 600, fontSize: 13.5, color: '#111827' }}>{role.label}</div>
-        <div style={{ fontSize: 11.5, color: '#9CA3AF', marginTop: 1, lineHeight: 1.35 }}>
+      <div className="flex-1 text-left">
+        <div className="font-semibold text-[13.5px] text-slate-900 dark:text-[#F5F7FA]">{role.label}</div>
+        <div className="text-[11.5px] text-slate-500 dark:text-[#AAB4C2] mt-0.5 leading-snug">
           {role.subtitle}
         </div>
       </div>
@@ -276,18 +278,12 @@ export const RegisterPage = () => {
   return (
     <div className="w-full flex items-center justify-center py-4 px-4">
       <div
-        className="w-full animate-fade-in"
+        className="w-full animate-fade-in relative overflow-hidden bg-white dark:bg-[#11171F] border border-slate-200 dark:border-[#26313D] shadow-2xl rounded-[20px] grid grid-cols-1 sm:grid-cols-2"
         style={{
           maxWidth: 860,
-          borderRadius: 20,
-          overflow: 'hidden',
-          display: 'grid',
-          gridTemplateColumns: '1fr 1fr',
-          background: '#FFFFFF',
-          border: '1px solid #E5E7EB',
-          boxShadow: '0 20px 48px -8px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.04)',
         }}
       >
+        <BorderBeam duration={8} size={150} colorFrom="#FF5A2F" colorTo="#FFA726" />
         {/* ── Left: Brand Panel (Identical sibling to Login) ── */}
         <div
           style={{
@@ -420,29 +416,16 @@ export const RegisterPage = () => {
 
         {/* ── Right: Registration Content (Stepper) ── */}
         <div
-          style={{
-            padding: '40px 40px',
-            display: 'flex',
-            flexDirection: 'column',
-            justifyContent: 'center',
-            background: '#FFFFFF',
-          }}
-          className="login-right-panel"
+          className="login-right-panel bg-white dark:bg-[#11171F] p-8 sm:p-10 flex flex-col justify-center transition-colors duration-200"
         >
           {/* Header */}
-          <div style={{ marginBottom: 20 }}>
+          <div className="mb-5">
             <h1
-              style={{
-                fontWeight: 700,
-                fontSize: 22,
-                color: '#111827',
-                margin: 0,
-                letterSpacing: '-0.02em',
-              }}
+              className="text-xl sm:text-2xl font-bold text-slate-900 dark:text-[#F5F7FA] tracking-tight mb-1"
             >
               Create your account
             </h1>
-            <p style={{ color: '#9CA3AF', fontSize: 13, marginTop: 4, fontWeight: 400 }}>
+            <p className="text-xs sm:text-[13px] text-slate-500 dark:text-[#A5B1C2] leading-relaxed">
               Join the FoodBridge redistribution network
             </p>
           </div>
@@ -515,16 +498,19 @@ export const RegisterPage = () => {
                   ))}
                 </div>
 
-                <button
+                <Button
                   type="button"
                   onClick={handleStep1Continue}
                   disabled={!selectedRole}
-                  className="fb-btn-auth"
+                  variant="primary"
+                  size="lg"
+                  fullWidth
+                  icon={ArrowRight}
+                  iconPosition="right"
                   style={{ marginTop: 18 }}
                 >
-                  <span>Continue</span>
-                  <ArrowRight size={16} className="btn-arrow" />
-                </button>
+                  Continue
+                </Button>
 
                 <p style={{ textAlign: 'center', fontSize: 12, color: '#9CA3AF', marginTop: 14 }}>
                   Already have an account?{' '}
@@ -560,31 +546,8 @@ export const RegisterPage = () => {
 
                 {/* Account credentials */}
                 {googleUser ? (
-                  <div
-                    style={{
-                      marginBottom: 20,
-                      padding: '12px 14px',
-                      borderRadius: 10,
-                      background: '#F8FAFC',
-                      border: '1px solid #E2E8F0',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 12,
-                    }}
-                  >
-                    <div
-                      style={{
-                        width: 36,
-                        height: 36,
-                        borderRadius: 8,
-                        background: '#FFFFFF',
-                        border: '1px solid #E2E8F0',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexShrink: 0,
-                      }}
-                    >
+                  <div className="mb-5 p-3 sm:p-3.5 rounded-xl bg-slate-50 dark:bg-[#171E27] border border-slate-200 dark:border-[#26313D] flex items-center gap-3">
+                    <div className="w-9 h-9 rounded-lg bg-white dark:bg-[#11171F] border border-slate-200 dark:border-[#26313D] flex items-center justify-center shrink-0">
                       <svg style={{ width: 18, height: 18 }} viewBox="0 0 24 24">
                         <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
                         <path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" fill="#34A853" />
@@ -592,12 +555,12 @@ export const RegisterPage = () => {
                         <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" fill="#EA4335" />
                       </svg>
                     </div>
-                    <div style={{ flex: 1, minWidth: 0 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                        <span style={{ fontSize: 13.5, fontWeight: 600, color: '#1E293B' }}>{googleUser.email}</span>
-                        <ShieldCheck size={15} style={{ color: '#10B981', flexShrink: 0 }} />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-[13.5px] font-semibold text-slate-800 dark:text-[#F5F7FA] truncate">{googleUser.email}</span>
+                        <ShieldCheck size={15} className="text-emerald-500 shrink-0" />
                       </div>
-                      <div style={{ fontSize: 11, color: '#64748B' }}>Verified with Google · No password required</div>
+                      <div className="text-[11px] text-slate-500 dark:text-[#748296]">Verified with Google · No password required</div>
                     </div>
                   </div>
                 ) : (
@@ -738,24 +701,28 @@ export const RegisterPage = () => {
 
                 {/* Actions row */}
                 <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
-                  <button
+                  <Button
                     type="button"
                     onClick={() => goToStep(1)}
-                    className="fb-btn-secondary"
-                    style={{ flex: '0 0 auto', height: 48, paddingLeft: 18, paddingRight: 18 }}
+                    variant="secondary"
+                    size="lg"
                   >
                     Back
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     type="button"
                     disabled={loading}
+                    loading={loading}
+                    loadingText="Creating account…"
                     onClick={handleStep2Continue}
-                    className="fb-btn-auth"
+                    variant="primary"
+                    size="lg"
+                    icon={ArrowRight}
+                    iconPosition="right"
                     style={{ flex: 1 }}
                   >
-                    <span>{loading ? 'Creating account…' : 'Create Account'}</span>
-                    {!loading && <ArrowRight size={16} className="btn-arrow" />}
-                  </button>
+                    Create Account
+                  </Button>
                 </div>
 
                 <p style={{ textAlign: 'center', fontSize: 12, color: '#9CA3AF', marginTop: 14 }}>
@@ -769,48 +736,33 @@ export const RegisterPage = () => {
 
             {/* ─────── STEP 3: COMPLETE ─────── */}
             <Step>
-              <div style={{ textAlign: 'center', padding: '8px 0 12px' }}>
+              <div className="text-center py-2">
                 <div
-                  className="animate-check-scale"
-                  style={{
-                    width: 60,
-                    height: 60,
-                    borderRadius: '50%',
-                    background: '#F0FDF4',
-                    border: '1.5px solid #BBF7D0',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    margin: '0 auto 18px',
-                  }}
+                  className="animate-check-scale w-14 h-14 rounded-full bg-emerald-50 dark:bg-emerald-500/15 border border-emerald-200 dark:border-emerald-500/30 flex items-center justify-center mx-auto mb-4"
                 >
-                  <CheckCircle size={26} style={{ color: '#10B981' }} />
+                  <CheckCircle size={26} className="text-emerald-500" />
                 </div>
                 <h2
-                  style={{
-                    fontWeight: 700,
-                    fontSize: 19,
-                    color: '#111827',
-                    margin: '0 0 8px',
-                    letterSpacing: '-0.01em',
-                  }}
+                  className="font-bold text-lg text-slate-900 dark:text-[#F5F7FA] mb-2 tracking-tight"
                 >
                   You&apos;re all set.
                 </h2>
-                <p style={{ fontSize: 13, color: '#6B7280', lineHeight: 1.6, marginBottom: 24 }}>
+                <p className="text-xs sm:text-[13px] text-slate-500 dark:text-[#AAB4C2] leading-relaxed mb-6">
                   {successMsg || 'Your FoodBridge account is ready.'}
                 </p>
                 {isPending ? (
-                  <Link
+                  <Button
                     to="/login"
-                    className="fb-btn-auth"
-                    style={{ textDecoration: 'none', display: 'inline-flex', maxWidth: 220 }}
+                    variant="primary"
+                    size="lg"
+                    icon={ArrowRight}
+                    iconPosition="right"
+                    style={{ maxWidth: 220, margin: '0 auto' }}
                   >
-                    <span>Go to Login</span>
-                    <ArrowRight size={16} className="btn-arrow" />
-                  </Link>
+                    Go to Login
+                  </Button>
                 ) : (
-                  <p style={{ fontSize: 12, color: '#9CA3AF' }}>
+                  <p className="text-xs text-slate-400 dark:text-[#7F8A99]">
                     Redirecting to your dashboard…
                   </p>
                 )}

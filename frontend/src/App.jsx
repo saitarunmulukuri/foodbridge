@@ -1,4 +1,4 @@
-import React, { Suspense, lazy } from 'react';
+import { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AuthLayout } from './components/layout/AuthLayout';
@@ -117,25 +117,21 @@ const PublicLayout = ({ children }) => {
   ];
 
   return (
-    <div style={{ minHeight: '100vh', background: '#FAFAFC', display: 'flex', flexDirection: 'column' }}>
-      <div style={{ paddingTop: '12px' }}>
+    <div className="min-h-screen bg-[#F7F8FA] dark:bg-[#0B0F14] text-slate-900 dark:text-[#F5F7FA] flex flex-col transition-colors duration-200">
+      <div className="pt-3">
         <PillNav
           items={navItems}
           activeHref={location.pathname}
           ease="power2.out"
-          baseColor="#FFFFFF"
-          pillColor="#F8F9FB"
-          pillTextColor="#101828"
-          hoveredPillTextColor="#FFFFFF"
           isAuthNav={false}
         />
       </div>
-      <main style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '24px 16px' }}>
+      <main className="flex-1 w-full max-w-[1200px] mx-auto p-4 sm:p-6 flex flex-col justify-start">
         <Suspense fallback={<PageLoader />}>
           {children}
         </Suspense>
       </main>
-      <footer style={{ padding: '14px 24px', textAlign: 'center', fontSize: '11px', color: '#9CA3AF', borderTop: '1px solid #E4E7EC', background: '#FFFFFF' }}>
+      <footer className="py-3.5 px-6 text-center text-[11px] text-slate-400 dark:text-slate-500 border-t border-slate-200 dark:border-[#26313D] bg-white dark:bg-[#11171F] transition-colors duration-200">
         FoodBridge · Surplus food redistribution logistics
       </footer>
     </div>

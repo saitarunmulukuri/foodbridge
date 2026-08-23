@@ -6,6 +6,7 @@ import {
   generateLanyardStrapTexture,
 } from './LanyardCardCanvas';
 import { RotateCw, RefreshCcw, Sparkles, ShieldCheck, Download, Copy, Check } from 'lucide-react';
+import { Button } from '../common/Button';
 
 const ROLE_THEMES = {
   DONOR: {
@@ -286,74 +287,40 @@ export function FoodBridgeProfileCard({ user, stats = {} }) {
 
         {/* Physics Controls Buttons */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <button
+          <Button
             id="profile-flip-badge-btn"
             onClick={() => setFlipSignal((s) => s + 1)}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '6px 12px',
-              borderRadius: '8px',
-              border: '1px solid #E2E8F0',
-              background: '#FFFFFF',
-              color: '#334155',
-              fontSize: '12px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-              transition: 'background 0.15s ease',
-            }}
+            variant="secondary"
+            size="sm"
+            icon={RotateCw}
           >
-            <RotateCw size={13} />
-            <span>Spin Badge</span>
-          </button>
+            Spin Badge
+          </Button>
 
-          <button
+          <Button
             id="profile-reset-physics-btn"
             onClick={() => setResetSignal((s) => s + 1)}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '6px 12px',
-              borderRadius: '8px',
-              border: '1px solid #E2E8F0',
-              background: '#FFFFFF',
-              color: '#334155',
-              fontSize: '12px',
-              fontWeight: 600,
-              cursor: 'pointer',
-              boxShadow: '0 1px 2px rgba(0,0,0,0.04)',
-              transition: 'background 0.15s ease',
-            }}
+            variant="secondary"
+            size="sm"
+            icon={RefreshCcw}
           >
-            <RefreshCcw size={13} />
-            <span>Center</span>
-          </button>
+            Center
+          </Button>
 
-          <button
+          <Button
             id="profile-download-card-btn"
             onClick={handleDownloadCard}
+            variant="primary"
+            size="sm"
+            icon={Download}
             style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '6px 12px',
-              borderRadius: '8px',
-              border: `1px solid ${theme.accentColor}`,
               background: theme.accentColor,
-              color: '#FFFFFF',
-              fontSize: '12px',
-              fontWeight: 600,
-              cursor: 'pointer',
+              borderColor: theme.accentColor,
               boxShadow: `0 2px 8px -2px ${theme.accentColor}60`,
-              transition: 'opacity 0.15s ease',
             }}
           >
-            <Download size={13} />
-            <span>Save ID</span>
-          </button>
+            Export Pass
+          </Button>
         </div>
       </div>
     </div>

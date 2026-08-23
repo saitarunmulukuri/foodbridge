@@ -360,6 +360,30 @@
   transform: scale(0.95);
 }
 
+/* ── Theme Toggler Slot ── */
+.pill-nav-theme-slot {
+  display: inline-flex;
+  align-items: center;
+  margin: 0 3px;
+  flex-shrink: 0;
+}
+
+.mobile-menu-theme-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  border-radius: 12px;
+  background-color: #F8F9FB;
+  margin: 6px 0;
+}
+
+.mobile-menu-theme-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #334155;
+}
+
 /* ── Right Slot ── */
 .pill-nav-right {
   display: flex;
@@ -507,3 +531,81 @@
   text-transform: uppercase;
   letter-spacing: 0.8px;
 }
+
+/* ── Dark Mode Enhancements for PillNav ── */
+:root.dark .pill-nav,
+html.dark .pill-nav {
+  --base: #11171F;
+  --pill-bg: #171E27;
+  --pill-text: #F5F7FA;
+  --hover-text: #FFFFFF;
+  --hover-bg: #1E2631;
+  --active-bg: #FF5A2F;
+  --active-text: #FFFFFF;
+  border-color: #26313D;
+  box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.5), 0 2px 6px -1px rgba(0, 0, 0, 0.3);
+}
+
+:root.dark .pill-logo-text,
+html.dark .pill-logo-text {
+  color: #F5F7FA;
+}
+
+:root.dark .pill-collapse-button,
+html.dark .pill-collapse-button {
+  background: #171E27;
+  border-color: #26313D;
+  color: #A5B1C2;
+}
+
+:root.dark .pill-collapse-button:hover,
+html.dark .pill-collapse-button:hover {
+  background: #1E2631;
+  border-color: #334050;
+  color: #F5F7FA;
+}
+
+:root.dark .mobile-menu-popover,
+html.dark .mobile-menu-popover {
+  background: #11171F;
+  border-color: #26313D;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.6);
+}
+
+:root.dark .mobile-menu-link,
+html.dark .mobile-menu-link {
+  color: #F5F7FA;
+}
+
+:root.dark .mobile-menu-link:hover,
+html.dark .mobile-menu-link:hover {
+  background-color: #171E27;
+  color: #FF5A2F;
+}
+
+:root.dark .mobile-menu-divider,
+html.dark .mobile-menu-divider {
+  background: #26313D;
+}
+
+:root.dark .mobile-menu-button,
+html.dark .mobile-menu-button {
+  background: #171E27;
+  border-color: #26313D;
+}
+
+:root.dark .hamburger-line,
+html.dark .hamburger-line {
+  background-color: #F5F7FA;
+}
+
+:root.dark .mobile-menu-theme-row,
+html.dark .mobile-menu-theme-row {
+  background-color: #171D25;
+}
+
+:root.dark .mobile-menu-theme-label,
+html.dark .mobile-menu-theme-label {
+  color: #F5F7FA;
+}
+
