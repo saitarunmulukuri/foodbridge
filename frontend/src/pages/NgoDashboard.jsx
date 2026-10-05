@@ -227,7 +227,7 @@ const RequestCard = ({ request, onAccept, onDecline, actionLoading }) => {
           </Button>
           <Button
             id={`decline-request-${request.request_id ?? request.id}`}
-            onClick={() => onDecline(request.request_id ?? request.id)}
+            onClick={() => onDecline(request.request_id ?? request.id, donationTitle)}
             disabled={actionLoading}
             variant="secondary"
             size="sm"
@@ -266,6 +266,22 @@ export const NgoDashboard = () => {
   const [actionLoading, setActionLoading] = useState(false);
   const [error, setError]       = useState(null);
   const [flash, setFlash]       = useState(null);
+  const [declineTarget, setDeclineTarget] = useState(null); // { id, title }
+  const [declineReason, setDeclineReason] = useState('');
+  const [declineError, setDeclineError]   = useState('');
+  const [declineLoading, setDeclineLoading] = useState(false);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape' && declineTarget && !declineLoading) {
+        setDeclineTarget(null);
+        setDeclineReason('');
+        setDeclineError('');
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [declineTarget, declineLoading]);
 
   const fetchData = async () => {
     setLoading(true);
@@ -314,19 +330,47 @@ export const NgoDashboard = () => {
     }
   };
 
-  const handleDecline = async (requestId) => {
-    setActionLoading(true);
-    setFlash(null);
+  const handleOpenDecline = (requestId, title) => {
+    setDeclineTarget({ id: requestId, title });
+    setDeclineReason('');
+    setDeclineError('');
+  };
+
+  const handleCloseDecline = () => {
+    if (declineLoading) return;
+    setDeclineTarget(null);
+    setDeclineReason('');
+    setDeclineError('');
+  };
+
+  const handleConfirmDecline = async (e) => {
+    if (e) e.preventDefault();
+    const trimmed = declineReason.trim();
+    if (!trimmed) {
+      setDeclineError('decline_reason must not be empty.');
+      return;
+    }
+    if (trimmed.length > 1000) {
+      setDeclineError('decline_reason must not exceed 1000 characters.');
+      return;
+    }
+
+    setDeclineLoading(true);
+    setDeclineError('');
     try {
-      const res = await ngoService.declineRequest(requestId, '');
-      if (res.success || res.data) {
-        setFlash({ type: 'success', message: `Request #${requestId} declined.` });
+      const res = await ngoService.declineRequest(declineTarget.id, trimmed);
+      if (res && res.success !== false) {
+        setFlash({ type: 'success', message: `Request #${declineTarget.id} declined.` });
+        setDeclineTarget(null);
+        setDeclineReason('');
         await fetchData();
+      } else {
+        setDeclineError(res?.error || 'Decline failed.');
       }
     } catch (err) {
-      setFlash({ type: 'error', message: err.message || 'Decline failed.' });
+      setDeclineError(err.message || 'Decline failed.');
     } finally {
-      setActionLoading(false);
+      setDeclineLoading(false);
     }
   };
 
@@ -401,7 +445,7 @@ export const NgoDashboard = () => {
               <RequestCard
                 request={r}
                 onAccept={handleAccept}
-                onDecline={handleDecline}
+                onDecline={handleOpenDecline}
                 actionLoading={actionLoading}
               />
             )}
@@ -412,7 +456,7 @@ export const NgoDashboard = () => {
       {/* History */}
       {historyRequests.length > 0 && (
         <div className="fb-section-card overflow-hidden">
-          <div className="fb-section-card-header bg-slate-50/70 dark:bg-[#171D25] border-b border-slate-100 dark:border-[#242D38] flex items-center">
+          <div className="fb-section-card-header bg-slate-50/70 dark:bg-[#171E27] border-b border-slate-100 dark:border-[#26313D] flex items-center">
             <History size={15} className="text-[#FF5A2F]" />
             <h2 className="text-sm font-semibold text-slate-900 dark:text-[#F5F7FA]">Request history</h2>
             <span className="text-xs text-slate-400 dark:text-[#7F8A99] font-semibold ml-auto">{historyRequests.length} records</span>
@@ -421,6 +465,145 @@ export const NgoDashboard = () => {
             {historyRequests.map(r => (
               <HistoryRow key={r.request_id ?? r.id} request={r} />
             ))}
+          </div>
+        </div>
+      )}
+
+      {/* Decline Request Confirmation Dialog Modal */}
+      {declineTarget && (
+        <div
+          id="decline-dialog-overlay"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 dark:bg-black/75 backdrop-blur-sm animate-fade-in"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="decline-modal-title"
+          onClick={(e) => {
+            if (e.target === e.currentTarget && !declineLoading) handleCloseDecline();
+          }}
+        >
+          <div className="bg-white dark:bg-[#11171F] border border-slate-200 dark:border-[#26313D] rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4 animate-scale-in">
+            {/* Header */}
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-start space-x-3">
+                <div className="w-10 h-10 rounded-xl bg-red-50 dark:bg-red-500/10 border border-red-200 dark:border-red-500/20 text-red-600 dark:text-red-400 flex items-center justify-center shrink-0 mt-0.5">
+                  <XCircle size={20} />
+                </div>
+                <div>
+                  <h3 id="decline-modal-title" className="text-base font-bold text-slate-900 dark:text-[#F5F7FA]">
+                    Decline Donation Request
+                  </h3>
+                  <p className="text-xs text-slate-500 dark:text-[#AAB4C2] mt-0.5 font-medium">
+                    Request #{declineTarget.id} &bull; <span className="font-semibold text-slate-700 dark:text-[#D2DAE5]">{declineTarget.title}</span>
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={handleCloseDecline}
+                disabled={declineLoading}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-[#F5F7FA] p-1 rounded-lg transition-colors cursor-pointer"
+                aria-label="Close dialog"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <p className="text-xs text-slate-600 dark:text-[#AAB4C2] leading-relaxed">
+              Please enter the reason for declining this donation. This reason is required for audit transparency and will be recorded with the donation.
+            </p>
+
+            {/* Quick Reason Suggestions */}
+            <div className="space-y-1.5">
+              <span className="text-[10px] font-bold text-slate-400 dark:text-[#7F8A99] uppercase tracking-wider block">
+                Quick Select:
+              </span>
+              <div className="flex flex-wrap gap-1.5">
+                {[
+                  'Capacity full for today',
+                  'Outside operating hours',
+                  'Cannot handle perishable storage',
+                  'Logistics / staff unavailable',
+                ].map((reason) => (
+                  <button
+                    key={reason}
+                    type="button"
+                    onClick={() => {
+                      setDeclineReason(reason);
+                      setDeclineError('');
+                    }}
+                    className="px-2.5 py-1 text-[11px] font-medium rounded-lg bg-slate-100 dark:bg-[#1A232E] text-slate-700 dark:text-[#D2DAE5] hover:bg-orange-50 hover:text-[#FF5A2F] dark:hover:bg-orange-500/10 dark:hover:text-[#FF7A50] border border-slate-200/80 dark:border-[#26313D] transition-colors cursor-pointer"
+                  >
+                    {reason}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Textarea Form */}
+            <form onSubmit={handleConfirmDecline} className="space-y-3">
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-xs">
+                  <label htmlFor="decline-reason-input" className="font-bold text-slate-700 dark:text-[#D2DAE5]">
+                    Decline Reason <span className="text-red-500">*</span>
+                  </label>
+                  <span className="text-[10px] font-semibold text-slate-400 dark:text-[#7F8A99] tabular-nums">
+                    {declineReason.length}/1000
+                  </span>
+                </div>
+                <textarea
+                  id="decline-reason-input"
+                  rows={3}
+                  maxLength={1000}
+                  value={declineReason}
+                  onChange={(e) => {
+                    setDeclineReason(e.target.value);
+                    if (declineError && e.target.value.trim()) {
+                      setDeclineError('');
+                    }
+                  }}
+                  placeholder="State the reason why your organisation cannot accept this request..."
+                  className={`w-full p-3 rounded-xl border text-xs text-slate-900 dark:text-[#F5F7FA] bg-slate-50 dark:bg-[#171E27] focus:bg-white dark:focus:bg-[#11171F] focus:outline-none transition resize-none ${
+                    declineError
+                      ? 'border-red-400 dark:border-red-500/60 focus:ring-1 focus:ring-red-400'
+                      : 'border-slate-200 dark:border-[#26313D] focus:border-[#FF5A2F] focus:ring-1 focus:ring-[#FF5A2F]'
+                  }`}
+                  disabled={declineLoading}
+                  autoFocus
+                />
+                {declineError && (
+                  <p id="decline-error-msg" className="text-xs font-semibold text-red-600 dark:text-red-400 flex items-center space-x-1 mt-1">
+                    <AlertCircle size={13} className="shrink-0" />
+                    <span>{declineError}</span>
+                  </p>
+                )}
+              </div>
+
+              {/* Actions */}
+              <div className="flex items-center justify-end space-x-2.5 pt-3 border-t border-slate-100 dark:border-[#26313D]">
+                <Button
+                  id="cancel-decline-btn"
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleCloseDecline}
+                  disabled={declineLoading}
+                >
+                  Cancel
+                </Button>
+                <Button
+                  id="confirm-decline-btn"
+                  type="submit"
+                  variant="danger"
+                  size="sm"
+                  icon={XCircle}
+                  loading={declineLoading}
+                  loadingText="Declining…"
+                  disabled={declineLoading}
+                >
+                  Confirm Decline
+                </Button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -100,10 +100,10 @@ export const NumberField = forwardRef(({
           showControls ? 'rounded-none text-center font-bold' : 'rounded-[10px]'
         } ${
           disabled
-            ? 'bg-slate-50 dark:bg-[#11171F] text-slate-400 dark:text-slate-600 border-slate-200 dark:border-[#26313D] cursor-not-allowed'
+            ? 'bg-slate-50 dark:bg-[#11171F] text-slate-400 dark:text-[#7F8A99] border-slate-200 dark:border-[#26313D] cursor-not-allowed'
             : error
             ? 'bg-white dark:bg-[#171E27] text-slate-900 dark:text-[#F5F7FA] border-red-500 ring-2 ring-red-500/20'
-            : 'bg-white dark:bg-[#171E27] text-slate-900 dark:text-[#F5F7FA] border border-slate-200 dark:border-[#26313D] placeholder-slate-400 dark:placeholder-[#748296] focus:border-[#FF5A2F] focus:ring-2 focus:ring-[#FF5A2F]/20'
+            : 'bg-white dark:bg-[#171E27] text-slate-900 dark:text-[#F5F7FA] border border-slate-200 dark:border-[#26313D] placeholder-slate-400 dark:placeholder-[#8E9CAE] focus:border-[#FF5A2F] focus:ring-2 focus:ring-[#FF5A2F]/20'
         } ${inputClassName}`}
         style={{
           ...inputStyle,
@@ -118,7 +118,7 @@ export const NumberField = forwardRef(({
           onClick={() => handleStepChange(1)}
           disabled={disabled || readOnly || (max !== undefined && parseFloat(value) >= parseFloat(max))}
           aria-label="Increase quantity"
-          className="shrink-0 w-10 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-[#FF5A2F] hover:bg-slate-50 dark:hover:bg-[#1E293B] disabled:opacity-30 disabled:pointer-events-none transition rounded-r-[10px] border border-l-0 border-slate-200 dark:border-[#242D38] bg-white dark:bg-[#171D25] h-[44px]"
+          className="shrink-0 w-10 flex items-center justify-center text-slate-500 dark:text-[#AAB4C2] hover:text-[#FF5A2F] hover:bg-slate-50 dark:hover:bg-[#1E293B] disabled:opacity-30 disabled:pointer-events-none transition rounded-r-[10px] border border-l-0 border-slate-200 dark:border-[#242D38] bg-white dark:bg-[#171D25] h-[44px]"
         >
           <Plus size={14} />
         </button>

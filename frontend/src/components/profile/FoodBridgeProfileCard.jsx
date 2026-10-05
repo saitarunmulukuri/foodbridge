@@ -119,18 +119,7 @@ export function FoodBridgeProfileCard({ user, stats = {} }) {
 
   return (
     <div
-      style={{
-        background: 'var(--color-surface)',
-        borderRadius: '20px',
-        border: '1px solid var(--color-border)',
-        padding: '24px',
-        boxShadow: '0 4px 20px -4px rgba(15, 23, 42, 0.06)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        position: 'relative',
-        overflow: 'hidden',
-      }}
+      className="bg-white dark:bg-[#11171F] border border-slate-200 dark:border-[#26313D] rounded-[20px] p-6 shadow-sm flex flex-col items-center relative overflow-hidden"
     >
       {/* Decorative top ambient aura */}
       <div
@@ -181,14 +170,7 @@ export function FoodBridgeProfileCard({ user, stats = {} }) {
         </div>
 
         <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '5px',
-            fontSize: '12px',
-            color: '#64748B',
-            fontWeight: 500,
-          }}
+          className="text-slate-500 dark:text-[#AAB4C2] font-medium text-xs flex items-center gap-1.5"
         >
           <Sparkles size={13} style={{ color: theme.accentColor }} />
           <span>Interactive 3D Physics</span>
@@ -197,15 +179,7 @@ export function FoodBridgeProfileCard({ user, stats = {} }) {
 
       {/* 3D Lanyard Canvas Viewport */}
       <div
-        style={{
-          width: '100%',
-          height: '460px',
-          position: 'relative',
-          borderRadius: '16px',
-          background: 'var(--color-bg-secondary, linear-gradient(180deg, #F8FAFC 0%, #EDF2F7 100%))',
-          border: '1px solid var(--color-border)',
-          overflow: 'hidden',
-        }}
+        className="w-full h-[460px] relative rounded-2xl overflow-hidden bg-slate-50 dark:bg-[#0E141B] border border-slate-200 dark:border-[#26313D]"
       >
         {/* Interaction Hint Overlay */}
         <div
@@ -248,43 +222,19 @@ export function FoodBridgeProfileCard({ user, stats = {} }) {
 
       {/* Action Toolbar Below Canvas */}
       <div
-        style={{
-          width: '100%',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          marginTop: '16px',
-          paddingTop: '16px',
-          borderTop: '1px solid var(--color-border)',
-          flexWrap: 'wrap',
-          gap: '10px',
-        }}
+        className="w-full flex justify-between items-center mt-4 pt-4 border-t border-slate-200 dark:border-[#26313D] flex-wrap gap-2.5"
       >
         {/* ID Number Tag */}
         <div
           onClick={handleCopyId}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '6px 12px',
-            background: 'var(--color-bg-secondary, #F8FAFC)',
-            border: '1px solid var(--color-border)',
-            borderRadius: '8px',
-            cursor: 'pointer',
-            fontSize: '12px',
-            fontWeight: 600,
-            fontFamily: 'monospace',
-            color: 'var(--color-text-primary)',
-            transition: 'all 0.15s ease',
-          }}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg border cursor-pointer text-xs font-semibold font-mono transition-colors duration-150 select-none bg-slate-100 hover:bg-slate-200/70 border-slate-200 text-slate-800 dark:bg-[#171D25] dark:hover:bg-[#1E2631] dark:border-[#26313D] dark:text-[#F5F7FA] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5A2F]/40"
           title="Click to copy ID"
         >
           <span>{formattedId}</span>
           {copied ? (
-            <Check size={13} style={{ color: '#10B981' }} />
+            <Check size={13} className="text-emerald-500 shrink-0" />
           ) : (
-            <Copy size={13} style={{ color: '#94A3B8' }} />
+            <Copy size={13} className="text-slate-400 dark:text-[#7F8A99] shrink-0" />
           )}
         </div>
 

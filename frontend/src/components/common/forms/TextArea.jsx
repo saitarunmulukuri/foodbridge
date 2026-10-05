@@ -47,10 +47,10 @@ export const TextArea = forwardRef(({
         aria-required={required}
         className={`w-full font-sans transition-all duration-150 outline-none p-3.5 rounded-[10px] text-[13.5px] min-h-[80px] ${
           disabled
-            ? 'bg-slate-50 dark:bg-[#11171F] text-slate-400 dark:text-slate-600 border-slate-200 dark:border-[#26313D] cursor-not-allowed'
+            ? 'bg-slate-50 dark:bg-[#11171F] text-slate-400 dark:text-[#7F8A99] border-slate-200 dark:border-[#26313D] cursor-not-allowed'
             : error
             ? 'bg-white dark:bg-[#171E27] text-slate-900 dark:text-[#F5F7FA] border-red-500 ring-2 ring-red-500/20'
-            : 'bg-white dark:bg-[#171E27] text-slate-900 dark:text-[#F5F7FA] border border-slate-200 dark:border-[#26313D] placeholder-slate-400 dark:placeholder-[#748296] focus:border-[#FF5A2F] focus:ring-2 focus:ring-[#FF5A2F]/20'
+            : 'bg-white dark:bg-[#171E27] text-slate-900 dark:text-[#F5F7FA] border border-slate-200 dark:border-[#26313D] placeholder-slate-400 dark:placeholder-[#8E9CAE] focus:border-[#FF5A2F] focus:ring-2 focus:ring-[#FF5A2F]/20'
         } ${inputClassName}`}
         style={{
           resize: 'vertical',

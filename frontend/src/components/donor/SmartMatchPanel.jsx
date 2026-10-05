@@ -99,7 +99,7 @@ const EngineHeader = ({ subtitle, badgeText, rightContent }) => (
           FOODBRIDGE DECISION ENGINE
         </span>
         {badgeText && (
-          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-orange-100 dark:bg-orange-500/20 text-[#FF5A2F]">
+          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-semibold bg-orange-100 dark:bg-orange-500/20 text-[#FF5A2F] dark:text-[#FF7A50]">
             {badgeText}
           </span>
         )}
@@ -177,7 +177,7 @@ const NGOCard = ({ match, rank, reducedMotion }) => {
   return (
     <motion.div
       variants={cardVariants}
-      className={`rounded-2xl border transition-all duration-200 overflow-hidden bg-white dark:bg-[#11171F] ${
+      className={`rounded-2xl border transition-[border-color,box-shadow] duration-200 overflow-hidden bg-white dark:bg-[#11171F] ${
         isTop
           ? 'border-orange-300 dark:border-orange-500/40 shadow-md ring-1 ring-orange-200 dark:ring-orange-500/20'
           : 'border-slate-200 dark:border-[#26313D] hover:border-slate-300 dark:hover:border-slate-600'
@@ -342,13 +342,13 @@ const ProcessingPipeline = ({ currentStage, reducedMotion }) => {
               </h4>
             </div>
           </div>
-          <div className="flex items-center space-x-2 px-2.5 py-1 rounded-full bg-orange-100/70 dark:bg-orange-500/20 text-[#FF5A2F]">
+          <div className="flex items-center space-x-2 px-2.5 py-1 rounded-full bg-orange-100/70 dark:bg-orange-500/20 text-[#FF5A2F] dark:text-[#FF7A50]">
             <span className="relative flex h-2 w-2">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#FF5A2F] opacity-75" />
               <span className="relative inline-flex rounded-full h-2 w-2 bg-[#FF5A2F]" />
             </span>
             <span className="text-[10px] font-bold uppercase tracking-wider">
-              Evaluating Pipeline
+              {currentStage >= PIPELINE_STAGES.length ? 'Finalizing Recommendation…' : 'Evaluating Pipeline'}
             </span>
           </div>
         </div>
@@ -371,7 +371,7 @@ const ProcessingPipeline = ({ currentStage, reducedMotion }) => {
             <motion.div
               key={step.id}
               variants={itemVariants}
-              className={`rounded-xl p-3.5 border transition-all duration-300 ${
+              className={`rounded-xl p-3.5 border transition-[border-color,background-color,box-shadow] duration-200 ${
                 isActive
                   ? 'border-orange-300 dark:border-orange-500/40 bg-orange-50/40 dark:bg-orange-500/10 shadow-sm ring-1 ring-orange-200 dark:ring-orange-500/20'
                   : isDone
@@ -424,7 +424,7 @@ const ProcessingPipeline = ({ currentStage, reducedMotion }) => {
                         </span>
                       )}
                       {isActive && (
-                        <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-[#FF5A2F] animate-pulse">
+                        <span className="inline-flex items-center space-x-1 text-[10px] font-bold text-[#FF5A2F] dark:text-[#FF7A50] animate-pulse">
                           <span>Processing…</span>
                         </span>
                       )}
@@ -447,7 +447,7 @@ const ProcessingPipeline = ({ currentStage, reducedMotion }) => {
                         className="h-full bg-gradient-to-r from-[#FF5A2F] to-[#FF4500] rounded-full"
                         initial={{ width: '0%' }}
                         animate={{ width: '100%' }}
-                        transition={{ duration: 0.65, ease: 'easeInOut', repeat: Infinity }}
+                        transition={{ duration: (idx === 2 ? 0.9 : 0.7), ease: [0.2, 0, 0.2, 1] }}
                       />
                     </div>
                   )}
@@ -515,20 +515,38 @@ export const SmartMatchPanel = ({ donationId, onComplete }) => {
     setPipelineIndex(0);
     setError(null);
 
-    // Staggered pipeline timeline
-    const stepDuration = reducedMotion ? 100 : 500;
+    // Staggered pipeline timeline:
+    // Stage 0: Candidate Discovery ~700ms
+    // Stage 1: Eligibility Filter ~700ms
+    // Stage 2: Multi-Factor Scoring ~900ms
+    // Stage 3: Deterministic Ranking ~700ms
+    // Followed by brief ~300ms settlement when all stages are complete.
+    // Total visual processing: ~3.3 seconds (or ~200ms when reducedMotion is enabled)
+    const stageDurations = reducedMotion ? [50, 50, 50, 50] : [700, 700, 900, 700];
 
     const pipelinePromise = new Promise(resolve => {
-      let current = 0;
-      const stepInterval = setInterval(() => {
-        current += 1;
-        if (current < PIPELINE_STAGES.length) {
-          setPipelineIndex(current);
+      let currentStep = 0;
+      setPipelineIndex(0);
+
+      const advance = () => {
+        if (currentStep < PIPELINE_STAGES.length - 1) {
+          stageTimerRef.current = setTimeout(() => {
+            currentStep += 1;
+            setPipelineIndex(currentStep);
+            advance();
+          }, stageDurations[currentStep]);
         } else {
-          clearInterval(stepInterval);
-          resolve();
+          // Final stage completes after its duration plus a brief settlement pause
+          stageTimerRef.current = setTimeout(() => {
+            setPipelineIndex(PIPELINE_STAGES.length);
+            stageTimerRef.current = setTimeout(() => {
+              resolve();
+            }, reducedMotion ? 0 : 300);
+          }, stageDurations[currentStep]);
         }
-      }, stepDuration);
+      };
+
+      advance();
     });
 
     try {
@@ -573,15 +591,15 @@ export const SmartMatchPanel = ({ donationId, onComplete }) => {
 
         <button
           onClick={handleRun}
-          className="w-full text-left rounded-2xl border border-dashed border-orange-300 dark:border-orange-500/40 bg-orange-50/40 dark:bg-orange-500/10 hover:bg-orange-50 dark:hover:bg-orange-500/15 hover:border-orange-400 transition-all duration-200 group cursor-pointer p-5"
+          className="w-full text-left rounded-2xl border border-dashed border-orange-300 dark:border-orange-500/40 bg-orange-50/40 dark:bg-orange-500/10 hover:bg-orange-50 dark:hover:bg-orange-500/15 hover:border-orange-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5A2F]/30 transition-colors duration-200 group cursor-pointer p-4 sm:p-5"
         >
-          <div className="flex items-center justify-between gap-4">
-            <div className="flex items-center space-x-3.5 min-w-0">
-              <div className="w-11 h-11 rounded-2xl flex items-center justify-center shrink-0 bg-white dark:bg-[#171D25] border border-orange-200 dark:border-orange-500/30 text-[#FF5A2F] shadow-sm group-hover:scale-105 transition-transform duration-200">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3.5 sm:gap-4">
+            <div className="flex items-center space-x-3.5 min-w-0 flex-1">
+              <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-2xl flex items-center justify-center shrink-0 bg-white dark:bg-[#171D25] border border-orange-200 dark:border-orange-500/30 text-[#FF5A2F] shadow-sm group-hover:scale-105 transition-transform duration-200 will-change-transform transform-gpu">
                 <Zap size={20} className="fill-[#FF5A2F]/20" />
               </div>
-              <div className="min-w-0">
-                <p className="text-sm font-bold text-slate-900 dark:text-[#F5F7FA]">
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold text-slate-900 dark:text-[#F5F7FA] truncate">
                   Run Smart Match Pipeline
                 </p>
                 <p className="text-xs text-slate-500 dark:text-[#AAB4C2] mt-0.5 font-medium truncate">
@@ -590,7 +608,7 @@ export const SmartMatchPanel = ({ donationId, onComplete }) => {
               </div>
             </div>
 
-            <div className="px-4 py-2 rounded-full text-xs font-bold text-white bg-gradient-to-tr from-[#FF5A2F] to-[#FF4500] shadow transition-all duration-200 group-hover:scale-105 group-hover:shadow-md shrink-0">
+            <div className="inline-flex items-center justify-center px-4 py-2 rounded-full text-xs font-bold text-white bg-gradient-to-tr from-[#FF5A2F] to-[#FF4500] shadow transition-all duration-200 group-hover:scale-105 group-hover:shadow-md shrink-0 whitespace-nowrap self-start sm:self-auto will-change-transform transform-gpu">
               Run Engine →
             </div>
           </div>
@@ -708,7 +726,7 @@ export const SmartMatchPanel = ({ donationId, onComplete }) => {
               )}
               <button
                 onClick={handleRun}
-                className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-bold text-slate-700 dark:text-[#D2DAE5] bg-slate-100 hover:bg-slate-200 dark:bg-[#1A232E] dark:hover:bg-[#242F3D] transition-colors cursor-pointer shrink-0"
+                className="inline-flex items-center space-x-1 px-3 py-1.5 rounded-full text-xs font-bold text-slate-700 dark:text-[#D2DAE5] bg-slate-100 hover:bg-slate-200 dark:bg-[#1A232E] dark:hover:bg-[#242F3D] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5A2F]/30 transition-colors cursor-pointer shrink-0"
               >
                 <RotateCcw size={12} />
                 <span>Re-run Engine</span>
@@ -740,7 +758,7 @@ export const SmartMatchPanel = ({ donationId, onComplete }) => {
             <button
               onClick={() => setShowCandidates(!showCandidates)}
               aria-expanded={showCandidates}
-              className="w-full flex items-center justify-between px-4 py-3 text-xs font-bold text-slate-700 dark:text-[#D2DAE5] hover:bg-slate-100/60 dark:hover:bg-[#1A232E] transition cursor-pointer"
+              className="w-full flex items-center justify-between px-4 py-3 text-xs font-bold text-slate-700 dark:text-[#D2DAE5] hover:bg-slate-100/60 dark:hover:bg-[#1A232E] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5A2F]/30 transition-colors duration-150 cursor-pointer"
             >
               <div className="flex items-center space-x-2">
                 <Info size={14} className="text-slate-400 dark:text-[#7F8A99]" />
@@ -787,7 +805,7 @@ export const SmartMatchPanel = ({ donationId, onComplete }) => {
                               {Math.round((cand.total_score || 0) * 100)}% Match
                             </span>
                           ) : (
-                            <span className="text-[10px] text-slate-400 dark:text-[#7F8A99] italic">
+                            <span className="text-[10px] text-slate-500 dark:text-[#AAB4C2] italic">
                               {cand.rejection_reason || 'Disqualified'}
                             </span>
                           )}
@@ -802,7 +820,7 @@ export const SmartMatchPanel = ({ donationId, onComplete }) => {
         )}
 
         {/* Transparent scoring footer info */}
-        <p className="text-[11px] text-slate-400 dark:text-[#7F8A99] text-center pt-1 font-medium">
+        <p className="text-[11px] text-slate-500 dark:text-[#AAB4C2] text-center pt-1 font-medium">
           Decision Engine v{meta?.algorithmVersion || '1.0'} · Multi-criteria transparent scoring (Distance 25%, Capacity 20%, Freshness 20%, Demand 20%, Compatibility 10%, Availability 5%).
         </p>
       </motion.div>

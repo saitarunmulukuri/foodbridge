@@ -51,7 +51,7 @@ export const TextField = forwardRef(({
     <div className="relative w-full flex items-center">
       {/* Optional Leading Icon */}
       {Icon && (
-        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500 pointer-events-none flex items-center justify-center">
+        <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-[#7F8A99] pointer-events-none flex items-center justify-center">
           {renderIcon()}
         </div>
       )}
@@ -82,10 +82,10 @@ export const TextField = forwardRef(({
           isPassword || suffix ? 'pr-11' : 'pr-3.5'
         } ${
           disabled
-            ? 'bg-slate-50 dark:bg-[#11171F] text-slate-400 dark:text-slate-600 border-slate-200 dark:border-[#26313D] cursor-not-allowed'
+            ? 'bg-slate-50 dark:bg-[#11171F] text-slate-400 dark:text-[#7F8A99] border-slate-200 dark:border-[#26313D] cursor-not-allowed'
             : error
             ? 'bg-white dark:bg-[#171E27] text-slate-900 dark:text-[#F5F7FA] border-red-500 ring-2 ring-red-500/20'
-            : 'bg-white dark:bg-[#171E27] text-slate-900 dark:text-[#F5F7FA] border border-slate-200 dark:border-[#26313D] placeholder-slate-400 dark:placeholder-[#748296] focus:border-[#FF5A2F] focus:ring-2 focus:ring-[#FF5A2F]/20'
+            : 'bg-white dark:bg-[#171E27] text-slate-900 dark:text-[#F5F7FA] border border-slate-200 dark:border-[#26313D] placeholder-slate-400 dark:placeholder-[#8E9CAE] focus:border-[#FF5A2F] focus:ring-2 focus:ring-[#FF5A2F]/20'
         } ${inputClassName}`}
         style={{
           ...inputStyle,
@@ -100,7 +100,7 @@ export const TextField = forwardRef(({
           tabIndex={-1}
           onClick={() => setShowPassword(prev => !prev)}
           aria-label={showPassword ? 'Hide password' : 'Show password'}
-          className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-slate-400 dark:text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition focus:outline-none"
+          className="absolute right-3 top-1/2 -translate-y-1/2 p-1.5 rounded-md text-slate-400 dark:text-[#7F8A99] hover:text-slate-700 dark:hover:text-[#F5F7FA] transition focus:outline-none"
         >
           {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
         </button>

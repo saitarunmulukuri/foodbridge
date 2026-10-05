@@ -28,6 +28,8 @@ import {
   FileText,
   Truck,
   ShieldCheck,
+  Copy,
+  Check,
 } from 'lucide-react';
 
 function formatDateTime(iso) {
@@ -277,6 +279,14 @@ export const DonationDetailPage = () => {
   const [donation, setDonation] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [copiedId, setCopiedId] = useState(false);
+
+  const handleCopyId = () => {
+    if (!donation?.donation_id) return;
+    navigator.clipboard.writeText(String(donation.donation_id));
+    setCopiedId(true);
+    setTimeout(() => setCopiedId(false), 2000);
+  };
 
   const fetchDonation = useCallback(async () => {
     setLoading(true);
@@ -359,7 +369,19 @@ export const DonationDetailPage = () => {
           <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-4">
             <div className="min-w-0">
               <div className="flex items-center space-x-2 mb-2">
-                <span className="text-[11px] font-mono text-slate-400 dark:text-[#748296] font-bold">ID #{donation.donation_id}</span>
+                <button
+                  type="button"
+                  onClick={handleCopyId}
+                  className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-md text-[11px] font-mono font-bold bg-slate-100 dark:bg-[#171D25] border border-slate-200 dark:border-[#26313D] text-slate-700 dark:text-[#F5F7FA] hover:bg-slate-200/80 dark:hover:bg-[#1E2631] transition-colors cursor-pointer select-none focus:outline-none focus-visible:ring-2 focus-visible:ring-[#FF5A2F]/40"
+                  title="Click to copy donation ID"
+                >
+                  <span>ID #{donation.donation_id}</span>
+                  {copiedId ? (
+                    <Check size={11} className="text-emerald-500 shrink-0" />
+                  ) : (
+                    <Copy size={11} className="text-slate-400 dark:text-[#7F8A99] shrink-0" />
+                  )}
+                </button>
                 <StatusBadge status={donation.status} />
               </div>
               <h1 className="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-[#F5F7FA] leading-tight">
@@ -482,7 +504,7 @@ export const DonationDetailPage = () => {
         {/* Left Column: Food Items Inventory */}
         <Card title={`Food Items Manifest (${foodItems.length})`} icon={Boxes}>
           {foodItems.length > 0 ? (
-            <div className="divide-y divide-slate-100">
+            <div className="divide-y divide-slate-100 dark:divide-[#26313D]">
               {foodItems.map((item, i) => (
                 <FoodItemRow key={item.food_item_id ?? item.id ?? i} item={item} index={i} />
               ))}
