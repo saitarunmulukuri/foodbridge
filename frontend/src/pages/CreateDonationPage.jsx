@@ -268,6 +268,50 @@ export const CreateDonationPage = () => {
     }
   };
 
+  const [presetLoaded, setPresetLoaded] = useState(false);
+
+  const loadDemoScenario = () => {
+    const now = new Date();
+    now.setSeconds(0, 0);
+    const expiry = new Date(now.getTime() + 6 * 60 * 60 * 1000); // 6 hours later
+
+    setFormData({
+      donation_title: 'Fresh Veg Biryani Meal Packs',
+      description: 'Freshly prepared vegetarian biryani meal packs available for immediate community redistribution.',
+      available_from: toLocalDatetimeString(now),
+      expiry_time:    toLocalDatetimeString(expiry),
+      total_quantity: '50',
+      quantity_unit:  'PACKET',
+      pickup_address: "Dave's Kitchen, Road No. 12, Banjara Hills, Hyderabad",
+      pickup_city:    'Hyderabad',
+      pickup_state:   'Telangana',
+      pickup_postal_code: '500034',
+      pickup_latitude:  '17.412600',
+      pickup_longitude: '78.407100',
+      delivery_preference: 'PICKUP_REQUIRED',
+      special_instructions: 'Freshly packed in individual thermal meal containers. Ready for immediate pickup.',
+    });
+
+    setItems([{
+      item_name: 'Fresh Veg Biryani Meal Packs',
+      category: 'RICE',
+      quantity: '50',
+      unit: 'PACKET',
+      food_type: 'VEGETARIAN',
+      contains_allergens: false,
+    }]);
+
+    setTimeError(null);
+    setError(null);
+    setLocationStatus('success');
+    setLocationMessage(null);
+
+    setPresetLoaded(true);
+    setTimeout(() => {
+      setPresetLoaded(false);
+    }, 3500);
+  };
+
   return (
     <div className="max-w-6xl mx-auto space-y-6 animate-fade-in-up">
       <Link to="/donor" className="inline-flex items-center space-x-1.5 text-xs text-slate-500 dark:text-[#A5B1C2] hover:text-slate-900 dark:hover:text-[#F5F7FA] transition font-semibold">
@@ -288,6 +332,48 @@ export const CreateDonationPage = () => {
           </p>
         </div>
       </div>
+
+      {/* Demo Scenario Preset Banner */}
+      <div className="relative overflow-hidden bg-gradient-to-r from-orange-500/10 via-amber-500/5 to-transparent dark:from-orange-500/15 dark:via-amber-500/10 dark:to-[#11171F] border border-orange-200 dark:border-orange-500/30 rounded-2xl p-4 sm:p-5 shadow-sm">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="space-y-1">
+            <div className="inline-flex items-center space-x-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold uppercase tracking-wider bg-orange-100 dark:bg-orange-500/20 text-[#FF5A2F] border border-orange-200 dark:border-orange-500/30">
+              <Sparkles size={11} className="shrink-0" />
+              <span>DEMO SCENARIO</span>
+            </div>
+            <h2 className="text-sm sm:text-base font-bold text-slate-900 dark:text-[#F5F7FA] flex items-center gap-1.5">
+              <span>Dave&apos;s Kitchen</span>
+              <span className="text-orange-500 font-semibold text-xs">→</span>
+              <span>50 Fresh Veg Biryani Meal Packs</span>
+            </h2>
+            <p className="text-xs text-slate-600 dark:text-[#A5B1C2] font-medium">
+              Pre-fills a realistic donation for demonstrating FoodBridge&apos;s real Decision &amp; Matching Engine.
+            </p>
+          </div>
+
+          <div className="flex items-center gap-3 shrink-0">
+            {presetLoaded && (
+              <span className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-200 dark:border-emerald-500/30 px-3 py-1.5 rounded-xl animate-fade-in">
+                <CheckCircle2 size={14} className="shrink-0" />
+                <span>Demo scenario loaded</span>
+              </span>
+            )}
+            <Button
+              id="load-demo-scenario-btn"
+              type="button"
+              variant={presetLoaded ? "secondary" : "primary"}
+              size="md"
+              icon={presetLoaded ? CheckCircle2 : Sparkles}
+              onClick={loadDemoScenario}
+              className="font-bold shadow-sm"
+            >
+              {presetLoaded ? "Reload Demo Scenario" : "Fill Demo Scenario"}
+            </Button>
+          </div>
+        </div>
+      </div>
+
+
 
       {error && (
         <div className="fb-alert-error">

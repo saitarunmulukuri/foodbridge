@@ -77,6 +77,7 @@ def run_decision_engine():
 
     donation_id = validated_data["donation_id"]
     top_n = validated_data.get("top_n")
+    persist = validated_data.get("persist", True)
 
     # IDOR ownership guard: non-ADMIN callers must own the donation
     if role != "ADMIN":
@@ -91,7 +92,7 @@ def run_decision_engine():
             raise DonationForbiddenException(donation_id)
 
     service = DecisionEngineService()
-    result = service.run(donation_id=donation_id, top_n=top_n)
+    result = service.run(donation_id=donation_id, top_n=top_n, persist=persist)
 
     output = _result_schema.dump(result)
 
@@ -100,3 +101,4 @@ def run_decision_engine():
         "message": "NGO recommendations generated successfully.",
         "data": output,
     }), 200
+

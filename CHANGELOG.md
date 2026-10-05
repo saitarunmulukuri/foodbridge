@@ -13,7 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **Readiness Probe Endpoint**: `GET /api/v1/readiness` for Kubernetes and load balancer health checks.
 - **Background Scheduler Integration**: Threaded background scheduler for automated timeout management of un-actioned NGO requests and Volunteer assignments.
 - **OpenAPI 3.0.3 Specification**: Complete REST API specification at `docs/api-spec.yaml`.
-- **System Documentation**: Comprehensive technical documentation in `docs/` (`API.md`, `ARCHITECTURE.md`, `DATABASE.md`, `DECISION_ENGINE.md`, `DEPLOYMENT.md`).
+- **System Documentation**: Comprehensive technical documentation in `docs/` (`api/`, `architecture/`, `database/`, `decision-engine/`, `deployment/`).
 
 ### Fixed
 - **Decision Engine IDOR Guard**: Enforced strict donor ownership check on `POST /api/v1/decision-engine/run`.

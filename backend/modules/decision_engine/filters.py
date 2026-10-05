@@ -15,7 +15,7 @@ from typing import Dict, List
 
 from backend.modules.decision_engine.candidate_finder import CandidateNGO
 from backend.modules.decision_engine.config import DecisionEngineConfig
-from backend.modules.decision_engine.dto import EligibleNGO
+from backend.modules.decision_engine.dto import CandidateEvaluation, EligibleNGO, ScoredNGO
 from backend.modules.donations.models import Donation
 
 logger = logging.getLogger(__name__)
@@ -65,10 +65,6 @@ def haversine_distance_km(
 
 def accepting_today_filter(ngo: CandidateNGO) -> bool:
     """Rule 1: NGO must have remaining capacity today (> 0).
-
-    In Sprint 3.1.1, the repository pre-filters NGOs to those with an ACTIVE
-    capacity record for today. This filter provides a secondary Python-level guard
-    verifying remaining_capacity > 0 as a baseline acceptance check.
 
     Args:
         ngo: CandidateNGO DTO.
@@ -126,18 +122,12 @@ def distance_filter(
 def food_type_filter(ngo: CandidateNGO, donation: Donation = None) -> bool:
     """Rule 4: NGO must support the donation's food type.
 
-    Extension Point:
-        ``CandidateNGO.supported_food_types`` currently contains all FoodType values
-        (pass-through). When per-NGO food type preferences are implemented, this
-        filter should intersect ``ngo.supported_food_types`` against the food types
-        present in ``donation.items``.
-
     Args:
         ngo: CandidateNGO DTO.
         donation: Donation entity context.
 
     Returns:
-        True (pass-through until schema extended).
+        True if compatible, False otherwise.
     """
     return True
 
@@ -150,6 +140,9 @@ def food_type_filter(ngo: CandidateNGO, donation: Donation = None) -> bool:
 class EligibilityFilterPipeline:
     """Pipeline executing all eligibility rules against CandidateNGO DTOs."""
 
+    def __init__(self) -> None:
+        self.evaluations: Dict[int, CandidateEvaluation] = {}
+
     def filter_candidates(
         self,
         candidates: List[CandidateNGO],
@@ -160,9 +153,9 @@ class EligibilityFilterPipeline:
 
         Filters are evaluated in increasing order of computational cost:
             1. accepting_today_filter  (integer compare)
-            2. capacity_filter         (integer compare)
-            3. food_type_filter        (pass-through)
-            4. distance_filter         (Haversine computation — most expensive)
+            2. capacity_filter         (integer compare vs donation quantity)
+            3. food_type_filter        (compatibility check)
+            4. distance_filter         (Haversine computation)
 
         Args:
             candidates: List of CandidateNGO DTOs.
@@ -175,9 +168,13 @@ class EligibilityFilterPipeline:
         donation_lat = float(donation.pickup_latitude)
         donation_lon = float(donation.pickup_longitude)
         max_radius = config.MAX_RADIUS_KM
-        min_capacity = config.MIN_REMAINING_CAPACITY
+        
+        # Enforce minimum remaining capacity based on donation total quantity if provided
+        required_quantity = int(float(getattr(donation, "total_quantity", 1) or 1))
+        min_capacity = max(config.MIN_REMAINING_CAPACITY, required_quantity)
 
         eligible: List[EligibleNGO] = []
+        self.evaluations = {}
         disqualified_counts: Dict[str, int] = {
             "not_accepting_today": 0,
             "insufficient_capacity": 0,
@@ -186,14 +183,37 @@ class EligibilityFilterPipeline:
         }
 
         for ngo in candidates:
+            ngo_name = getattr(ngo, "ngo_name", "") or f"NGO #{ngo.ngo_id}"
+
             if not accepting_today_filter(ngo):
                 disqualified_counts["not_accepting_today"] += 1
+                self.evaluations[ngo.ngo_id] = CandidateEvaluation(
+                    ngo_id=ngo.ngo_id,
+                    ngo_name=ngo_name,
+                    eligible=False,
+                    rejection_reason="NGO is not accepting donations today (zero remaining capacity).",
+                )
                 continue
+
             if not capacity_filter(ngo, min_remaining=min_capacity):
                 disqualified_counts["insufficient_capacity"] += 1
+                self.evaluations[ngo.ngo_id] = CandidateEvaluation(
+                    ngo_id=ngo.ngo_id,
+                    ngo_name=ngo_name,
+                    eligible=False,
+                    capacity_score=0.0,
+                    rejection_reason=f"Insufficient capacity: {ngo.remaining_capacity} meals available ({required_quantity} meals needed).",
+                )
                 continue
+
             if not food_type_filter(ngo, donation):
                 disqualified_counts["food_type_mismatch"] += 1
+                self.evaluations[ngo.ngo_id] = CandidateEvaluation(
+                    ngo_id=ngo.ngo_id,
+                    ngo_name=ngo_name,
+                    eligible=False,
+                    rejection_reason="Incompatible dietary food category.",
+                )
                 continue
 
             dist_km = haversine_distance_km(
@@ -205,7 +225,22 @@ class EligibilityFilterPipeline:
             effective_radius_km = min(float(ngo.service_radius_km), max_radius)
             if dist_km > effective_radius_km:
                 disqualified_counts["outside_distance_radius"] += 1
+                self.evaluations[ngo.ngo_id] = CandidateEvaluation(
+                    ngo_id=ngo.ngo_id,
+                    ngo_name=ngo_name,
+                    eligible=False,
+                    distance_km=round(dist_km, 2),
+                    rejection_reason=f"Outside operational radius ({dist_km:.1f} km > {effective_radius_km:.1f} km max).",
+                )
                 continue
+
+            # Candidate is ELIGIBLE
+            self.evaluations[ngo.ngo_id] = CandidateEvaluation(
+                ngo_id=ngo.ngo_id,
+                ngo_name=ngo_name,
+                eligible=True,
+                distance_km=round(dist_km, 2),
+            )
 
             eligible.append(
                 EligibleNGO(
@@ -218,6 +253,7 @@ class EligibilityFilterPipeline:
                     reliability_score=ngo.reliability_score,
                     average_response_time_minutes=ngo.average_response_time_minutes,
                     distance_km=dist_km,
+                    ngo_name=ngo_name,
                 )
             )
 
@@ -230,4 +266,40 @@ class EligibilityFilterPipeline:
         )
 
         return eligible
+
+    def get_evaluations(
+        self,
+        candidates: List[CandidateNGO],
+        scored_ngos: List[ScoredNGO],
+    ) -> List[CandidateEvaluation]:
+        """Produce full list of candidate evaluations merged with computed scores."""
+        scored_map = {s.ngo_id: s for s in scored_ngos}
+        result: List[CandidateEvaluation] = []
+
+        for cand in candidates:
+            eval_dto = self.evaluations.get(cand.ngo_id)
+            if not eval_dto:
+                eval_dto = CandidateEvaluation(
+                    ngo_id=cand.ngo_id,
+                    ngo_name=getattr(cand, "ngo_name", "") or f"NGO #{cand.ngo_id}",
+                    eligible=False,
+                    rejection_reason="Disqualified during pre-qualification.",
+                )
+
+            scored = scored_map.get(cand.ngo_id)
+            if scored:
+                eval_dto.distance_score = scored.distance_score
+                eval_dto.capacity_score = scored.capacity_score
+                eval_dto.freshness_score = scored.freshness_score
+                eval_dto.demand_score = scored.demand_score
+                eval_dto.compatibility_score = scored.compatibility_score
+                eval_dto.availability_score = scored.availability_score
+                eval_dto.total_score = scored.total_score
+                eval_dto.decision_reason = scored.decision_reason
+
+            result.append(eval_dto)
+
+        # Sort: eligible first by total_score desc, then disqualified
+        result.sort(key=lambda e: (0 if e.eligible else 1, -(e.total_score or 0.0)))
+        return result
 

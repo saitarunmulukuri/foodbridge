@@ -130,10 +130,11 @@ class TestNGOCapacityUpdateSchema(unittest.TestCase):
         self.assertEqual(data["date"], _FUTURE_DATE)
         self.assertEqual(data["maximum_capacity"], 100)
 
-    def test_date_required(self):
-        with self.assertRaises(ValidationError) as ctx:
-            self.schema.load({"maximum_capacity": 100})
-        self.assertIn("date", ctx.exception.messages)
+    def test_date_optional_defaults_properly(self):
+        data = self.schema.load({"maximum_capacity": 100})
+        self.assertEqual(data["maximum_capacity"], 100)
+        self.assertIsNone(data.get("date"))
+
 
     def test_maximum_capacity_required(self):
         with self.assertRaises(ValidationError) as ctx:

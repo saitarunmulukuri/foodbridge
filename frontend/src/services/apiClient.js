@@ -58,12 +58,28 @@ export async function request(endpoint, options = {}) {
     const data = await response.json().catch(() => ({}));
 
     if (!response.ok) {
-      const errorMessage = data?.error?.message || data?.message || `Request failed with status ${response.status}`;
+      let detailMsg = '';
+      const details = data?.error?.details || data?.details;
+      if (details && typeof details === 'object') {
+        const values = Object.values(details);
+        if (values.length > 0) {
+          const first = values[0];
+          detailMsg = Array.isArray(first) ? first[0] : (typeof first === 'string' ? first : JSON.stringify(first));
+        }
+      }
+      const errorMessage =
+        detailMsg ||
+        data?.message ||
+        data?.error?.message ||
+        (typeof data?.error === 'string' ? data.error : null) ||
+        `Request failed with status ${response.status}`;
       const error = new Error(errorMessage);
       error.status = response.status;
       error.data = data;
       throw error;
     }
+
+
 
     return data;
   } catch (err) {

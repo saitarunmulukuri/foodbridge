@@ -79,6 +79,12 @@ class DonationRequestResponseSchema(Schema):
     created_at = fields.DateTime(format="iso", dump_default=None)
     responded_at = fields.DateTime(format="iso", dump_default=None)
     expires_at = fields.DateTime(format="iso", dump_default=None)
+    donation_title = fields.Str(dump_default=None)
+    total_quantity = fields.Float(dump_default=None)
+    quantity_unit = fields.Str(dump_default=None)
+    pickup_address = fields.Str(dump_default=None)
+    expiry_time = fields.DateTime(format="iso", dump_default=None)
+
 
 
 class DonationRequestListResponseSchema(Schema):

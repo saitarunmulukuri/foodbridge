@@ -7,8 +7,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
 from backend.database import db
+from backend.modules.donations.models import RecommendationCycle
+from backend.modules.ngos.models import NGORequest
 from backend.modules.volunteers.models import AssignmentHistory, Volunteer, VolunteerAssignment
 from backend.shared.constants.enums import AssignmentStatus
+
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +47,10 @@ class VolunteerRepository:
             .where(VolunteerAssignment.assignment_id == assignment_id)
             .options(
                 joinedload(VolunteerAssignment.volunteer),
-                joinedload(VolunteerAssignment.ngo_request),
+                joinedload(VolunteerAssignment.ngo_request)
+                .joinedload(NGORequest.recommendation_cycle)
+                .joinedload(RecommendationCycle.donation),
+                joinedload(VolunteerAssignment.ngo_request).joinedload(NGORequest.ngo),
             )
         )
         return self._session.execute(stmt).unique().scalars().first()
@@ -57,11 +63,15 @@ class VolunteerRepository:
             select(VolunteerAssignment)
             .where(VolunteerAssignment.volunteer_id == volunteer_id)
             .options(
-                joinedload(VolunteerAssignment.ngo_request),
+                joinedload(VolunteerAssignment.ngo_request)
+                .joinedload(NGORequest.recommendation_cycle)
+                .joinedload(RecommendationCycle.donation),
+                joinedload(VolunteerAssignment.ngo_request).joinedload(NGORequest.ngo),
             )
             .order_by(VolunteerAssignment.created_at.desc())
         )
         return list(self._session.execute(stmt).unique().scalars().all())
+
 
     def find_pending_assignments_for_request(
         self, ngo_request_id: int, exclude_assignment_id: Optional[int] = None

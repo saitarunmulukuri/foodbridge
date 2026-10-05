@@ -359,8 +359,17 @@ class VolunteerService:
 
     @staticmethod
     def _serialize(assignment: VolunteerAssignment) -> dict:
+        """Serialize a VolunteerAssignment to a plain dict matching the API contract."""
+        donation = None
+        ngo = None
+        if assignment.ngo_request and assignment.ngo_request.recommendation_cycle:
+            donation = assignment.ngo_request.recommendation_cycle.donation
+        if assignment.ngo_request:
+            ngo = assignment.ngo_request.ngo
+
         return {
             "assignment_id": assignment.assignment_id,
+            "id": assignment.assignment_id,
             "ngo_request_id": assignment.ngo_request_id,
             "volunteer_id": assignment.volunteer_id,
             "rank": assignment.assignment_rank,
@@ -368,6 +377,14 @@ class VolunteerService:
             "status": assignment.status.value,
             "response_deadline": assignment.response_deadline.isoformat(),
             "created_at": assignment.created_at.isoformat() if assignment.created_at else None,
+            "donation_title": donation.donation_title if donation else f"Donation #{assignment.assignment_id}",
+            "total_quantity": float(donation.total_quantity) if donation and donation.total_quantity else None,
+            "quantity_unit": donation.quantity_unit.value if donation and donation.quantity_unit else None,
+            "pickup_address": donation.pickup_address if donation else None,
+            "pickup_latitude": float(donation.pickup_latitude) if donation and donation.pickup_latitude else None,
+            "pickup_longitude": float(donation.pickup_longitude) if donation and donation.pickup_longitude else None,
+            "ngo_name": ngo.organisation_name if ngo else None,
+            "ngo_address": ngo.address if ngo else None,
         }
 
     @staticmethod

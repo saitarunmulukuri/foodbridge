@@ -42,11 +42,12 @@ from backend.modules.donation_requests.schemas import (
     DonationRequestResponseSchema,
 )
 from backend.modules.ngos.exceptions import NGONotFoundException
-from backend.modules.ngos.models import NGORequest
+from backend.modules.ngos.models import NGODailyCapacity, NGODateCapacity, NGORequest
 from backend.modules.donations.models import Donation
-from backend.shared.constants.enums import DonationStatus, RequestStatus
+from backend.shared.constants.enums import DayOfWeek, DonationStatus, RequestStatus
 
 logger = logging.getLogger(__name__)
+
 
 _response_schema = DonationRequestResponseSchema()
 
@@ -195,7 +196,44 @@ class DonationRequestService:
             )
             cancelled_count = self.repository.cancel_competing_requests(competing)
 
+            # Step 3b: Atomically reserve NGO capacity
+            try:
+                qty_to_allocate = int(float(getattr(donation, "total_quantity", 0) or 0))
+                avail = getattr(donation, "available_from", None)
+                if isinstance(avail, datetime):
+                    donation_date = avail.date()
+                else:
+                    donation_date = datetime.now(timezone.utc).date()
+
+                if qty_to_allocate > 0:
+                    date_cap = (
+                        db.session.query(NGODateCapacity)
+                        .filter_by(ngo_id=ngo.ngo_id, date=donation_date)
+                        .first()
+                    )
+                    if date_cap:
+                        date_cap.allocated_meals = int(date_cap.allocated_meals or 0) + qty_to_allocate
+
+                    dow_str = donation_date.strftime("%A").upper()
+                    if hasattr(DayOfWeek, dow_str):
+                        dow = DayOfWeek[dow_str]
+                        daily_cap = (
+                            db.session.query(NGODailyCapacity)
+                            .filter_by(ngo_id=ngo.ngo_id, day_of_week=dow)
+                            .first()
+                        )
+                        if daily_cap:
+                            daily_cap.remaining_capacity = max(
+                                0,
+                                int(daily_cap.max_meals or 0)
+                                - (date_cap.allocated_meals if date_cap else qty_to_allocate),
+                            )
+            except Exception as cap_err:
+                logger.warning("Capacity reservation skipped or failed during accept: %s", cap_err)
+
             db.session.commit()
+
+
 
             # Step 4: Dispatch initial volunteer assignment
             try:
@@ -336,8 +374,10 @@ class DonationRequestService:
         """Serialise an NGORequest ORM instance to the API response dict."""
         # Resolve donation_id through the loaded recommendation_cycle
         donation_id = None
+        donation = None
         if request.recommendation_cycle:
             donation_id = request.recommendation_cycle.donation_id
+            donation = request.recommendation_cycle.donation
 
         display_status = _STATUS_DISPLAY_MAP.get(request.status, request.status.value)
 
@@ -352,4 +392,10 @@ class DonationRequestService:
             "created_at": request.created_at,
             "responded_at": request.responded_at,
             "expires_at": request.response_deadline,
+            "donation_title": donation.donation_title if donation else f"Donation #{donation_id}",
+            "total_quantity": float(donation.total_quantity) if donation and donation.total_quantity else None,
+            "quantity_unit": donation.quantity_unit.value if donation and donation.quantity_unit else None,
+            "pickup_address": donation.pickup_address if donation else None,
+            "expiry_time": donation.expiry_time if donation else None,
         })
+

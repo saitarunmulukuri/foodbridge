@@ -1,10 +1,9 @@
 /**
  * GoogleSignInButton — FoodBridge Google Identity Services Button.
- * Designed to seamlessly blend with FoodBridge design language while respecting
- * Google Identity branding guidelines.
+ * Seamlessly integrates Google Identity Services with FoodBridge design language.
  */
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 
 const GOOGLE_CLIENT_ID =
   import.meta.env.VITE_GOOGLE_CLIENT_ID ||
@@ -19,38 +18,52 @@ export const GoogleSignInButton = ({
   const [loading, setLoading] = useState(false);
   const [hovered, setHovered] = useState(false);
   const [focused, setFocused] = useState(false);
-  const hiddenGsiBtnRef = useRef(null);
+  const gsiContainerRef = useRef(null);
+
+  const handleCredentialResponse = useCallback(
+    (response) => {
+      setLoading(false);
+      if (response?.credential) {
+        if (onSuccess) onSuccess(response.credential);
+      } else {
+        if (onError) {
+          onError(new Error('Google sign-in could not be completed. Please try again.'));
+        }
+      }
+    },
+    [onSuccess, onError]
+  );
 
   useEffect(() => {
-    // Initialize Google Identity Services when script is ready
+    let isMounted = true;
+
     const initGsi = () => {
+      if (!isMounted) return;
       if (window.google?.accounts?.id && GOOGLE_CLIENT_ID) {
         try {
           window.google.accounts.id.initialize({
             client_id: GOOGLE_CLIENT_ID,
-            callback: (response) => {
-              setLoading(false);
-              if (response?.credential) {
-                if (onSuccess) onSuccess(response.credential);
-              } else {
-                if (onError) onError(new Error('No Google credential returned.'));
-              }
-            },
+            callback: handleCredentialResponse,
             auto_select: false,
             cancel_on_tap_outside: true,
+            context: 'signin',
+            ux_mode: 'popup',
           });
 
-          // Render a hidden GIS button to trigger native popup on click
-          if (hiddenGsiBtnRef.current) {
-            window.google.accounts.id.renderButton(hiddenGsiBtnRef.current, {
+          if (gsiContainerRef.current) {
+            // Render GIS button over the container
+            window.google.accounts.id.renderButton(gsiContainerRef.current, {
               type: 'standard',
               theme: 'outline',
               size: 'large',
-              width: 300,
+              width: 360,
+              text: 'continue_with',
+              shape: 'rectangular',
+              logo_alignment: 'left',
             });
           }
         } catch (err) {
-          console.warn('GIS initialization error:', err);
+          console.warn('Google Identity Services initialization warning:', err);
         }
       }
     };
@@ -63,31 +76,33 @@ export const GoogleSignInButton = ({
           clearInterval(interval);
           initGsi();
         }
-      }, 200);
-      return () => clearInterval(interval);
+      }, 150);
+      return () => {
+        isMounted = false;
+        clearInterval(interval);
+      };
     }
-  }, [onSuccess, onError]);
 
-  const handleClick = () => {
+    return () => {
+      isMounted = false;
+    };
+  }, [handleCredentialResponse]);
+
+  const handleFallbackClick = () => {
     if (disabled || loading) return;
 
     setLoading(true);
 
-    // Attempt to trigger GIS popup
-    if (hiddenGsiBtnRef.current) {
-      const actualGsiBtn = hiddenGsiBtnRef.current.querySelector('div[role="button"]');
-      if (actualGsiBtn) {
-        actualGsiBtn.click();
-        return;
-      }
-    }
-
     if (window.google?.accounts?.id) {
-      window.google.accounts.id.prompt((notification) => {
-        if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
-          setLoading(false);
-        }
-      });
+      try {
+        window.google.accounts.id.prompt((notification) => {
+          if (notification.isNotDisplayed() || notification.isSkippedMoment()) {
+            setLoading(false);
+          }
+        });
+      } catch {
+        setLoading(false);
+      }
     } else {
       setLoading(false);
       if (onError) {
@@ -101,37 +116,29 @@ export const GoogleSignInButton = ({
   const isBtnDisabled = disabled || loading;
 
   return (
-    <div style={{ position: 'relative', width: '100%' }}>
-      {/* Hidden GIS container used to cleanly bridge native Google popup events */}
-      <div
-        ref={hiddenGsiBtnRef}
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          opacity: 0.001,
-          pointerEvents: 'none',
-          zIndex: -1,
-          width: 1,
-          height: 1,
-          overflow: 'hidden',
-        }}
-        aria-hidden="true"
-      />
-
+    <div
+      style={{
+        position: 'relative',
+        width: '100%',
+        height: 48,
+        borderRadius: 10,
+        overflow: 'hidden',
+      }}
+    >
+      {/* ── Custom FoodBridge Styled Button (Visual Layer) ── */}
       <button
         type="button"
         id="google-signin-btn"
-        onClick={handleClick}
+        onClick={handleFallbackClick}
         disabled={isBtnDisabled}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
         onFocus={() => setFocused(true)}
         onBlur={() => setFocused(false)}
-        aria-label={loading ? 'Connecting to Google' : text}
+        aria-label={loading ? 'Connecting to Google…' : text}
         style={{
           width: '100%',
-          height: 48,
+          height: '100%',
           borderRadius: 10,
           border: hovered && !isBtnDisabled ? '1px solid #9CA3AF' : '1px solid #D1D5DB',
           background: hovered && !isBtnDisabled ? '#F9FAFB' : '#FFFFFF',
@@ -151,6 +158,7 @@ export const GoogleSignInButton = ({
           outline: 'none',
           transition: 'all 150ms cubic-bezier(0.4, 0, 0.2, 1)',
           padding: '0 16px',
+          userSelect: 'none',
         }}
       >
         {loading ? (
@@ -179,7 +187,7 @@ export const GoogleSignInButton = ({
           </>
         ) : (
           <>
-            {/* Authentic Google multi-color G logo */}
+            {/* Google Multi-Color G Logo */}
             <svg
               style={{ width: 18, height: 18, flexShrink: 0 }}
               viewBox="0 0 24 24"
@@ -207,6 +215,27 @@ export const GoogleSignInButton = ({
         )}
       </button>
 
+      {/* ── Native Google GIS Iframe Overlay ── */}
+      {/* Positioned on top with opacity 0.001 to capture authentic browser user gestures directly */}
+      <div
+        ref={gsiContainerRef}
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '100%',
+          height: '100%',
+          opacity: 0.001,
+          zIndex: 10,
+          cursor: isBtnDisabled ? 'not-allowed' : 'pointer',
+          pointerEvents: isBtnDisabled ? 'none' : 'auto',
+          overflow: 'hidden',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+        }}
+      />
+
       <style>{`
         @keyframes fb-spin {
           from { transform: rotate(0deg); }
@@ -216,3 +245,6 @@ export const GoogleSignInButton = ({
     </div>
   );
 };
+
+export default GoogleSignInButton;
+

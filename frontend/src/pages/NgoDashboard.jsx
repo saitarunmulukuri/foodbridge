@@ -63,27 +63,51 @@ const CapacityWidget = ({ capacity, onUpdate }) => {
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState('');
 
+  const todayIso = new Date().toISOString().split('T')[0];
   const todayName = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
-  const todayRecord = Array.isArray(capacity)
-    ? capacity.find(c => c.day_of_week === todayName) || capacity[0]
-    : null;
+
+  const capacityList = useMemo(() => {
+    if (Array.isArray(capacity)) return capacity;
+    if (capacity?.capacities && Array.isArray(capacity.capacities)) return capacity.capacities;
+    if (capacity?.capacity_records && Array.isArray(capacity.capacity_records)) return capacity.capacity_records;
+    return [];
+  }, [capacity]);
+
+  const todayRecord = useMemo(() => {
+    return capacityList.find(c => c.date === todayIso || c.day_of_week === todayName) || capacityList[0] || null;
+  }, [capacityList, todayIso, todayName]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const val = parseInt(newCapacity, 10);
-    if (!val || val < 1) { setError('Enter a valid capacity.'); return; }
+    if (!newCapacity || newCapacity.trim() === '') {
+      setError('Please enter a capacity value.');
+      return;
+    }
+    const val = Number(newCapacity);
+    if (isNaN(val) || !Number.isInteger(val)) {
+      setError('Capacity must be a valid whole number.');
+      return;
+    }
+    if (val < 1) {
+      setError('Capacity must be at least 1 meal.');
+      return;
+    }
+    if (val > 100000) {
+      setError('Capacity cannot exceed 100,000 meals.');
+      return;
+    }
     setLoading(true);
     setError(null);
     setSuccess('');
     try {
-      const res = await ngoService.updateCapacity(todayName, val);
+      const res = await ngoService.updateCapacity(todayIso, val);
       if (res.success || res.data) {
-        setSuccess(`Capacity set to ${val} meals for today.`);
+        setSuccess(`Capacity updated successfully to ${val} meals.`);
         setNewCapacity('');
-        onUpdate();
+        if (onUpdate) await onUpdate();
       }
     } catch (err) {
-      setError(err.message || 'Update failed.');
+      setError(err.message || 'Capacity update failed.');
     } finally {
       setLoading(false);
     }
@@ -101,7 +125,7 @@ const CapacityWidget = ({ capacity, onUpdate }) => {
         </div>
         {todayRecord && (
           <div className="ml-auto text-right">
-            <p className="text-2xl font-extrabold text-slate-900 dark:text-[#F5F7FA] tabular-nums">{todayRecord.maximum_capacity ?? '—'}</p>
+            <p className="text-2xl font-extrabold text-slate-900 dark:text-[#F5F7FA] tabular-nums">{todayRecord.maximum_capacity ?? todayRecord.max_meals ?? '—'}</p>
             <p className="text-[10px] text-slate-400 dark:text-[#748296] font-bold uppercase tracking-wider">current max meals</p>
           </div>
         )}
@@ -114,7 +138,7 @@ const CapacityWidget = ({ capacity, onUpdate }) => {
         <NumberField
           id="capacity-input"
           min="1"
-          max="10000"
+          max="100000"
           placeholder="New max capacity (meals)"
           value={newCapacity}
           onChange={e => setNewCapacity(e.target.value)}
@@ -137,6 +161,7 @@ const CapacityWidget = ({ capacity, onUpdate }) => {
     </div>
   );
 };
+
 
 const RequestCard = ({ request, onAccept, onDecline, actionLoading }) => {
   const donationTitle = request.donation_title || request.donation?.donation_title || `Donation #${request.donation_id}`;
@@ -252,8 +277,9 @@ export const NgoDashboard = () => {
         ngoService.listRequests().catch(() => null),
       ]);
       if (profileRes?.data) setProfile(profileRes.data.profile || profileRes.data);
-      if (capacityRes?.data) setCapacity(capacityRes.data.capacity_records || capacityRes.data || []);
+      if (capacityRes?.data) setCapacity(capacityRes.data.capacities || capacityRes.data.capacity_records || capacityRes.data || []);
       if (requestsRes?.data) setRequests(requestsRes.data.requests || requestsRes.data || []);
+
     } catch (err) {
       setError(err.message || 'Failed to load NGO data.');
     } finally {

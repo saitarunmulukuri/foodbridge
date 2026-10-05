@@ -1,4 +1,4 @@
-import { Suspense } from 'react';
+import { Suspense, useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { AuthProvider, useAuth } from './contexts/AuthContext';
 import { AuthLayout } from './components/layout/AuthLayout';
@@ -29,7 +29,7 @@ const PageLoader = () => (
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      minHeight: '50vh',
+      minHeight: '60vh',
       width: '100%',
     }}
   >
@@ -38,20 +38,35 @@ const PageLoader = () => (
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
-        gap: '12px',
+        gap: '16px',
       }}
     >
-      <div
-        style={{
-          width: '36px',
-          height: '36px',
-          borderRadius: '50%',
-          border: '3px solid #E2E8F0',
-          borderTopColor: '#FF5A2F',
-          animation: 'fb-spin 0.8s linear infinite',
-        }}
-      />
-      <span style={{ fontSize: '12px', fontWeight: 600, color: '#64748B' }}>
+      {/* FoodBridge branded loader */}
+      <div style={{ position: 'relative', width: '48px', height: '48px' }}>
+        <div
+          style={{
+            position: 'absolute',
+            width: '48px',
+            height: '48px',
+            borderRadius: '50%',
+            border: '4px solid rgba(255, 90, 47, 0.1)',
+            borderTopColor: '#FF5A2F',
+            animation: 'fb-spin 0.8s linear infinite',
+          }}
+        />
+        <div
+          style={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            fontSize: '18px',
+          }}
+        >
+          🍽️
+        </div>
+      </div>
+      <span style={{ fontSize: '13px', fontWeight: 600, color: '#64748B', letterSpacing: '0.02em' }}>
         Loading FoodBridge…
       </span>
       <style>{`
@@ -95,6 +110,19 @@ const ProtectedRoute = ({ children, allowedRoles }) => {
 const PublicLayout = ({ children }) => {
   const location = useLocation();
   const { isAuthenticated, role } = useAuth();
+
+  // Update page title based on route
+  useEffect(() => {
+    const titles = {
+      '/': 'FoodBridge - Surplus Food Redistribution Platform',
+      '/how-it-works': 'How It Works - FoodBridge',
+      '/impact': 'Impact & Statistics - FoodBridge',
+      '/about': 'About Us - FoodBridge',
+      '/login': 'Sign In - FoodBridge',
+      '/register': 'Create Account - FoodBridge',
+    };
+    document.title = titles[location.pathname] || 'FoodBridge';
+  }, [location.pathname]);
 
   const getDashboardHref = () => {
     if (role === 'DONOR') return '/donor';

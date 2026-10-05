@@ -162,15 +162,23 @@ class DecisionEngineService:
             raise NoEligibleNGOsException(donation_id)
 
         # Step 5: Score Eligible NGOs
-        scored_ngos = self._step5_score(eligible_ngos)
+        scored_ngos = self._step5_score(eligible_ngos, donation=donation)
 
         # Step 6: Rank Scored NGOs
         recommendations = self._step6_rank(scored_ngos, donation_id, top_n=top_n)
         completed_at = datetime.now(timezone.utc)
 
+        top_match = recommendations[0] if recommendations else None
+        candidates_eval = self.eligibility_pipeline.get_evaluations(candidates, scored_ngos)
+
         result = DecisionEngineResult(
             donation_id=donation_id,
+            selected_ngo_id=top_match.ngo_id if top_match else None,
+            selected_ngo_name=top_match.ngo_name if top_match else None,
+            score=top_match.total_score if top_match else None,
+            decision_reason=top_match.decision_reason if top_match else None,
             recommendations=recommendations,
+            candidates=candidates_eval,
             total_candidates=len(candidates),
             total_eligible=len(eligible_ngos),
             total_scored=len(scored_ngos),
@@ -186,9 +194,13 @@ class DecisionEngineService:
             )
 
         logger.info(
-            "DecisionEngineService finished execution for donation_id=%s: %d recommendations produced",
+            "[DecisionEngine] Donation #FB-%s: Evaluated %d candidate(s), %d eligible. Winner: %s (Score: %.1f%%, Reason: %s)",
             donation_id,
-            len(recommendations),
+            len(candidates),
+            len(eligible_ngos),
+            top_match.ngo_name if top_match else "None",
+            (top_match.total_score * 100) if top_match else 0.0,
+            top_match.decision_reason if top_match else "No match",
         )
         return result
 
@@ -227,11 +239,13 @@ class DecisionEngineService:
     def _step5_score(
         self,
         eligible_ngos: List[EligibleNGO],
+        donation=None,
     ) -> List[ScoredNGO]:
         """Step 5: Compute multi-criteria recommendation scores."""
         return self.scoring_engine.score(
             eligible_ngos=eligible_ngos,
             config=self.config,
+            donation=donation,
         )
 
     def _step6_rank(

@@ -5,7 +5,8 @@ import {
   generateCardBackTexture,
   generateLanyardStrapTexture,
 } from './LanyardCardCanvas';
-import { RotateCw, RefreshCcw, Sparkles, ShieldCheck, Download, Copy, Check } from 'lucide-react';
+import { RotateCw, RefreshCcw, Sparkles, ShieldCheck, Download, Copy, Check, Hand } from 'lucide-react';
+
 import { Button } from '../common/Button';
 
 const ROLE_THEMES = {
@@ -119,9 +120,9 @@ export function FoodBridgeProfileCard({ user, stats = {} }) {
   return (
     <div
       style={{
-        background: '#FFFFFF',
+        background: 'var(--color-surface)',
         borderRadius: '20px',
-        border: '1px solid #E2E8F0',
+        border: '1px solid var(--color-border)',
         padding: '24px',
         boxShadow: '0 4px 20px -4px rgba(15, 23, 42, 0.06)',
         display: 'flex',
@@ -201,8 +202,8 @@ export function FoodBridgeProfileCard({ user, stats = {} }) {
           height: '460px',
           position: 'relative',
           borderRadius: '16px',
-          background: 'linear-gradient(180deg, #F8FAFC 0%, #EDF2F7 100%)',
-          border: '1px solid #E2E8F0',
+          background: 'var(--color-bg-secondary, linear-gradient(180deg, #F8FAFC 0%, #EDF2F7 100%))',
+          border: '1px solid var(--color-border)',
           overflow: 'hidden',
         }}
       >
@@ -228,8 +229,10 @@ export function FoodBridgeProfileCard({ user, stats = {} }) {
             gap: '6px',
           }}
         >
-          <span>✋ Grab & swing the badge</span>
+          <Hand size={13} className="shrink-0 text-slate-300" aria-hidden="true" />
+          <span>Grab & swing the badge</span>
         </div>
+
 
         <Lanyard
           frontImage={frontImage}
@@ -252,7 +255,7 @@ export function FoodBridgeProfileCard({ user, stats = {} }) {
           alignItems: 'center',
           marginTop: '16px',
           paddingTop: '16px',
-          borderTop: '1px solid #F1F5F9',
+          borderTop: '1px solid var(--color-border)',
           flexWrap: 'wrap',
           gap: '10px',
         }}
@@ -265,14 +268,14 @@ export function FoodBridgeProfileCard({ user, stats = {} }) {
             alignItems: 'center',
             gap: '8px',
             padding: '6px 12px',
-            background: '#F8FAFC',
-            border: '1px solid #E2E8F0',
+            background: 'var(--color-bg-secondary, #F8FAFC)',
+            border: '1px solid var(--color-border)',
             borderRadius: '8px',
             cursor: 'pointer',
             fontSize: '12px',
             fontWeight: 600,
             fontFamily: 'monospace',
-            color: '#0F172A',
+            color: 'var(--color-text-primary)',
             transition: 'all 0.15s ease',
           }}
           title="Click to copy ID"

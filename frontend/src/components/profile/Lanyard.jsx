@@ -461,7 +461,7 @@ export function Lanyard({
   });
   const [fallbackFlipped, setFallbackFlipped] = useState(false);
 
-  // Load textures
+  // Load textures — magFilter must be LinearFilter for crisp GPU upscaling
   useEffect(() => {
     const loader = new THREE.TextureLoader();
 
@@ -471,7 +471,10 @@ export function Lanyard({
         (tex) => {
           tex.generateMipmaps = true;
           tex.minFilter = THREE.LinearMipmapLinearFilter;
+          tex.magFilter = THREE.LinearFilter;
           tex.colorSpace = THREE.SRGBColorSpace;
+          tex.anisotropy = 16;
+          tex.needsUpdate = true;
           setFrontTexture(tex);
         },
         undefined,
@@ -485,7 +488,10 @@ export function Lanyard({
         (tex) => {
           tex.generateMipmaps = true;
           tex.minFilter = THREE.LinearMipmapLinearFilter;
+          tex.magFilter = THREE.LinearFilter;
           tex.colorSpace = THREE.SRGBColorSpace;
+          tex.anisotropy = 16;
+          tex.needsUpdate = true;
           setBackTexture(tex);
         },
         undefined,
@@ -500,6 +506,8 @@ export function Lanyard({
           tex.wrapS = THREE.RepeatWrapping;
           tex.wrapT = THREE.RepeatWrapping;
           tex.repeat.set(-4, 1);
+          tex.magFilter = THREE.LinearFilter;
+          tex.needsUpdate = true;
           setStrapTexture(tex);
         },
         undefined,
@@ -534,9 +542,12 @@ export function Lanyard({
         <Canvas
           camera={{ position, fov }}
           gl={{ alpha: transparent, antialias: true, powerPreference: 'high-performance' }}
+          dpr={[1, Math.min(window.devicePixelRatio || 1, 2)]}
           style={{ width: '100%', height: '100%', cursor: 'grab' }}
           onCreated={({ gl }) => {
             gl.setClearColor(0x000000, 0);
+            // Maximize texture anisotropy for card sharpness
+            gl.capabilities && (gl.capabilities.getMaxAnisotropy?.());
           }}
         >
           <ambientLight intensity={1.2} />

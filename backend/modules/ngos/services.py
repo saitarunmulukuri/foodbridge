@@ -18,7 +18,7 @@ Capacity Business Logic (Sprint 3.2 — NGODateCapacity):
 """
 
 import logging
-from datetime import date as date_type
+from datetime import date as date_type, datetime, timezone
 from typing import Optional
 
 from backend.database import db
@@ -34,9 +34,10 @@ from backend.modules.ngos.schemas import (
     NGOCapacityResponseSchema,
     NGOProfileResponseSchema,
 )
-from backend.shared.constants.enums import VerificationStatus
+from backend.shared.constants.enums import CapacityStatus, DayOfWeek, VerificationStatus
 
 logger = logging.getLogger(__name__)
+
 
 _profile_response_schema = NGOProfileResponseSchema()
 _capacity_response_schema = NGOCapacityResponseSchema()
@@ -230,7 +231,7 @@ class NGOCapacityService:
         if ngo is None:
             raise NGONotFoundException(user_id)
 
-        capacity_date: date_type = validated_data["date"]
+        capacity_date: date_type = validated_data.get("date") or datetime.now(timezone.utc).date()
         new_maximum: int = validated_data["maximum_capacity"]
         date_str: str = capacity_date.isoformat()
 
@@ -248,18 +249,44 @@ class NGOCapacityService:
 
         remaining = new_maximum - allocated  # computed; never stored
 
+        # Determine day of week from date or validated_data
+        day_name = validated_data.get("day_of_week")
+        if day_name:
+            day_enum = DayOfWeek(day_name.upper())
+        else:
+            day_enum = DayOfWeek(capacity_date.strftime("%A").upper())
+
         try:
+            # 1. Update NGODateCapacity for target date
             capacity = self.repository.upsert_date_capacity(
                 ngo_id=ngo.ngo_id,
                 capacity_date=capacity_date,
                 max_meals=new_maximum,
             )
+
+            # 2. Synchronize NGODailyCapacity for day of week
+            status_val = CapacityStatus.ACTIVE
+            status_str = validated_data.get("status")
+            if status_str:
+                try:
+                    status_val = CapacityStatus(status_str.upper())
+                except ValueError:
+                    status_val = CapacityStatus.ACTIVE
+
+            self.repository.upsert_daily_capacity(
+                ngo_id=ngo.ngo_id,
+                day_of_week=day_enum,
+                max_meals=new_maximum,
+                remaining_capacity=remaining,
+                status=status_val,
+            )
+
             db.session.commit()
             db.session.refresh(capacity)
             logger.info(
-                "NGO date-capacity updated: user_id=%s ngo_id=%s date=%s "
+                "NGO date-capacity updated: user_id=%s ngo_id=%s date=%s day=%s "
                 "max=%s allocated=%s remaining=%s.",
-                user_id, ngo.ngo_id, date_str,
+                user_id, ngo.ngo_id, date_str, day_enum.value,
                 new_maximum, allocated, remaining,
             )
         except Exception:
@@ -287,14 +314,17 @@ class NGOCapacityService:
         max_meals = int(record.max_meals)
         allocated = int(record.allocated_meals)
         remaining = max(0, max_meals - allocated)  # computed; spec invariant
+        day_str = record.date.strftime("%A").upper() if record.date else None
 
         return _capacity_response_schema.dump({
             "date_capacity_id": record.date_capacity_id,
             "ngo_id": record.ngo_id,
             "date": record.date,
+            "day_of_week": day_str,
             "maximum_capacity": max_meals,
             "allocated_capacity": allocated,
             "remaining_capacity": remaining,
             "created_at": record.created_at,
             "updated_at": record.updated_at,
         })
+

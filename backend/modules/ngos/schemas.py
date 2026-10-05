@@ -24,6 +24,7 @@ from backend.modules.ngos.validators import (
     validate_city,
     validate_country,
     validate_date_not_in_past,
+    validate_day_of_week,
     validate_latitude,
     validate_longitude,
     validate_maximum_capacity,
@@ -33,6 +34,7 @@ from backend.modules.ngos.validators import (
     validate_state,
     validate_website_url,
 )
+
 
 
 # -----------------------------------------------------------------------
@@ -147,17 +149,16 @@ class NGOCapacityUpdateSchema(Schema):
     """Schema for validating PUT /api/v1/ngos/me/capacity request body.
 
     Accepted fields:
-        date:             Target calendar date (YYYY-MM-DD, required, not in past).
+        date:             Target calendar date (YYYY-MM-DD, optional — defaults to today UTC).
+        day_of_week:      Day of week string (e.g. MONDAY, optional).
         maximum_capacity: New maximum daily meal intake (required, > 0).
+        status:           Capacity status (optional — default ACTIVE).
 
     Read-only — silently excluded (Meta.unknown = EXCLUDE):
         allocated_capacity  (system-managed, set by the Decision Engine)
         remaining_capacity  (computed: maximum_capacity - allocated_capacity)
         date_capacity_id    (system-assigned)
         ngo_id              (from JWT identity)
-
-    Business rules enforced downstream (service layer):
-        maximum_capacity must be ≥ current allocated_capacity.
     """
 
     class Meta:
@@ -165,14 +166,25 @@ class NGOCapacityUpdateSchema(Schema):
 
     date = fields.Date(
         format="%Y-%m-%d",
-        required=True,
+        required=False,
+        load_default=None,
         validate=validate_date_not_in_past,
         metadata={"description": "Target capacity date in YYYY-MM-DD format."},
+    )
+    day_of_week = fields.Str(
+        required=False,
+        allow_none=True,
+        validate=validate_day_of_week,
+        metadata={"description": "Day of week string."},
     )
     maximum_capacity = fields.Int(
         required=True,
         validate=validate_maximum_capacity,
-        metadata={"description": "Maximum number of meals the NGO can accept on this date."},
+        metadata={"description": "Maximum number of meals the NGO can accept."},
+    )
+    status = fields.Str(
+        required=False,
+        load_default="ACTIVE",
     )
 
 
@@ -188,6 +200,7 @@ class NGOCapacityResponseSchema(Schema):
     date_capacity_id = fields.Int(dump_default=None)
     ngo_id = fields.Int(dump_default=None)
     date = fields.Date(format="%Y-%m-%d", dump_default=None)
+    day_of_week = fields.Str(dump_default=None)
 
     # Capacity figures
     maximum_capacity = fields.Int(dump_default=None)    # stored as max_meals
@@ -203,3 +216,4 @@ class NGOCapacityListResponseSchema(Schema):
 
     capacities = fields.List(fields.Nested(NGOCapacityResponseSchema))
     total = fields.Int()
+

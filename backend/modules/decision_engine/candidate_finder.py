@@ -72,6 +72,7 @@ class CandidateNGO:
     supported_food_types: List[FoodType]
     reliability_score: Optional[float]
     average_response_time_minutes: Optional[float]
+    ngo_name: str = ""
 
 
 # -----------------------------------------------------------------------
@@ -167,6 +168,7 @@ class CandidateNGOFinder:
             supported_food_types     ← all FoodType values (extension point)
             reliability_score        ← computed from NGO.ngo_requests history
             average_response_time_minutes ← None (schema extension point)
+            ngo_name                 ← NGO.organisation_name
 
         Args:
             ngo: Loaded NGO ORM model instance with daily_capacities and
@@ -184,6 +186,7 @@ class CandidateNGOFinder:
             supported_food_types=self._extract_supported_food_types(ngo),
             reliability_score=self._compute_reliability_score(ngo),
             average_response_time_minutes=None,  # Extension point — see docstring
+            ngo_name=ngo.organisation_name or f"NGO #{ngo.ngo_id}",
         )
 
     @staticmethod

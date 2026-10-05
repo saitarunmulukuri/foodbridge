@@ -107,7 +107,9 @@ export const LoginPage = () => {
   };
 
   const handleGoogleError = (err) => {
-    setErrorMessage(err?.message || 'Google Sign-In failed.');
+    setErrorMessage(
+      err?.message || 'Google Sign-In could not be completed. Please try again or use email/password.'
+    );
   };
 
   const handleSubmit = (e) => {

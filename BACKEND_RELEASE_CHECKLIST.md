@@ -23,7 +23,7 @@ This checklist confirms that all backend modules, APIs, security mechanisms, tes
 ## 3. Decision Engine & Recommendation System
 - [x] Pre-qualification candidate finder querying active & verified NGOs.
 - [x] 4-stage eligibility pipeline (Accepting Today, Capacity, Dietary Type, Distance Radius).
-- [x] Multi-criteria scoring engine (40% Proximity, 30% Capacity Fit, 30% Reliability).
+- [x] Multi-criteria scoring engine (Distance: 25%, Capacity: 20%, Freshness: 20%, Demand: 20%, Compatibility: 10%, Availability: 5% — Total: 100%).
 - [x] Priority ranker ordering candidates by score descending.
 - [x] Execution engine persisting `DecisionEngineRun`, `RecommendationCycle`, and issuing rank-1 `NGORequest`.
 
@@ -59,9 +59,9 @@ This checklist confirms that all backend modules, APIs, security mechanisms, tes
 
 ## 8. Documentation & OpenAPI Specification
 - [x] OpenAPI 3.0.3 specification (`docs/api-spec.yaml`).
-- [x] Architecture document (`docs/ARCHITECTURE.md`).
-- [x] API reference (`docs/API.md`).
-- [x] Database ERD & design guide (`docs/DATABASE.md`).
-- [x] Decision Engine mathematical specification (`docs/DECISION_ENGINE.md`).
-- [x] Production deployment guide (`docs/DEPLOYMENT.md`).
+- [x] Architecture document (`docs/architecture/README.md`).
+- [x] API reference (`docs/api/README.md`).
+- [x] Database ERD & design guide (`docs/database/README.md`).
+- [x] Decision Engine mathematical specification (`docs/decision-engine/README.md`).
+- [x] Production deployment guide (`docs/deployment/README.md`).
 - [x] Changelog (`CHANGELOG.md`) and MIT License (`LICENSE`).

@@ -1220,7 +1220,8 @@ html.dark .vd-transit-badge {
 /* ─── Driver status controls ──────────────────────────────────────────────── */
 .vd-status-controls {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
   flex-wrap: wrap;
   gap: 1.25rem 2rem;
   padding: 1.25rem 1.5rem;
@@ -1232,11 +1233,12 @@ html.dark .vd-transit-badge {
 .vd-status-group {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  align-items: center;
+  gap: 8px;
 }
 
 .vd-status-group-label {
-  font-size: 10.5px;
+  font-size: 11px;
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.08em;
@@ -1248,102 +1250,255 @@ html.dark .vd-transit-badge {
 }
 
 .vd-status-session-tag {
-  font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  padding: 1px 5px;
-  border-radius: 4px;
+  font-size: 9.5px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 1.5px 6.5px;
+  border-radius: 9999px;
   background: rgba(59, 130, 246, 0.1);
   color: #3B82F6;
-  border: 1px solid rgba(59, 130, 246, 0.2);
+  border: 1px solid rgba(59, 130, 246, 0.25);
   text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+}
+html.dark .vd-status-session-tag {
+  background: rgba(59, 130, 246, 0.15);
+  color: #60A5FA;
+  border-color: rgba(59, 130, 246, 0.35);
 }
 
 .vd-status-divider {
   width: 1px;
-  align-self: stretch;
+  height: 36px;
+  align-self: center;
   background: var(--fb-border);
   flex-shrink: 0;
-  margin: 4px 0;
+}
+html.dark .vd-status-divider {
+  background: rgba(255, 255, 255, 0.1);
 }
 
-.vd-pill-group {
-  display: flex;
-  background: var(--fb-surface-elevated);
-  border: 1px solid var(--fb-border);
-  border-radius: 10px;
-  padding: 3px;
-  gap: 2px;
-}
-
-.vd-pill {
+/* ─── Polished Segmented Control System ─────────────────────────────────────── */
+.fb-segmented-control {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 5px 12px;
-  border-radius: 8px;
-  font-size: 12px;
-  font-weight: 600;
-  cursor: pointer;
-  border: none;
-  background: transparent;
-  color: var(--fb-text-muted);
-  transition: background 150ms ease, color 150ms ease, box-shadow 150ms ease;
-  white-space: nowrap;
+  gap: 4px;
+  padding: 4px;
+  background: var(--fb-surface-elevated);
+  border: 1px solid var(--fb-border);
+  border-radius: 9999px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), inset 0 1px 1px rgba(0, 0, 0, 0.03);
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  user-select: none;
   position: relative;
+  max-width: 100%;
 }
 
-.vd-pill:hover:not(:disabled) {
-  background: var(--fb-surface-hover);
+html.dark .fb-segmented-control {
+  background: #131A23;
+  border-color: rgba(255, 255, 255, 0.09);
+  box-shadow: 0 2px 8px -2px rgba(0, 0, 0, 0.5), inset 0 1px 1px rgba(255, 255, 255, 0.03);
+}
+
+.fb-segmented-control--disabled {
+  opacity: 0.5;
+  pointer-events: none;
+}
+
+.fb-segmented-control--full {
+  width: 100%;
+}
+.fb-segmented-control--full .fb-segmented-item {
+  flex: 1;
+}
+
+.fb-segmented-item {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 36px;
+  padding: 0 14px;
+  border-radius: 9999px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--fb-text-muted);
+  cursor: pointer;
+  white-space: nowrap;
+  background: transparent;
+  border: 1px solid transparent;
+  outline: none;
+  transition:
+    background-color 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    color 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    border-color 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1),
+    opacity 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.fb-segmented-control--sm .fb-segmented-item {
+  height: 30px;
+  padding: 0 10px;
+  font-size: 12px;
+  gap: 4px;
+}
+
+.fb-segmented-item:hover:not(:disabled):not(.fb-segmented-item--active) {
   color: var(--fb-text);
+  background: var(--fb-surface-hover);
 }
 
-.vd-pill:disabled {
-  opacity: 0.45;
+html.dark .fb-segmented-item:hover:not(:disabled):not(.fb-segmented-item--active) {
+  background: rgba(255, 255, 255, 0.05);
+  color: #F1F5F9;
+}
+
+.fb-segmented-item:disabled {
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
-.vd-pill--online {
-  background: #F0FDF4;
-  color: #15803D;
-  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.15);
-}
-html.dark .vd-pill--online {
-  background: rgba(16, 185, 129, 0.12);
-  color: #34D399;
-  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.1);
+.fb-segmented-item:focus-visible {
+  box-shadow: 0 0 0 2px var(--fb-primary), 0 0 0 4px rgba(255, 90, 47, 0.25);
 }
 
-.vd-pill--offline {
+.fb-segmented-icon {
+  transition: color 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ── Active Variations ── */
+
+/* Default / Primary Active */
+.fb-segmented-item--active.fb-segmented-item--default,
+.fb-segmented-item--active.fb-segmented-item--primary {
   background: var(--fb-surface);
-  color: var(--fb-text-secondary);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  color: var(--fb-text);
+  font-weight: 600;
+  border-color: var(--fb-border);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 4px 12px -4px rgba(0, 0, 0, 0.06);
+}
+html.dark .fb-segmented-item--active.fb-segmented-item--default,
+html.dark .fb-segmented-item--active.fb-segmented-item--primary {
+  background: #1E2734;
+  color: #FFFFFF;
+  border-color: rgba(255, 255, 255, 0.12);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 6px 16px -4px rgba(0, 0, 0, 0.5);
 }
 
-.vd-pill--available {
+/* Online Active (Green Pill) */
+.fb-segmented-item--active.fb-segmented-item--online {
+  background: #ECFDF5;
+  color: #065F46;
+  font-weight: 600;
+  border-color: rgba(16, 185, 129, 0.35);
+  box-shadow: 0 1px 3px rgba(16, 185, 129, 0.18), 0 4px 12px -4px rgba(16, 185, 129, 0.2);
+}
+html.dark .fb-segmented-item--active.fb-segmented-item--online {
+  background: rgba(16, 185, 129, 0.16);
+  color: #34D399;
+  font-weight: 600;
+  border-color: rgba(16, 185, 129, 0.35);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 14px -2px rgba(16, 185, 129, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.06);
+}
+
+/* Offline Active (Muted Red/Gray Pill) */
+.fb-segmented-item--active.fb-segmented-item--offline {
+  background: #FEF2F2;
+  color: #991B1B;
+  font-weight: 600;
+  border-color: rgba(239, 68, 68, 0.25);
+  box-shadow: 0 1px 3px rgba(239, 68, 68, 0.12);
+}
+html.dark .fb-segmented-item--active.fb-segmented-item--offline {
+  background: rgba(239, 68, 68, 0.12);
+  color: #F87171;
+  font-weight: 600;
+  border-color: rgba(239, 68, 68, 0.28);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 10px -2px rgba(239, 68, 68, 0.2);
+}
+
+/* Available Active (Blue Pill) */
+.fb-segmented-item--active.fb-segmented-item--available {
   background: #EFF6FF;
   color: #1D4ED8;
-  box-shadow: 0 1px 3px rgba(59, 130, 246, 0.15);
+  font-weight: 600;
+  border-color: rgba(59, 130, 246, 0.35);
+  box-shadow: 0 1px 3px rgba(59, 130, 246, 0.18), 0 4px 12px -4px rgba(59, 130, 246, 0.2);
 }
-html.dark .vd-pill--available {
-  background: rgba(59, 130, 246, 0.12);
+html.dark .fb-segmented-item--active.fb-segmented-item--available {
+  background: rgba(59, 130, 246, 0.16);
   color: #93C5FD;
+  font-weight: 600;
+  border-color: rgba(59, 130, 246, 0.38);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 14px -2px rgba(59, 130, 246, 0.28), inset 0 1px 1px rgba(255, 255, 255, 0.06);
 }
 
-.vd-pill--unavailable {
-  background: var(--fb-surface);
-  color: var(--fb-text-secondary);
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+/* Unavailable Active (Muted Red/Slate Pill) */
+.fb-segmented-item--active.fb-segmented-item--unavailable {
+  background: #FEF2F2;
+  color: #991B1B;
+  font-weight: 600;
+  border-color: rgba(239, 68, 68, 0.25);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+html.dark .fb-segmented-item--active.fb-segmented-item--unavailable {
+  background: rgba(239, 68, 68, 0.10);
+  color: #FCA5A5;
+  font-weight: 600;
+  border-color: rgba(239, 68, 68, 0.24);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 8px -2px rgba(239, 68, 68, 0.16);
 }
 
-.vd-pill-dot {
+/* Status Dot in Segmented Control */
+.fb-segmented-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
   flex-shrink: 0;
+  transition: background-color 220ms ease, box-shadow 220ms ease;
 }
-.vd-pill-dot--green { background: #10B981; }
-.vd-pill-dot--gray  { background: #94A3B8; }
+.fb-segmented-dot--green {
+  background: #10B981;
+  box-shadow: 0 0 6px rgba(16, 185, 129, 0.7);
+}
+.fb-segmented-dot--red {
+  background: #EF4444;
+  box-shadow: 0 0 5px rgba(239, 68, 68, 0.6);
+}
+.fb-segmented-dot--blue {
+  background: #3B82F6;
+  box-shadow: 0 0 5px rgba(59, 130, 246, 0.6);
+}
+.fb-segmented-dot--gray {
+  background: #94A3B8;
+}
+
+/* Icon active tinting */
+.fb-segmented-item--active.fb-segmented-item--online .fb-segmented-icon {
+  color: #10B981;
+}
+html.dark .fb-segmented-item--active.fb-segmented-item--online .fb-segmented-icon {
+  color: #34D399;
+}
+.fb-segmented-item--active.fb-segmented-item--offline .fb-segmented-icon {
+  color: #EF4444;
+}
+html.dark .fb-segmented-item--active.fb-segmented-item--offline .fb-segmented-icon {
+  color: #F87171;
+}
+.fb-segmented-item--active.fb-segmented-item--available .fb-segmented-icon {
+  color: #3B82F6;
+}
+html.dark .fb-segmented-item--active.fb-segmented-item--available .fb-segmented-icon {
+  color: #60A5FA;
+}
+.fb-segmented-item--active.fb-segmented-item--unavailable .fb-segmented-icon {
+  color: #EF4444;
+}
+html.dark .fb-segmented-item--active.fb-segmented-item--unavailable .fb-segmented-icon {
+  color: #F87171;
+}
 
 /* ─── Bulk actions ────────────────────────────────────────────────────────── */
 .vd-bulk-actions {

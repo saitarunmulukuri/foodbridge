@@ -24,9 +24,11 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session, joinedload
 
 from backend.database import db
-from backend.modules.ngos.models import NGO, NGODateCapacity
+from backend.modules.ngos.models import NGO, NGODailyCapacity, NGODateCapacity
+from backend.shared.constants.enums import CapacityStatus, DayOfWeek
 
 logger = logging.getLogger(__name__)
+
 
 
 class NGORepository:
@@ -192,3 +194,54 @@ class NGORepository:
             max_meals,
         )
         return new_record
+
+    def find_daily_capacity_by_day(
+        self, ngo_id: int, day_of_week: DayOfWeek
+    ) -> Optional[NGODailyCapacity]:
+        """Load an NGODailyCapacity record by NGO ID and day of week."""
+        stmt = select(NGODailyCapacity).where(
+            NGODailyCapacity.ngo_id == ngo_id,
+            NGODailyCapacity.day_of_week == day_of_week,
+        )
+        return self._session.execute(stmt).scalars().first()
+
+    def upsert_daily_capacity(
+        self,
+        ngo_id: int,
+        day_of_week: DayOfWeek,
+        max_meals: int,
+        remaining_capacity: int,
+        status: CapacityStatus = CapacityStatus.ACTIVE,
+    ) -> NGODailyCapacity:
+        """Create or update an NGODailyCapacity record for an NGO and day of week."""
+        existing = self.find_daily_capacity_by_day(ngo_id, day_of_week)
+        if existing is not None:
+            existing.max_meals = max_meals
+            existing.remaining_capacity = remaining_capacity
+            existing.status = status
+            logger.debug(
+                "NGORepository: updated daily-capacity for ngo_id=%s day=%s max=%s rem=%s.",
+                ngo_id,
+                day_of_week.value,
+                max_meals,
+                remaining_capacity,
+            )
+            return existing
+
+        new_record = NGODailyCapacity(
+            ngo_id=ngo_id,
+            day_of_week=day_of_week,
+            max_meals=max_meals,
+            remaining_capacity=remaining_capacity,
+            status=status,
+        )
+        self._session.add(new_record)
+        logger.debug(
+            "NGORepository: created daily-capacity for ngo_id=%s day=%s max=%s rem=%s.",
+            ngo_id,
+            day_of_week.value,
+            max_meals,
+            remaining_capacity,
+        )
+        return new_record
+

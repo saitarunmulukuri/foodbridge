@@ -56,6 +56,26 @@ foodbridge/
 └── .github/            # GitHub configuration and workflow guidelines
 ```
 
+## Quick Start (Windows)
+
+To start both the Backend API and Frontend App with one click:
+```cmd
+start.bat
+```
+- Starts Flask backend on `http://localhost:5000`
+- Starts Vite React frontend on `http://localhost:3000`
+- Automatically opens `http://localhost:3000` in your default browser
+
+To stop all running servers:
+```cmd
+stop.bat
+```
+
+### Demo Credentials (Password: `Secure@12345`)
+- **Food Donor:** `e2e_donor@foodbridge.org`
+- **NGO Partner:** `e2e_ngo@foodbridge.org`
+- **Volunteer Driver:** `e2e_vol@foodbridge.org`
+
 ## Development Roadmap
 - [ ] **Phase 1:** Repository structure and architecture design
 - [ ] **Phase 2:** Core domain modules and database schemas setup

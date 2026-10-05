@@ -1,8 +1,7 @@
 """Ranking Engine component for the Decision Engine.
 
-Sprint 3.2 Responsibility:
-    Sort ScoredNGO DTOs by total_score descending and produce final Recommendation DTOs
-    complete with ranking indices and algorithm metadata.
+Sort ScoredNGO DTOs by total_score descending and produce final Recommendation DTOs
+complete with ranking indices, score breakdowns, explainable decision reasons, and algorithm metadata.
 """
 
 import logging
@@ -25,6 +24,11 @@ class RankingEngine:
     ) -> List[Recommendation]:
         """Rank scored NGOs by total_score descending and convert into Recommendation DTOs.
 
+        Deterministic tie-breakers:
+            1. Total Score (descending)
+            2. Distance in KM (ascending - closer is better)
+            3. Remaining capacity (descending - higher capacity is better)
+
         Args:
             scored_ngos: List of ScoredNGO DTOs.
             donation_id: The primary key of the evaluated donation.
@@ -37,10 +41,10 @@ class RankingEngine:
         if not scored_ngos:
             return []
 
-        # Sort primarily by total_score descending, secondarily by distance_km ascending
+        # Sort with deterministic tie-breakers
         sorted_ngos = sorted(
             scored_ngos,
-            key=lambda s: (-s.total_score, s.distance_km),
+            key=lambda s: (-s.total_score, s.distance_km, -s.remaining_capacity),
         )
 
         if top_n is not None and top_n > 0:
@@ -60,6 +64,11 @@ class RankingEngine:
                 reliability_score_weighted=ngo.reliability_score_weighted,
                 response_score=ngo.response_score,
                 algorithm_version=algorithm_version,
+                ngo_name=ngo.ngo_name or f"NGO #{ngo.ngo_id}",
+                freshness_score=ngo.freshness_score,
+                demand_score=ngo.demand_score,
+                availability_score=ngo.availability_score,
+                decision_reason=ngo.decision_reason,
             )
             recommendations.append(rec)
 
@@ -69,3 +78,4 @@ class RankingEngine:
             donation_id,
         )
         return recommendations
+

@@ -65,20 +65,44 @@ class DecisionEngineConfig:
     # Scoring Algorithm Weights  (sum must equal 1.00)
     # ------------------------------------------------------------------
     DISTANCE_WEIGHT: float = float(
-        os.getenv("DECISION_ENGINE_DISTANCE_WEIGHT", "0.35")
+        os.getenv("DECISION_ENGINE_DISTANCE_WEIGHT", "0.25")
     )
     CAPACITY_WEIGHT: float = float(
-        os.getenv("DECISION_ENGINE_CAPACITY_WEIGHT", "0.25")
+        os.getenv("DECISION_ENGINE_CAPACITY_WEIGHT", "0.20")
+    )
+    FRESHNESS_WEIGHT: float = float(
+        os.getenv("DECISION_ENGINE_FRESHNESS_WEIGHT", "0.20")
+    )
+    DEMAND_WEIGHT: float = float(
+        os.getenv("DECISION_ENGINE_DEMAND_WEIGHT", "0.20")
     )
     COMPATIBILITY_WEIGHT: float = float(
-        os.getenv("DECISION_ENGINE_COMPATIBILITY_WEIGHT", "0.15")
+        os.getenv("DECISION_ENGINE_COMPATIBILITY_WEIGHT", "0.10")
     )
+    AVAILABILITY_WEIGHT: float = float(
+        os.getenv("DECISION_ENGINE_AVAILABILITY_WEIGHT", "0.05")
+    )
+
+    # Backward-compatibility aliases
     RELIABILITY_WEIGHT: float = float(
-        os.getenv("DECISION_ENGINE_RELIABILITY_WEIGHT", "0.15")
+        os.getenv("DECISION_ENGINE_DEMAND_WEIGHT", "0.20")
     )
     RESPONSE_WEIGHT: float = float(
-        os.getenv("DECISION_ENGINE_RESPONSE_WEIGHT", "0.10")
+        os.getenv("DECISION_ENGINE_AVAILABILITY_WEIGHT", "0.05")
     )
+
+    def __post_init__(self) -> None:
+        """Sync backward-compatibility aliases if set."""
+        if self.RELIABILITY_WEIGHT != 0.20 and self.DEMAND_WEIGHT == 0.20:
+            object.__setattr__(self, "DEMAND_WEIGHT", self.RELIABILITY_WEIGHT)
+        else:
+            object.__setattr__(self, "RELIABILITY_WEIGHT", self.DEMAND_WEIGHT)
+
+        if self.RESPONSE_WEIGHT != 0.05 and self.AVAILABILITY_WEIGHT == 0.05:
+            object.__setattr__(self, "AVAILABILITY_WEIGHT", self.RESPONSE_WEIGHT)
+        else:
+            object.__setattr__(self, "RESPONSE_WEIGHT", self.AVAILABILITY_WEIGHT)
+
 
     # ------------------------------------------------------------------
     # Response Time Parameters
@@ -87,8 +111,9 @@ class DecisionEngineConfig:
         os.getenv("DECISION_ENGINE_MAX_RESPONSE_TIME_MINUTES", "120.0")
     )
 
+
     def validate_weights(self) -> None:
-        """Assert that all five scoring weights sum to 1.00 (±0.001 tolerance).
+        """Assert that all scoring weights sum to 1.00 (±0.001 tolerance).
 
         Raises:
             ValueError: If the weights do not sum correctly.
@@ -96,9 +121,10 @@ class DecisionEngineConfig:
         total = (
             self.DISTANCE_WEIGHT
             + self.CAPACITY_WEIGHT
+            + self.FRESHNESS_WEIGHT
+            + self.DEMAND_WEIGHT
             + self.COMPATIBILITY_WEIGHT
-            + self.RELIABILITY_WEIGHT
-            + self.RESPONSE_WEIGHT
+            + self.AVAILABILITY_WEIGHT
         )
         if abs(total - 1.0) > 0.001:
             raise ValueError(
@@ -110,3 +136,4 @@ class DecisionEngineConfig:
 
 # Module-level default configuration singleton
 default_config = DecisionEngineConfig()
+

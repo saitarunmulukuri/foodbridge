@@ -117,10 +117,10 @@ export const E2EStepperPage = () => {
       await new Promise((r) => setTimeout(r, 1000));
 
       // Step 7: Volunteer Login & Fetch Assignment
-      addLog('Step 7: Logging in as Volunteer Driver (e2e_volunteer@foodbridge.org)...');
-      const volAuth = await authService.login('e2e_volunteer@foodbridge.org', 'Secure@12345');
+      addLog('Step 7: Logging in as Volunteer Driver (e2e_vol@foodbridge.org)...');
+      const volAuth = await authService.login('e2e_vol@foodbridge.org', 'Secure@12345');
       setStoredToken(volAuth.data.access_token);
-      setStoredUser({ role: 'VOLUNTEER', email: 'e2e_volunteer@foodbridge.org' });
+      setStoredUser({ role: 'VOLUNTEER', email: 'e2e_vol@foodbridge.org' });
 
       const volAssignmentsRes = await volunteerService.listAssignments();
       const matchedAssignment = (volAssignmentsRes.data.assignments || []).find((a) => a.donation_id === donationId);

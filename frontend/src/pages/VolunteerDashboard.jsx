@@ -22,6 +22,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { StatusBadge } from '../components/common/StatusBadge';
 import { ExpiryTimer } from '../components/common/ExpiryTimer';
 import { Button } from '../components/common/Button';
+import { SegmentedControl } from '../components/common/SegmentedControl';
 import { TruckViewer } from '../components/volunteer/TruckViewer';
 import { PendingAssignmentCard } from '../components/volunteer/PendingAssignmentCard';
 import {
@@ -169,30 +170,33 @@ const DriverStatusControls = ({ isOnline, isAvailable, onToggleOnline, onToggleA
     {/* Online / Offline */}
     <div className="vd-status-group">
       <p className="vd-status-group-label">Connection</p>
-      <div className="vd-pill-group" role="group" aria-label="Online or Offline status">
-        <button
-          id="status-online-btn"
-          className={`vd-pill ${isOnline ? 'vd-pill--online' : ''}`}
-          onClick={() => !isOnline && onToggleOnline(true)}
-          disabled={loading || isOnline}
-          aria-pressed={isOnline}
-        >
-          <Wifi size={13} aria-hidden="true" />
-          Online
-          {isOnline && <span className="vd-pill-dot vd-pill-dot--green" aria-hidden="true" />}
-        </button>
-        <button
-          id="status-offline-btn"
-          className={`vd-pill ${!isOnline ? 'vd-pill--offline' : ''}`}
-          onClick={() => isOnline && onToggleOnline(false)}
-          disabled={loading || !isOnline}
-          aria-pressed={!isOnline}
-        >
-          <WifiOff size={13} aria-hidden="true" />
-          Offline
-          {!isOnline && <span className="vd-pill-dot vd-pill-dot--gray" aria-hidden="true" />}
-        </button>
-      </div>
+      <SegmentedControl
+        ariaLabel="Connection status"
+        value={isOnline ? 'online' : 'offline'}
+        onChange={(val) => onToggleOnline(val === 'online')}
+        disabled={loading}
+        options={[
+          {
+            id: 'status-online-btn',
+            value: 'online',
+            label: 'Online',
+            icon: Wifi,
+            statusDot: 'green',
+            activeVariant: 'online',
+            disabled: loading || isOnline,
+            title: isOnline ? 'Currently online' : 'Switch to online status',
+          },
+          {
+            id: 'status-offline-btn',
+            value: 'offline',
+            label: 'Offline',
+            icon: WifiOff,
+            activeVariant: 'offline',
+            disabled: loading || !isOnline,
+            title: !isOnline ? 'Currently offline' : 'Switch to offline status',
+          },
+        ]}
+      />
     </div>
 
     <div className="vd-status-divider" aria-hidden="true" />
@@ -203,30 +207,32 @@ const DriverStatusControls = ({ isOnline, isAvailable, onToggleOnline, onToggleA
         Availability
         <span className="vd-status-session-tag">Session</span>
       </p>
-      <div className="vd-pill-group" role="group" aria-label="Availability status">
-        <button
-          id="status-available-btn"
-          className={`vd-pill ${isAvailable ? 'vd-pill--available' : ''}`}
-          onClick={() => !isAvailable && onToggleAvailable(true)}
-          disabled={!isOnline}
-          aria-pressed={isAvailable}
-          title={!isOnline ? 'Go online to set availability' : undefined}
-        >
-          <ShieldCheck size={13} aria-hidden="true" />
-          Available
-        </button>
-        <button
-          id="status-unavailable-btn"
-          className={`vd-pill ${!isAvailable ? 'vd-pill--unavailable' : ''}`}
-          onClick={() => isAvailable && onToggleAvailable(false)}
-          disabled={!isOnline}
-          aria-pressed={!isAvailable}
-          title={!isOnline ? 'Go online to set availability' : undefined}
-        >
-          <ShieldOff size={13} aria-hidden="true" />
-          Unavailable
-        </button>
-      </div>
+      <SegmentedControl
+        ariaLabel="Availability status"
+        value={isAvailable ? 'available' : 'unavailable'}
+        onChange={(val) => onToggleAvailable(val === 'available')}
+        disabled={!isOnline}
+        options={[
+          {
+            id: 'status-available-btn',
+            value: 'available',
+            label: 'Available',
+            icon: ShieldCheck,
+            activeVariant: 'available',
+            disabled: !isOnline,
+            title: !isOnline ? 'Go online to set availability' : isAvailable ? 'Currently available' : 'Set as available',
+          },
+          {
+            id: 'status-unavailable-btn',
+            value: 'unavailable',
+            label: 'Unavailable',
+            icon: ShieldOff,
+            activeVariant: 'unavailable',
+            disabled: !isOnline,
+            title: !isOnline ? 'Go online to set availability' : !isAvailable ? 'Currently unavailable' : 'Set as unavailable',
+          },
+        ]}
+      />
     </div>
   </div>
 );

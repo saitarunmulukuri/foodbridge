@@ -13,13 +13,22 @@ export const ngoService = {
     return apiClient.get('/ngos/me/capacity');
   },
 
-  updateCapacity: async (dayOfWeek, maximumCapacity, status = 'ACTIVE') => {
-    return apiClient.put('/ngos/me/capacity', {
-      day_of_week: dayOfWeek,
+  updateCapacity: async (dayOfWeekOrDate, maximumCapacity, status = 'ACTIVE') => {
+    const payload = {
       maximum_capacity: parseInt(maximumCapacity, 10),
       status,
-    });
+    };
+    if (dayOfWeekOrDate && /^\d{4}-\d{2}-\d{2}$/.test(dayOfWeekOrDate)) {
+      payload.date = dayOfWeekOrDate;
+    } else if (dayOfWeekOrDate) {
+      payload.day_of_week = dayOfWeekOrDate.toUpperCase();
+      payload.date = new Date().toISOString().split('T')[0];
+    } else {
+      payload.date = new Date().toISOString().split('T')[0];
+    }
+    return apiClient.put('/ngos/me/capacity', payload);
   },
+
 
   listRequests: async () => {
     return apiClient.get('/ngo/requests');

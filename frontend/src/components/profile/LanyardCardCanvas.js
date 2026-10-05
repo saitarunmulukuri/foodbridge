@@ -26,9 +26,9 @@ function drawRoundRect(ctx, x, y, width, height, radius) {
 }
 
 export function generateCardFrontTexture(userData) {
-  // 2× high-DPI resolution for crisp text
-  const width = 1200;
-  const height = 1800;
+  // 4× high-DPI resolution for maximum sharpness
+  const width = 1600;
+  const height = 2400;
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
@@ -57,51 +57,51 @@ export function generateCardFrontTexture(userData) {
 
   // Top accent bar
   ctx.fillStyle = accentColor;
-  ctx.fillRect(0, 0, width, 40);
+  ctx.fillRect(0, 0, width, 54);
 
   // Outer border
   ctx.strokeStyle = '#CBD5E1';
-  ctx.lineWidth = 6;
-  ctx.strokeRect(3, 3, width - 6, height - 6);
+  ctx.lineWidth = 8;
+  ctx.strokeRect(4, 4, width - 8, height - 8);
 
   // Lanyard hole guide
   ctx.fillStyle = '#E2E8F0';
   ctx.beginPath();
-  drawRoundRect(ctx, width / 2 - 60, 60, 120, 20, 10);
+  drawRoundRect(ctx, width / 2 - 80, 80, 160, 28, 14);
   ctx.fill();
 
   // ---------- HEADER ----------
   ctx.fillStyle = '#0F172A';
-  ctx.font = 'bold 68px system-ui, Arial, sans-serif';
-  ctx.fillText('FOODBRIDGE', 80, 192);
+  ctx.font = 'bold 90px system-ui, Arial, sans-serif';
+  ctx.fillText('FOODBRIDGE', 106, 256);
 
   ctx.fillStyle = '#64748B';
-  ctx.font = '500 28px system-ui, Arial, sans-serif';
-  ctx.fillText('OFFICIAL NETWORK IDENTITY DOCUMENT', 80, 234);
+  ctx.font = '500 37px system-ui, Arial, sans-serif';
+  ctx.fillText('OFFICIAL NETWORK IDENTITY DOCUMENT', 106, 312);
 
   // Brand circle
   ctx.fillStyle = accentColor;
   ctx.beginPath();
-  ctx.arc(width - 130, 178, 56, 0, Math.PI * 2);
+  ctx.arc(width - 174, 238, 74, 0, Math.PI * 2);
   ctx.fill();
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 44px system-ui, Arial, sans-serif';
+  ctx.font = 'bold 58px system-ui, Arial, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('FB', width - 130, 194);
+  ctx.fillText('FB', width - 174, 258);
   ctx.textAlign = 'left';
 
   // Divider
   ctx.strokeStyle = '#E2E8F0';
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.moveTo(80, 270);
-  ctx.lineTo(width - 80, 270);
+  ctx.moveTo(106, 360);
+  ctx.lineTo(width - 106, 360);
   ctx.stroke();
 
   // ---------- AVATAR + NAME ----------
-  const avatarCX = 200;
-  const avatarCY = 450;
-  const avatarR = 120;
+  const avatarCX = 266;
+  const avatarCY = 600;
+  const avatarR = 160;
 
   ctx.fillStyle = accentColor;
   ctx.beginPath();
@@ -110,113 +110,129 @@ export function generateCardFrontTexture(userData) {
 
   const initials = name.split(' ').map((n) => n[0]).slice(0, 2).join('').toUpperCase();
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 80px system-ui, Arial, sans-serif';
+  ctx.font = 'bold 106px system-ui, Arial, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(initials || 'FB', avatarCX, avatarCY + 28);
+  ctx.fillText(initials || 'FB', avatarCX, avatarCY + 38);
   ctx.textAlign = 'left';
 
-  const nameX = avatarCX + avatarR + 48;
+  const nameX = avatarCX + avatarR + 64;
   const displayName = name.length > 20 ? name.slice(0, 18) + '\u2026' : name;
 
   ctx.fillStyle = '#0F172A';
-  ctx.font = 'bold 60px system-ui, Arial, sans-serif';
-  ctx.fillText(displayName, nameX, 396);
+  ctx.font = 'bold 80px system-ui, Arial, sans-serif';
+  ctx.fillText(displayName, nameX, 528);
 
   // Role pill
-  const pillW = 370;
+  const pillW = 494;
   ctx.fillStyle = accentColor;
   ctx.beginPath();
-  drawRoundRect(ctx, nameX, 416, pillW, 56, 10);
+  drawRoundRect(ctx, nameX, 554, pillW, 74, 14);
   ctx.fill();
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 26px system-ui, Arial, sans-serif';
+  ctx.font = 'bold 34px system-ui, Arial, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText(role.toUpperCase() + ' CREDENTIAL', nameX + pillW / 2, 453);
+  ctx.fillText(role.toUpperCase() + ' CREDENTIAL', nameX + pillW / 2, 603);
   ctx.textAlign = 'left';
 
   ctx.fillStyle = '#059669';
-  ctx.font = 'bold 26px system-ui, Arial, sans-serif';
-  ctx.fillText('\u25cf ' + status, nameX, 520);
+  ctx.font = 'bold 34px system-ui, Arial, sans-serif';
+  ctx.fillText('\u25cf ' + status, nameX, 692);
+
+  // Location icon & text
+  const pinX = nameX + 8;
+  const pinY = 735;
+  ctx.strokeStyle = '#64748B';
+  ctx.fillStyle = '#64748B';
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.arc(pinX, pinY - 8, 9, Math.PI * 0.8, Math.PI * 2.2);
+  ctx.lineTo(pinX, pinY + 8);
+  ctx.closePath();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(pinX, pinY - 8, 3.5, 0, Math.PI * 2);
+  ctx.fill();
 
   ctx.fillStyle = '#64748B';
-  ctx.font = '500 24px system-ui, Arial, sans-serif';
-  ctx.fillText('\uD83D\uDCCD ' + location, nameX, 564);
+  ctx.font = '500 32px system-ui, Arial, sans-serif';
+  ctx.fillText(location, nameX + 28, 746);
+
 
   // ---------- SEPARATOR ----------
   ctx.strokeStyle = '#E2E8F0';
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.moveTo(80, 614);
-  ctx.lineTo(width - 80, 614);
+  ctx.moveTo(106, 820);
+  ctx.lineTo(width - 106, 820);
   ctx.stroke();
 
   // ---------- DIGITAL ID BOX ----------
-  const idBoxY = 646;
-  const idBoxH = 160;
+  const idBoxY = 860;
+  const idBoxH = 214;
   ctx.fillStyle = '#0F172A';
   ctx.beginPath();
-  drawRoundRect(ctx, 80, idBoxY, width - 160, idBoxH, 20);
+  drawRoundRect(ctx, 106, idBoxY, width - 212, idBoxH, 26);
   ctx.fill();
 
   ctx.fillStyle = '#94A3B8';
-  ctx.font = 'bold 24px system-ui, Arial, sans-serif';
-  ctx.fillText('DIGITAL IDENTIFIER', 120, idBoxY + 52);
+  ctx.font = 'bold 32px system-ui, Arial, sans-serif';
+  ctx.fillText('DIGITAL IDENTIFIER', 160, idBoxY + 70);
 
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 64px "Courier New", monospace';
-  ctx.fillText(id, 120, idBoxY + 128);
+  ctx.font = 'bold 85px "Courier New", monospace';
+  ctx.fillText(id, 160, idBoxY + 170);
 
   // Chip icon
   ctx.fillStyle = '#334155';
   ctx.beginPath();
-  drawRoundRect(ctx, width - 220, idBoxY + 36, 100, 76, 12);
+  drawRoundRect(ctx, width - 294, idBoxY + 48, 134, 100, 16);
   ctx.fill();
   ctx.strokeStyle = '#64748B';
-  ctx.lineWidth = 3;
-  ctx.strokeRect(width - 206, idBoxY + 48, 72, 52);
+  ctx.lineWidth = 4;
+  ctx.strokeRect(width - 275, idBoxY + 64, 96, 70);
   ctx.strokeStyle = '#475569';
-  ctx.lineWidth = 2;
-  [14, 30, 46].forEach((off) => {
+  ctx.lineWidth = 3;
+  [18, 40, 62].forEach((off) => {
     ctx.beginPath();
-    ctx.moveTo(width - 206, idBoxY + 48 + off);
-    ctx.lineTo(width - 134, idBoxY + 48 + off);
+    ctx.moveTo(width - 275, idBoxY + 64 + off);
+    ctx.lineTo(width - 179, idBoxY + 64 + off);
     ctx.stroke();
   });
 
   // ---------- METRIC CARDS ----------
-  const metY = 852;
-  const metH = 220;
-  const metW = (width - 200) / 2;
+  const metY = 1136;
+  const metH = 294;
+  const metW = (width - 266) / 2;
 
   ctx.fillStyle = '#F8FAFC';
   ctx.strokeStyle = '#E2E8F0';
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 3;
   ctx.beginPath();
-  drawRoundRect(ctx, 80, metY, metW, metH, 20);
+  drawRoundRect(ctx, 106, metY, metW, metH, 26);
   ctx.fill();
   ctx.stroke();
   ctx.fillStyle = '#64748B';
-  ctx.font = 'bold 24px system-ui, Arial, sans-serif';
-  ctx.fillText(metric1.label, 116, metY + 60);
+  ctx.font = 'bold 32px system-ui, Arial, sans-serif';
+  ctx.fillText(metric1.label, 154, metY + 80);
   ctx.fillStyle = '#0F172A';
-  ctx.font = 'bold 88px system-ui, Arial, sans-serif';
-  ctx.fillText(metric1.value, 116, metY + 176);
+  ctx.font = 'bold 118px system-ui, Arial, sans-serif';
+  ctx.fillText(metric1.value, 154, metY + 234);
 
   ctx.fillStyle = '#F8FAFC';
   ctx.beginPath();
-  drawRoundRect(ctx, 80 + metW + 40, metY, metW, metH, 20);
+  drawRoundRect(ctx, 106 + metW + 54, metY, metW, metH, 26);
   ctx.fill();
   ctx.stroke();
   ctx.fillStyle = '#64748B';
-  ctx.font = 'bold 24px system-ui, Arial, sans-serif';
-  ctx.fillText(metric2.label, 80 + metW + 76, metY + 60);
+  ctx.font = 'bold 32px system-ui, Arial, sans-serif';
+  ctx.fillText(metric2.label, 106 + metW + 100, metY + 80);
   ctx.fillStyle = accentColor;
-  ctx.font = 'bold 88px system-ui, Arial, sans-serif';
-  ctx.fillText(metric2.value, 80 + metW + 76, metY + 176);
+  ctx.font = 'bold 118px system-ui, Arial, sans-serif';
+  ctx.fillText(metric2.value, 106 + metW + 100, metY + 234);
 
   // ---------- HOLOGRAPHIC STRIP ----------
-  const holoY = 1122;
-  const holoGrad = ctx.createLinearGradient(80, holoY, width - 80, holoY + 80);
+  const holoY = 1496;
+  const holoGrad = ctx.createLinearGradient(106, holoY, width - 106, holoY + 106);
   holoGrad.addColorStop(0, '#C7D2FE');
   holoGrad.addColorStop(0.25, '#FEF08A');
   holoGrad.addColorStop(0.5, '#A7F3D0');
@@ -224,48 +240,48 @@ export function generateCardFrontTexture(userData) {
   holoGrad.addColorStop(1, '#DDD6FE');
   ctx.fillStyle = holoGrad;
   ctx.beginPath();
-  drawRoundRect(ctx, 80, holoY, width - 160, 80, 14);
+  drawRoundRect(ctx, 106, holoY, width - 212, 106, 18);
   ctx.fill();
   ctx.fillStyle = 'rgba(15,23,42,0.7)';
-  ctx.font = 'bold 24px system-ui, Arial, sans-serif';
+  ctx.font = 'bold 32px system-ui, Arial, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('\u2605  SECURE DIGITAL AUTHENTICITY BADGE  \u00b7  FOODBRIDGE ECOSYSTEM  \u2605', width / 2, holoY + 50);
+  ctx.fillText('\u2605  SECURE DIGITAL AUTHENTICITY BADGE  \u00b7  FOODBRIDGE ECOSYSTEM  \u2605', width / 2, holoY + 67);
   ctx.textAlign = 'left';
 
   // ---------- BARCODE ----------
-  const bcY = 1250;
+  const bcY = 1666;
   ctx.fillStyle = '#0F172A';
   const seed = id.split('').reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  let curX = 80;
-  while (curX < width - 80) {
-    const bw = ((seed * (curX + 7)) % 6) + 3;
-    ctx.fillRect(curX, bcY, bw, 100);
-    curX += bw + ((seed * (curX + 3)) % 6) + 3;
+  let curX = 106;
+  while (curX < width - 106) {
+    const bw = ((seed * (curX + 7)) % 6) + 4;
+    ctx.fillRect(curX, bcY, bw, 134);
+    curX += bw + ((seed * (curX + 3)) % 6) + 4;
   }
   ctx.fillStyle = '#334155';
-  ctx.font = '500 26px "Courier New", monospace';
+  ctx.font = '500 35px "Courier New", monospace';
   ctx.textAlign = 'center';
-  ctx.fillText(id + '  \u00b7  ECDSAP256', width / 2, bcY + 140);
+  ctx.fillText(id + '  \u00b7  ECDSAP256', width / 2, bcY + 186);
   ctx.textAlign = 'left';
 
   // ---------- FOOTER ----------
   ctx.fillStyle = '#94A3B8';
-  ctx.font = '500 22px system-ui, Arial, sans-serif';
-  ctx.fillText(`ISSUED: ${new Date().getFullYear()}  \u00b7  AUTH: SEC-SHA256  \u00b7  ${email}`, 80, 1500);
+  ctx.font = '500 29px system-ui, Arial, sans-serif';
+  ctx.fillText(`ISSUED: ${new Date().getFullYear()}  \u00b7  AUTH: SEC-SHA256  \u00b7  ${email}`, 106, 2000);
   ctx.fillStyle = '#CBD5E1';
-  ctx.font = '500 20px system-ui, Arial, sans-serif';
-  ctx.fillText('This credential validates authorized participation in FoodBridge rescue operations.', 80, 1540);
+  ctx.font = '500 27px system-ui, Arial, sans-serif';
+  ctx.fillText('This credential validates authorized participation in FoodBridge rescue operations.', 106, 2053);
 
   // Bottom accent bar
   ctx.fillStyle = accentColor;
-  ctx.fillRect(0, height - 40, width, 40);
+  ctx.fillRect(0, height - 54, width, 54);
 
   return canvas.toDataURL('image/png');
 }
 
 export function generateCardBackTexture(userData) {
-  const width = 1200;
-  const height = 1800;
+  const width = 1600;
+  const height = 2400;
   const canvas = document.createElement('canvas');
   canvas.width = width;
   canvas.height = height;
@@ -282,41 +298,41 @@ export function generateCardBackTexture(userData) {
   ctx.fillRect(0, 0, width, height);
 
   ctx.fillStyle = accentColor;
-  ctx.fillRect(0, 0, width, 40);
+  ctx.fillRect(0, 0, width, 54);
 
   ctx.strokeStyle = '#1E293B';
-  ctx.lineWidth = 6;
-  ctx.strokeRect(3, 3, width - 6, height - 6);
+  ctx.lineWidth = 8;
+  ctx.strokeRect(4, 4, width - 8, height - 8);
 
   ctx.fillStyle = '#1E293B';
   ctx.beginPath();
-  drawRoundRect(ctx, width / 2 - 60, 60, 120, 20, 10);
+  drawRoundRect(ctx, width / 2 - 80, 80, 160, 28, 14);
   ctx.fill();
 
   // Header
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 58px system-ui, Arial, sans-serif';
-  ctx.fillText('FOODBRIDGE NETWORK', 80, 200);
+  ctx.font = 'bold 78px system-ui, Arial, sans-serif';
+  ctx.fillText('FOODBRIDGE NETWORK', 106, 266);
 
   ctx.fillStyle = '#64748B';
-  ctx.font = '500 28px system-ui, Arial, sans-serif';
-  ctx.fillText('SURPLUS FOOD REDISTRIBUTION PROTOCOL', 80, 252);
+  ctx.font = '500 37px system-ui, Arial, sans-serif';
+  ctx.fillText('SURPLUS FOOD REDISTRIBUTION PROTOCOL', 106, 336);
 
   ctx.strokeStyle = '#1E293B';
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 3;
   ctx.beginPath();
-  ctx.moveTo(80, 292);
-  ctx.lineTo(width - 80, 292);
+  ctx.moveTo(106, 390);
+  ctx.lineTo(width - 106, 390);
   ctx.stroke();
 
   // QR code
-  const qrSize = 320;
+  const qrSize = 426;
   const qrX = (width - qrSize) / 2;
-  const qrY = 342;
+  const qrY = 456;
 
   ctx.fillStyle = '#FFFFFF';
   ctx.beginPath();
-  drawRoundRect(ctx, qrX - 20, qrY - 20, qrSize + 40, qrSize + 40, 20);
+  drawRoundRect(ctx, qrX - 26, qrY - 26, qrSize + 52, qrSize + 52, 26);
   ctx.fill();
 
   ctx.fillStyle = '#0F172A';
@@ -342,27 +358,27 @@ export function generateCardBackTexture(userData) {
   }
 
   ctx.fillStyle = '#38BDF8';
-  ctx.font = 'bold 28px system-ui, Arial, sans-serif';
+  ctx.font = 'bold 37px system-ui, Arial, sans-serif';
   ctx.textAlign = 'center';
-  ctx.fillText('SCAN TO VERIFY CREDENTIAL', width / 2, qrY + qrSize + 56);
+  ctx.fillText('SCAN TO VERIFY CREDENTIAL', width / 2, qrY + qrSize + 74);
   ctx.textAlign = 'left';
 
   // Compliance box
-  const boxY = 802;
+  const boxY = 1070;
   ctx.fillStyle = '#1E293B';
   ctx.beginPath();
-  drawRoundRect(ctx, 80, boxY, width - 160, 440, 20);
+  drawRoundRect(ctx, 106, boxY, width - 212, 586, 26);
   ctx.fill();
   ctx.strokeStyle = '#334155';
-  ctx.lineWidth = 2;
+  ctx.lineWidth = 3;
   ctx.stroke();
 
   ctx.fillStyle = '#FFFFFF';
-  ctx.font = 'bold 34px system-ui, Arial, sans-serif';
-  ctx.fillText('Standard Operating Compliance', 120, boxY + 72);
+  ctx.font = 'bold 46px system-ui, Arial, sans-serif';
+  ctx.fillText('Standard Operating Compliance', 160, boxY + 96);
 
   ctx.fillStyle = '#94A3B8';
-  ctx.font = '400 26px system-ui, Arial, sans-serif';
+  ctx.font = '400 35px system-ui, Arial, sans-serif';
   const guidelines = [
     '\u00b7  Food quality checks conform to safe distribution norms.',
     '\u00b7  Real-time temperature & transit logging is mandatory.',
@@ -370,38 +386,38 @@ export function generateCardBackTexture(userData) {
     '\u00b7  Authorized for seamless checkpoint entry and handoff.',
   ];
   guidelines.forEach((g, i) => {
-    ctx.fillText(g, 120, boxY + 140 + i * 64);
+    ctx.fillText(g, 160, boxY + 186 + i * 86);
   });
 
   ctx.fillStyle = accentColor;
-  ctx.font = 'bold 28px system-ui, Arial, sans-serif';
-  ctx.fillText(`ROLE ACCESS: ${role.toUpperCase()} (TIER 1)`, 120, boxY + 404);
+  ctx.font = 'bold 37px system-ui, Arial, sans-serif';
+  ctx.fillText(`ROLE ACCESS: ${role.toUpperCase()} (TIER 1)`, 160, boxY + 538);
 
   // Hotline
-  const hotlineY = 1302;
+  const hotlineY = 1736;
   ctx.fillStyle = '#1E293B';
   ctx.beginPath();
-  drawRoundRect(ctx, 80, hotlineY, width - 160, 160, 20);
+  drawRoundRect(ctx, 106, hotlineY, width - 212, 214, 26);
   ctx.fill();
   ctx.strokeStyle = '#334155';
   ctx.stroke();
 
   ctx.fillStyle = '#94A3B8';
-  ctx.font = 'bold 26px system-ui, Arial, sans-serif';
-  ctx.fillText('DISPATCH & RAPID RESPONSE HELPLINE', 120, hotlineY + 60);
+  ctx.font = 'bold 35px system-ui, Arial, sans-serif';
+  ctx.fillText('DISPATCH & RAPID RESPONSE HELPLINE', 160, hotlineY + 80);
 
   ctx.fillStyle = '#38BDF8';
-  ctx.font = 'bold 34px "Courier New", monospace';
-  ctx.fillText('+1 (800) 555-FOOD  \u00b7  support@foodbridge.org', 120, hotlineY + 118);
+  ctx.font = 'bold 46px "Courier New", monospace';
+  ctx.fillText('+1 (800) 555-FOOD  \u00b7  support@foodbridge.org', 160, hotlineY + 158);
 
   // Footer cert
   ctx.fillStyle = '#475569';
-  ctx.font = '500 22px "Courier New", monospace';
-  ctx.fillText(`CERT: ${id}-ECDSA-P256-VERIFIED`, 80, 1532);
-  ctx.fillText('FoodBridge Initiative \u00b7 Decentralized Relief Logistics', 80, 1568);
+  ctx.font = '500 29px "Courier New", monospace';
+  ctx.fillText(`CERT: ${id}-ECDSA-P256-VERIFIED`, 106, 2042);
+  ctx.fillText('FoodBridge Initiative \u00b7 Decentralized Relief Logistics', 106, 2091);
 
   ctx.fillStyle = accentColor;
-  ctx.fillRect(0, height - 40, width, 40);
+  ctx.fillRect(0, height - 54, width, 54);
 
   return canvas.toDataURL('image/png');
 }
